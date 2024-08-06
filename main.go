@@ -4,48 +4,20 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"strings"
 )
-
-type TokenType string
-
-const (
-	TokenPrint   TokenType = "Print"
-	TokenNewline TokenType = "Newline"
-	TokenDigit   TokenType = "Digit"
-)
-
-type Token struct {
-	Type   TokenType
-	Lexeme string
-}
 
 func main() {
 	data, err := io.ReadAll(os.Stdin)
 	ohno(err)
 
-	tokens := make([]Token, 0)
-
-	for i := 0; i < len(data); i++ {
-		b := data[i]
-		if b == ' ' || b == '\t' {
-			continue
+	tokens, errors := tokenize(string(data))
+	if errors != nil {
+		fmt.Printf("Got %d errors:\n", len(errors))
+		for i, err := range errors {
+			fmt.Printf("  %d: %v\n", i, err)
 		}
-
-		if b == '\r' || b == '\n' {
-			tokens = append(tokens, Token{TokenNewline, string(b)})
-		} else if b >= '0' && b <= '9' {
-			tokens = append(tokens, Token{TokenDigit, string(b)})
-		} else if b == 'p' {
-			if strings.HasPrefix(string(data[i:]), "print") {
-				tokens = append(tokens, Token{TokenPrint, "print"})
-				i += 4
-			} else {
-				panic("invalid input, expected 'rint' after 'p'")
-			}
-		} else {
-			panic("invalid input, unexpected byte '" + string(b) + "'")
-		}
+		os.Exit(1)
+		return
 	}
 
 	fmt.Printf("Tokens: %v\n", tokens)
