@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strconv"
 )
 
 type TokenType string
@@ -9,12 +10,14 @@ type TokenType string
 const (
 	TokenPrint   TokenType = "Print"
 	TokenNewline TokenType = "Newline"
-	TokenNumber  TokenType = "Number"
+	TokenInt     TokenType = "Int"
+	TokenFloat   TokenType = "Float"
 )
 
 type Token struct {
-	Type   TokenType
-	Lexeme string
+	Type    TokenType
+	Lexeme  string
+	Literal any
 }
 
 func tokenize(input string) (tokens []Token, errors []error) {
@@ -37,7 +40,7 @@ func tokenize(input string) (tokens []Token, errors []error) {
 		case c == ' ' || c == '\t':
 			break
 		case c == '\n' || c == '\r':
-			addToken(Token{TokenNewline, string(c)})
+			addToken(Token{TokenNewline, string(c), nil})
 		case isDigit(c):
 			token, err := tokenizeNumber(runes[i:])
 			if err != nil {
@@ -53,7 +56,7 @@ func tokenize(input string) (tokens []Token, errors []error) {
 			}
 			identifier := string(runes[i:j])
 			if identifier == "print" {
-				addToken(Token{TokenPrint, identifier})
+				addToken(Token{TokenPrint, identifier, nil})
 			} else {
 				addError(fmt.Errorf("unsupported identifier '%s'", identifier))
 			}
@@ -75,13 +78,28 @@ func tokenizeNumber(runes []rune) (Token, error) {
 	for ; i < len(runes) && isDigit(runes[i]); i++ {
 	}
 
+	tokenType := TokenInt
+	literalFunc := func(s string) (any, error) {
+		return strconv.Atoi(s)
+	}
 	if len(runes[i:]) >= 2 && runes[i] == '.' && isDigit(runes[i+1]) {
+		tokenType = TokenFloat
+		literalFunc = func(s string) (any, error) {
+			return strconv.ParseFloat(s, 64)
+		}
+
 		i += 1 // Consume the .
 		for ; i < len(runes) && isDigit(runes[i]); i++ {
 		}
 	}
 
-	return Token{TokenNumber, string(runes[0:i])}, nil
+	lexeme := string(runes[0:i])
+	literal, err := literalFunc(lexeme)
+	if err != nil {
+		// Should never happen
+		return Token{}, err
+	}
+	return Token{tokenType, lexeme, literal}, nil
 }
 
 func isDigit(c rune) bool {

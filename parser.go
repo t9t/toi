@@ -31,7 +31,7 @@ func parseStatement(tokens []Token) (Statement, []Token, error) {
 		}
 
 		next := tokens[1]
-		if next.Type != TokenNumber {
+		if next.Type != TokenInt && next.Type != TokenFloat {
 			return nil, tokens[1:], fmt.Errorf("expected number after 'print' but got %s ('%s')", next.Type, next.Lexeme)
 		}
 
@@ -43,7 +43,7 @@ func parseStatement(tokens []Token) (Statement, []Token, error) {
 		if len(tokens) >= 3 {
 			offset = 3
 		}
-		return func() { fmt.Printf("%s\n", next.Lexeme) }, tokens[offset:], nil
+		return func() { fmt.Printf("%v\n", next.Literal) }, tokens[offset:], nil
 	}
 
 	return nil, tokens[1:], fmt.Errorf("unexpected token %s", tokens[0].Lexeme)
