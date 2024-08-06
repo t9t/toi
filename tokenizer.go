@@ -33,7 +33,6 @@ func tokenize(input string) (tokens []Token, errors []error) {
 	runes := []rune(input)
 	for i := 0; i < len(runes); i++ {
 		c := runes[i]
-		fmt.Printf("Token %d: #%c#\n", i, c)
 
 		switch {
 		case c == ' ' || c == '\t':
