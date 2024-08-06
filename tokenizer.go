@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"strings"
 )
 
 type TokenType string
@@ -10,7 +9,7 @@ type TokenType string
 const (
 	TokenPrint   TokenType = "Print"
 	TokenNewline TokenType = "Newline"
-	TokenDigit   TokenType = "Digit"
+	TokenNumber  TokenType = "Number"
 )
 
 type Token struct {
@@ -27,28 +26,39 @@ func tokenize(input string) (tokens []Token, errors []error) {
 		errors = append(errors, err)
 	}
 
+	isNum := func(c rune) bool { return c >= '0' && c <= '9' }
+	isAlpha := func(c rune) bool { return c == '_' || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') }
+	isAlphaNum := func(c rune) bool { return isNum(c) || isAlpha(c) }
+
 	runes := []rune(input)
 	for i := 0; i < len(runes); i++ {
 		c := runes[i]
+		fmt.Printf("Token %d: #%c#\n", i, c)
 
-		switch c {
-		case ' ', '\t':
+		switch {
+		case c == ' ' || c == '\t':
 			break
-		case '\n', '\r':
+		case c == '\n' || c == '\r':
 			addToken(Token{TokenNewline, string(c)})
-		default:
-			if c >= '0' && c <= '9' {
-				addToken(Token{TokenDigit, string(c)})
-			} else if c == 'p' {
-				if strings.HasPrefix(string(runes[i:]), "print") {
-					addToken(Token{TokenPrint, "print"})
-					i += 4
-				} else {
-					addError(fmt.Errorf("expected 'rint' after 'p'"))
-				}
-			} else {
-				addError(fmt.Errorf("unexpected character: %c", c))
+		case isNum(c):
+			j := i + 1
+			for ; j < len(runes) && isNum(runes[j]); j++ {
 			}
+			addToken(Token{TokenNumber, string(runes[i:j])})
+			i = j - 1
+		case isAlpha(c):
+			j := i + 1
+			for ; j < len(runes) && isAlphaNum(runes[j]); j++ {
+			}
+			identifier := string(runes[i:j])
+			if identifier == "print" {
+				addToken(Token{TokenPrint, identifier})
+			} else {
+				addError(fmt.Errorf("unsupported identifier '%s'", identifier))
+			}
+			i = j - 1
+		default:
+			addError(fmt.Errorf("unexpected character: %c", c))
 		}
 	}
 

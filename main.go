@@ -42,8 +42,8 @@ func main() {
 		next := tokens[i+1]
 		nextNext := tokens[i+2]
 
-		if next.Type != TokenDigit || nextNext.Type != TokenNewline {
-			panic("syntax error, expected digit and newline after 'print'")
+		if next.Type != TokenNumber || nextNext.Type != TokenNewline {
+			panic("syntax error, expected number and newline after 'print'")
 		}
 
 		i += 2
