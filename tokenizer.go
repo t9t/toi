@@ -57,7 +57,6 @@ var singleCharTokens = map[rune]TokenType{
 	'+': TokenPlus,
 	'-': TokenMinus,
 	'*': TokenAsterisk,
-	'/': TokenSlash,
 }
 
 var keywordTokens = map[string]TokenType{
@@ -90,6 +89,17 @@ func tokenize(input string) (tokens []Token, errors []error) {
 		switch {
 		case c == ' ' || c == '\t':
 			break
+		case c == '/':
+			if i != len(runes)-1 && runes[i+1] == '/' {
+				// Comment
+				j := i + 1
+				// Discard until end of line
+				for ; j < len(runes) && (runes[j] != '\r' && runes[j] != '\n'); j++ {
+				}
+				i = j - 1
+			} else {
+				addToken(Token{TokenSlash, "/", nil})
+			}
 		case c == '=':
 			if i != len(runes)-1 && runes[i+1] == '=' {
 				i += 1
