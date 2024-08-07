@@ -16,6 +16,11 @@ const (
 	TokenSlash      TokenType = "Slash"
 	TokenMinus      TokenType = "Minus"
 	TokenEquals     TokenType = "Equals"
+
+	TokenBraceOpen  TokenType = "BraceOpen"
+	TokenBraceClose TokenType = "BraceClose"
+
+	TokenWhile TokenType = "While"
 )
 
 type Token struct {
@@ -27,10 +32,19 @@ type Token struct {
 var singleCharTokens = map[rune]TokenType{
 	'\n': TokenNewline,
 	'\r': TokenNewline,
-	'+':  TokenPlus,
-	'/':  TokenSlash,
-	'-':  TokenMinus,
-	'=':  TokenEquals,
+
+	'{': TokenBraceOpen,
+	'}': TokenBraceClose,
+
+	'+': TokenPlus,
+	'/': TokenSlash,
+	'-': TokenMinus,
+	'=': TokenEquals,
+}
+
+var keywordTokens = map[string]TokenType{
+	"print": TokenPrint,
+	"while": TokenWhile,
 }
 
 func tokenize(input string) (tokens []Token, errors []error) {
@@ -72,8 +86,9 @@ func tokenize(input string) (tokens []Token, errors []error) {
 			for ; j < len(runes) && isAlphaNum(runes[j]); j++ {
 			}
 			identifier := string(runes[i:j])
-			if identifier == "print" {
-				addToken(Token{TokenPrint, identifier, nil})
+			tokenType, found := keywordTokens[identifier]
+			if found {
+				addToken(Token{tokenType, identifier, nil})
 			} else {
 				addToken(Token{TokenIdentifier, identifier, nil})
 			}

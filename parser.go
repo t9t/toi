@@ -32,20 +32,25 @@ func parseStatement(tokens []Token) (stmt Statement, next []Token, err error) {
 		if err != nil {
 			return nil, next, err
 		}
+	} else if tokens[0].Type == TokenWhile {
+		stmt, next, err = parseWhileStatement(tokens)
+		if err != nil {
+			return nil, next, err
+		}
 	} else if tokens[0].Type == TokenIdentifier {
 		stmt, next, err = parseAssignmentStatement(tokens)
 		if err != nil {
 			return nil, next, err
 		}
 	} else {
-		return nil, tokens[1:], fmt.Errorf("unexpected token %s", tokens[0].Lexeme)
+		return nil, tokens[1:], fmt.Errorf("unexpected token %s ('%s')", tokens[0].Type, tokens[0].Lexeme)
 	}
 
-	if len(next) != 0 && next[0].Type != TokenNewline {
+	if len(next) != 0 && next[0].Type != TokenNewline && next[0].Type != TokenBraceClose {
 		return nil, next, fmt.Errorf("expected newline after statement but got %s ('%s')", next[0].Type, next[0].Lexeme)
 	}
 
-	if len(next) != 0 {
+	if len(next) != 0 && next[0].Type == TokenNewline {
 		// Consume newline
 		next = next[1:]
 	}
@@ -63,6 +68,47 @@ func parsePrintStatement(tokens []Token) (Statement, []Token, error) {
 	}
 
 	return func(env Env) { fmt.Printf("%v\n", expr(env)) }, next, nil
+}
+
+func parseWhileStatement(tokens []Token) (Statement, []Token, error) {
+	expr, next, err := parseExpression(tokens[1:])
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// TODO: parse blocks
+	if len(next) == 0 || next[0].Type != TokenBraceOpen {
+		if len(next) != 0 {
+			next = next[1:]
+		}
+		return nil, next, fmt.Errorf("expected '{' after while expression")
+	}
+
+	next = next[1:]
+	statements := make([]Statement, 0)
+	for len(next) != 0 && next[0].Type != TokenBraceClose {
+		stmt, next2, err := parseStatement(next)
+		if err != nil {
+			return nil, next2, err
+		}
+		statements = append(statements, stmt)
+		next = next2
+	}
+
+	if len(next) == 0 || next[0].Type != TokenBraceClose {
+		if len(next) != 0 {
+			next = next[1:]
+		}
+		return nil, next, fmt.Errorf("expected '}' after while statements")
+	}
+
+	return func(env Env) {
+		for expr(env) != 0 {
+			for _, stmt := range statements {
+				stmt(env)
+			}
+		}
+	}, next[1:], nil
 }
 
 func parseAssignmentStatement(tokens []Token) (Statement, []Token, error) {

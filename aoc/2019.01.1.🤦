@@ -1,5 +1,8 @@
 sum = 0
-for num in inputNumbers() {
+i = 0
+while i < inputLength {
+    i = i + 1
+    num = inputNumbers[i]
     sum = (num / 3) - 2
 }
 print sum
