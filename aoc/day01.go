@@ -6,16 +6,25 @@ import (
 )
 
 func day01part1(input string) any {
-	sum := 0
+	nums := make([]int, 0)
 	for _, s := range strings.Split(input, "\n") {
 		if s == "" {
 			continue
 		}
 		n, err := strconv.Atoi(s)
 		rip(err)
-		sum += n/3 - 2
+		nums = append(nums, n)
 	}
-	return sum
+
+	for i, left := range nums {
+		for j := i + 1; j < len(nums); j++ {
+			right := nums[j]
+			if left+right == 2020 {
+				return left * right
+			}
+		}
+	}
+	panic("no answer found")
 }
 
 func day01part2(input string) any {

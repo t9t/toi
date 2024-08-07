@@ -12,6 +12,7 @@ const (
 	TokenIdentifier TokenType = "Identifier"
 	TokenNumber     TokenType = "Number"
 	TokenPlus       TokenType = "Plus"
+	TokenAsterisk   TokenType = "Asterisk"
 	TokenSlash      TokenType = "Slash"
 	TokenMinus      TokenType = "Minus"
 	TokenEquals     TokenType = "Equals"
@@ -23,8 +24,9 @@ const (
 
 	TokenComma TokenType = "Comma"
 
-	TokenIf    TokenType = "If"
-	TokenWhile TokenType = "While"
+	TokenIf     TokenType = "If"
+	TokenIfZero TokenType = "IfZero"
+	TokenWhile  TokenType = "While"
 )
 
 type Token struct {
@@ -45,14 +47,16 @@ var singleCharTokens = map[rune]TokenType{
 	',': TokenComma,
 
 	'+': TokenPlus,
-	'/': TokenSlash,
 	'-': TokenMinus,
+	'*': TokenAsterisk,
+	'/': TokenSlash,
 	'=': TokenEquals,
 }
 
 var keywordTokens = map[string]TokenType{
-	"if":    TokenIf,
-	"while": TokenWhile,
+	"if":     TokenIf,
+	"ifzero": TokenIfZero,
+	"while":  TokenWhile,
 }
 
 func tokenize(input string) (tokens []Token, errors []error) {

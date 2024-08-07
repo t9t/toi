@@ -16,3 +16,11 @@ i = 99
 if i {
     println(4)
 }
+
+ifzero 0 {
+    println(5)
+}
+
+ifzero 99 {
+    println(6)
+}

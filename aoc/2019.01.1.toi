@@ -1,7 +1,0 @@
-sum = 0
-i = inputLength
-while i {
-    i = i - 1
-    sum = sum + inputNumber(i) / 3 - 2
-}
-print sum

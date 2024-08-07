@@ -20,7 +20,7 @@ func main() {
 	day, part := os.Args[1], os.Args[2]
 	fmt.Printf("Running day %s; part %s\n", day, part)
 
-	input, err := os.ReadFile("../aoc/input/2019/" + day + ".txt")
+	input, err := os.ReadFile("../aoc/input/2020/" + day + ".txt")
 	rip(err)
 
 	f, found := funcs[day+"-"+part]

@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strings"
 )
 
 type Env map[string]any
@@ -15,9 +16,17 @@ type Builtin struct {
 }
 
 var builtins = map[string]Builtin{
-	"println": {1, func(env Env, e []Expression) int {
-		v := e[0](env)
-		fmt.Printf("%v\n", v)
+	"println": {-1, func(env Env, e []Expression) int {
+		var sb strings.Builder
+		var v int
+		for i, expr := range e {
+			if i != 0 {
+				sb.WriteString(", ")
+			}
+			v = expr(env)
+			sb.WriteString(fmt.Sprintf("%v", v))
+		}
+		fmt.Println(sb.String())
 		return v
 	}},
 	"inputNumber": {1, func(env Env, e []Expression) int { return env["_inputNumbers"].([]int)[e[0](env)] }},
@@ -46,6 +55,11 @@ func parseStatement(tokens []Token) (stmt Statement, next []Token, err error) {
 
 	if tokens[0].Type == TokenIf {
 		stmt, next, err = parseIfStatement(tokens)
+		if err != nil {
+			return nil, next, err
+		}
+	} else if tokens[0].Type == TokenIfZero {
+		stmt, next, err = parseIfZeroStatement(tokens)
 		if err != nil {
 			return nil, next, err
 		}
@@ -133,6 +147,26 @@ func parseIfStatement(tokens []Token) (Statement, []Token, error) {
 	}, next, nil
 }
 
+func parseIfZeroStatement(tokens []Token) (Statement, []Token, error) {
+	expr, next, err := parseExpression(tokens[1:])
+	if err != nil {
+		return nil, nil, err
+	}
+
+	block, next, err := parseBlock(next, "if")
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return func(env Env) {
+		v := expr(env)
+		//fmt.Printf("]] ifzero v: %v; tr: %v\n", v, tr)
+		if v == 0 {
+			block(env)
+		}
+	}, next, nil
+}
+
 func parseWhileStatement(tokens []Token) (Statement, []Token, error) {
 	expr, next, err := parseExpression(tokens[1:])
 	if err != nil {
@@ -180,7 +214,11 @@ func parsePlus(tokens []Token) (Expression, []Token, error) {
 }
 
 func parseDivide(tokens []Token) (Expression, []Token, error) {
-	return parseBinary(tokens, TokenSlash, parsePrimary, func(l, r int) int { return l / r })
+	return parseBinary(tokens, TokenSlash, parseMultiply, func(l, r int) int { return l / r })
+}
+
+func parseMultiply(tokens []Token) (Expression, []Token, error) {
+	return parseBinary(tokens, TokenAsterisk, parsePrimary, func(l, r int) int { return l * r })
 }
 
 func parseBinary(tokens []Token, tokenType TokenType, down func([]Token) (Expression, []Token, error), op func(int, int) int) (Expression, []Token, error) {
@@ -269,7 +307,7 @@ func parseFunctionCall(tokens []Token) (Expression, []Token, error) {
 		return nil, nil, fmt.Errorf("expected ')' or ',' but got end of input")
 	}
 
-	if len(arguments) != builtin.Arity {
+	if len(arguments) != builtin.Arity && builtin.Arity != -1 {
 		return nil, nil, fmt.Errorf("expected %d arguments but got %d for function '%s'", builtin.Arity, len(arguments), identifier)
 	}
 

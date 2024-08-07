@@ -1,0 +1,15 @@
+i = inputLength
+while i {
+    i = i - 1
+    left = inputNumber(i)
+
+    j = i
+    while j {
+        j = j - 1
+        right = inputNumber(j)
+
+        ifzero 2020 - left + right {
+            println(2020, left, right, left * right)
+        }
+    }
+}
