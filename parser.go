@@ -2,69 +2,11 @@ package main
 
 import (
 	"fmt"
-	"strings"
 )
 
 type Env map[string]any
 type Statement func(Env)
 type Expression func(Env) any
-type BuiltinFunc func(Env, []Expression) any
-
-type Builtin struct {
-	Arity int
-	Func  BuiltinFunc
-}
-
-var builtins = map[string]Builtin{
-	"println": {-1, func(env Env, e []Expression) any {
-		var sb strings.Builder
-		var v any
-		for i, expr := range e {
-			if i != 0 {
-				sb.WriteString(", ")
-			}
-			v = expr(env)
-			sb.WriteString(fmt.Sprintf("%v", v))
-		}
-		fmt.Println(sb.String())
-		return v
-	}},
-	"inputNumber": {1, func(env Env, e []Expression) any { return env["_inputNumbers"].([]int)[e[0](env).(int)] }},
-
-	// "Arrays"
-	"array": {0, func(env Env, e []Expression) any { return &[]any{} }},
-	"get": {2, func(env Env, e []Expression) any {
-		// get(arr, 2)
-		arr := e[0](env).(*[]any)
-		idx := e[1](env).(int)
-		return (*arr)[idx]
-	}},
-	"push": {2, func(env Env, e []Expression) any {
-		// push(arr, 42)
-		arr := e[0](env).(*[]any)
-		v := e[1](env)
-		*arr = append(*arr, v)
-		return v
-	}},
-	"set": {3, func(env Env, e []Expression) any {
-		// set(arr, 2, 42)
-		arr := e[0](env).(*[]any)
-		idx := e[1](env).(int)
-		val := e[2](env)
-		if idx < len(*arr) {
-			(*arr)[idx] = val
-		} else if idx == len(*arr) {
-			*arr = append(*arr, val)
-		} else {
-			panic("index out of bounds")
-		}
-		return val
-	}},
-	"len": {1, func(env Env, e []Expression) any {
-		// len(arr)
-		return len(*(e[0](env).(*[]any)))
-	}},
-}
 
 func parse(tokens []Token) (statements []Statement, err error) {
 	for len(tokens) > 0 {
@@ -366,7 +308,7 @@ func parseFunctionCall(tokens []Token) (Expression, []Token, error) {
 		}
 	}
 
-	if len(arguments) != builtin.Arity && builtin.Arity != -1 {
+	if len(arguments) != builtin.Arity && builtin.Arity != ArityVariadic {
 		return nil, nil, fmt.Errorf("expected %d arguments but got %d for function '%s'", builtin.Arity, len(arguments), identifier)
 	}
 
