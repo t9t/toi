@@ -7,7 +7,21 @@ import (
 )
 
 func main() {
-	data, err := io.ReadAll(os.Stdin)
+	if len(os.Args) != 1 && len(os.Args) != 2 {
+		fmt.Fprintln(os.Stderr, "Expected either:")
+		fmt.Fprintln(os.Stderr, "\tNo arguments: provide script in stdin")
+		fmt.Fprintln(os.Stderr, "\t1 argument:   script file (so stdin can be fed to the script)")
+		os.Exit(1)
+		return
+	}
+
+	var data []byte
+	var err error
+	if len(os.Args) == 1 {
+		data, err = io.ReadAll(os.Stdin)
+	} else {
+		data, err = os.ReadFile(os.Args[1])
+	}
 	ohno(err)
 
 	tokens, errors := tokenize(string(data))
