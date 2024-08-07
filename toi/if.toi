@@ -1,0 +1,18 @@
+if 0 {
+    println(1)
+}
+
+i = 12
+
+if 12 {
+    println(2)
+}
+
+if 0-1 {
+    println(3)
+}
+
+i = 99
+if i {
+    println(4)
+}

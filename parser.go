@@ -42,7 +42,12 @@ func parseStatement(tokens []Token) (stmt Statement, next []Token, err error) {
 		return nil, tokens[1:], nil
 	}
 
-	if tokens[0].Type == TokenWhile {
+	if tokens[0].Type == TokenIf {
+		stmt, next, err = parseIfStatement(tokens)
+		if err != nil {
+			return nil, next, err
+		}
+	} else if tokens[0].Type == TokenWhile {
 		stmt, next, err = parseWhileStatement(tokens)
 		if err != nil {
 			return nil, next, err
@@ -72,6 +77,49 @@ func parseStatement(tokens []Token) (stmt Statement, next []Token, err error) {
 	return stmt, next, nil
 }
 
+func parseIfStatement(tokens []Token) (Statement, []Token, error) {
+	expr, next, err := parseExpression(tokens[1:])
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// TODO: parse blocks
+	if len(next) == 0 || next[0].Type != TokenBraceOpen {
+		if len(next) != 0 {
+			next = next[1:]
+		}
+		return nil, nil, fmt.Errorf("expected '{' after if expression")
+	}
+
+	next = next[1:]
+	statements := make([]Statement, 0)
+	for len(next) != 0 && next[0].Type != TokenBraceClose {
+		stmt, next2, err := parseStatement(next)
+		if err != nil {
+			return nil, next2, err
+		} else if stmt == nil {
+			next = next2
+			continue
+		}
+		statements = append(statements, stmt)
+		next = next2
+	}
+
+	if len(next) == 0 || next[0].Type != TokenBraceClose {
+		if len(next) != 0 {
+			next = next[1:]
+		}
+		return nil, nil, fmt.Errorf("expected '}' after if statements")
+	}
+
+	return func(env Env) {
+		if isWeirdlyTrue(expr(env)) {
+			for _, stmt := range statements {
+				stmt(env)
+			}
+		}
+	}, next[1:], nil
+}
 func parseWhileStatement(tokens []Token) (Statement, []Token, error) {
 	expr, next, err := parseExpression(tokens[1:])
 	if err != nil {
@@ -108,7 +156,7 @@ func parseWhileStatement(tokens []Token) (Statement, []Token, error) {
 	}
 
 	return func(env Env) {
-		for expr(env) > 0 {
+		for isWeirdlyTrue(expr(env)) {
 			for _, stmt := range statements {
 				stmt(env)
 			}
@@ -239,4 +287,8 @@ func parseFunctionCall(tokens []Token) (Expression, []Token, error) {
 	}
 
 	return func(env Env) int { return builtin.Func(env, arguments) }, tokens, nil
+}
+
+func isWeirdlyTrue(i int) bool {
+	return i > 0
 }

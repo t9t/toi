@@ -23,6 +23,7 @@ const (
 
 	TokenComma TokenType = "Comma"
 
+	TokenIf    TokenType = "If"
 	TokenWhile TokenType = "While"
 )
 
@@ -50,6 +51,7 @@ var singleCharTokens = map[rune]TokenType{
 }
 
 var keywordTokens = map[string]TokenType{
+	"if":    TokenIf,
 	"while": TokenWhile,
 }
 
