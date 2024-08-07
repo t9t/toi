@@ -1,0 +1,5 @@
+print 42
+
+print inputNumber(10-9)
+
+print println(88)

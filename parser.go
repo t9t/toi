@@ -3,8 +3,23 @@ package main
 import "fmt"
 
 type Env map[string]any
-type Statement func(env Env)
-type Expression func(env Env) int
+type Statement func(Env)
+type Expression func(Env) int
+type BuiltinFunc func(Env, []Expression) int
+
+type Builtin struct {
+	Arity int
+	Func  BuiltinFunc
+}
+
+var builtins = map[string]Builtin{
+	"println": {1, func(env Env, e []Expression) int {
+		v := e[0](env)
+		fmt.Printf("%v\n", v)
+		return v
+	}},
+	"inputNumber": {1, func(env Env, e []Expression) int { return env["_inputNumbers"].([]int)[e[0](env)] }},
+}
 
 func parse(tokens []Token) (statements []Statement, err error) {
 	for len(tokens) > 0 {
@@ -217,6 +232,12 @@ func parsePrimary(tokens []Token) (Expression, []Token, error) {
 		return func(Env) int { return value }, tokens[1:], nil
 	} else if token.Type == TokenIdentifier {
 		identifier := token.Lexeme
+
+		if len(tokens) >= 2 && tokens[1].Type == TokenParenOpen {
+			return parseFunctionCall(tokens)
+		}
+
+		// Variable access
 		return func(env Env) int {
 			val, found := env[identifier]
 			if found {
@@ -224,21 +245,47 @@ func parsePrimary(tokens []Token) (Expression, []Token, error) {
 			}
 			return 0
 		}, tokens[1:], nil
-	} else if token.Type == TokenInputNumber {
-		if len(tokens) < 4 || tokens[1].Type != TokenParenOpen || (tokens[2].Type != TokenNumber && tokens[2].Type != TokenIdentifier) && tokens[3].Type != TokenBraceClose {
-			return nil, tokens[1:], fmt.Errorf("expected a parenthesized number or identifier after `inputNumber`, but got %s ('%s')", token.Type, token.Lexeme)
-		}
-
-		var indexFunc func(Env) int
-		if tokens[2].Type == TokenIdentifier {
-			identifier := tokens[2].Lexeme
-			indexFunc = func(env Env) int { return env[identifier].(int) }
-		} else {
-			index := tokens[2].Literal.(int)
-			indexFunc = func(Env) int { return index }
-		}
-		return func(env Env) int { return env["_inputNumbers"].([]int)[indexFunc(env)] }, tokens[4:], nil
 	}
 
 	return nil, nil, fmt.Errorf("expected primary expression but got %s ('%s')", token.Type, token.Lexeme)
+}
+
+func parseFunctionCall(tokens []Token) (Expression, []Token, error) {
+	identifier := tokens[0].Lexeme
+
+	builtin, found := builtins[identifier]
+	if !found {
+		return nil, nil, fmt.Errorf("no such builtin function '%s'", identifier)
+	}
+
+	tokens = tokens[2:] // Consume '('
+
+	arguments := make([]Expression, 0)
+	for len(tokens) > 0 {
+		expr, next, err := parseExpression(tokens)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		arguments = append(arguments, expr)
+		tokens = next
+		if len(tokens) > 0 {
+			if tokens[0].Type == TokenParenClose {
+				tokens = tokens[1:]
+				break
+			}
+			if tokens[0].Type == TokenComma {
+				tokens = tokens[1:]
+				continue
+			}
+			return nil, nil, fmt.Errorf("expected ')' or ',' but got %s ('%s')", tokens[0].Type, tokens[0].Lexeme)
+		}
+		return nil, nil, fmt.Errorf("expected ')' or ',' but got end of input")
+	}
+
+	if len(arguments) != builtin.Arity {
+		return nil, nil, fmt.Errorf("expected %d arguments but got %d for function '%s'", builtin.Arity, len(arguments), identifier)
+	}
+
+	return func(env Env) int { return builtin.Func(env, arguments) }, tokens, nil
 }

@@ -16,13 +16,14 @@ const (
 	TokenMinus      TokenType = "Minus"
 	TokenEquals     TokenType = "Equals"
 
-	TokenPrint       TokenType = "Print"
-	TokenInputNumber TokenType = "InputNumber"
+	TokenPrint TokenType = "Print"
 
 	TokenParenOpen  TokenType = "ParenOpen"
 	TokenParenClose TokenType = "ParenClose"
 	TokenBraceOpen  TokenType = "BraceOpen"
 	TokenBraceClose TokenType = "BraceClose"
+
+	TokenComma TokenType = "Comma"
 
 	TokenWhile TokenType = "While"
 )
@@ -42,6 +43,8 @@ var singleCharTokens = map[rune]TokenType{
 	'{': TokenBraceOpen,
 	'}': TokenBraceClose,
 
+	',': TokenComma,
+
 	'+': TokenPlus,
 	'/': TokenSlash,
 	'-': TokenMinus,
@@ -51,8 +54,7 @@ var singleCharTokens = map[rune]TokenType{
 var keywordTokens = map[string]TokenType{
 	"while": TokenWhile,
 
-	"print":       TokenPrint,
-	"inputNumber": TokenInputNumber,
+	"print": TokenPrint,
 }
 
 func tokenize(input string) (tokens []Token, errors []error) {
