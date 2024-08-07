@@ -40,7 +40,7 @@ func parseStatement(tokens []Token) (Statement, []Token, error) {
 			return nil, tokens[2:], fmt.Errorf("expected newline after statement but got %s ('%s')", next[0].Type, next[0].Lexeme)
 		}
 
-		if len(tokens) != 0 {
+		if len(next) != 0 {
 			// Consume newline
 			next = next[1:]
 		}
