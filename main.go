@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strconv"
+	"strings"
 )
 
 func main() {
@@ -17,10 +19,21 @@ func main() {
 
 	var data []byte
 	var err error
+	inputNumbers := []int{}
 	if len(os.Args) == 1 {
 		data, err = io.ReadAll(os.Stdin)
 	} else {
 		data, err = os.ReadFile(os.Args[1])
+		stdin, err := io.ReadAll(os.Stdin)
+		ohno(err)
+		for _, line := range strings.Split(string(stdin), "\n") {
+			if line == "" {
+				continue
+			}
+			n, err := strconv.Atoi(line)
+			ohno(err)
+			inputNumbers = append(inputNumbers, n)
+		}
 	}
 	ohno(err)
 
@@ -45,7 +58,9 @@ func main() {
 
 	fmt.Printf("%d statements: %v\n", len(statements), statements)
 
-	vars := make(map[string]int)
+	vars := make(map[string]any)
+	vars["inputLength"] = len(inputNumbers)
+	vars["_inputNumbers"] = inputNumbers
 	for _, s := range statements {
 		s(vars)
 	}

@@ -9,13 +9,15 @@ type TokenType string
 
 const (
 	TokenNewline    TokenType = "Newline"
-	TokenPrint      TokenType = "Print"
 	TokenIdentifier TokenType = "Identifier"
 	TokenNumber     TokenType = "Number"
 	TokenPlus       TokenType = "Plus"
 	TokenSlash      TokenType = "Slash"
 	TokenMinus      TokenType = "Minus"
 	TokenEquals     TokenType = "Equals"
+
+	TokenPrint       TokenType = "Print"
+	TokenInputNumber TokenType = "InputNumber"
 
 	TokenParenOpen  TokenType = "ParenOpen"
 	TokenParenClose TokenType = "ParenClose"
@@ -47,8 +49,10 @@ var singleCharTokens = map[rune]TokenType{
 }
 
 var keywordTokens = map[string]TokenType{
-	"print": TokenPrint,
 	"while": TokenWhile,
+
+	"print":       TokenPrint,
+	"inputNumber": TokenInputNumber,
 }
 
 func tokenize(input string) (tokens []Token, errors []error) {

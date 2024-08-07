@@ -2,7 +2,7 @@ package main
 
 import "fmt"
 
-type Env map[string]int
+type Env map[string]any
 type Statement func(env Env)
 type Expression func(env Env) int
 
@@ -90,6 +90,9 @@ func parseWhileStatement(tokens []Token) (Statement, []Token, error) {
 		stmt, next2, err := parseStatement(next)
 		if err != nil {
 			return nil, next2, err
+		} else if stmt == nil {
+			next = next2
+			continue
 		}
 		statements = append(statements, stmt)
 		next = next2
@@ -214,8 +217,28 @@ func parsePrimary(tokens []Token) (Expression, []Token, error) {
 		return func(Env) int { return value }, tokens[1:], nil
 	} else if token.Type == TokenIdentifier {
 		identifier := token.Lexeme
-		return func(env Env) int { return env[identifier] }, tokens[1:], nil
+		return func(env Env) int {
+			val, found := env[identifier]
+			if found {
+				return val.(int)
+			}
+			return 0
+		}, tokens[1:], nil
+	} else if token.Type == TokenInputNumber {
+		if len(tokens) < 4 || tokens[1].Type != TokenParenOpen || (tokens[2].Type != TokenNumber && tokens[2].Type != TokenIdentifier) && tokens[3].Type != TokenBraceClose {
+			return nil, tokens[1:], fmt.Errorf("expected a parenthesized number or identifier after `inputNumber`, but got %s ('%s')", token.Type, token.Lexeme)
+		}
+
+		var indexFunc func(Env) int
+		if tokens[2].Type == TokenIdentifier {
+			identifier := tokens[2].Lexeme
+			indexFunc = func(env Env) int { return env[identifier].(int) }
+		} else {
+			index := tokens[2].Literal.(int)
+			indexFunc = func(Env) int { return index }
+		}
+		return func(env Env) int { return env["_inputNumbers"].([]int)[indexFunc(env)] }, tokens[4:], nil
 	}
 
-	return nil, nil, fmt.Errorf("expected number but got %s ('%s')", token.Type, token.Lexeme)
+	return nil, nil, fmt.Errorf("expected primary expression but got %s ('%s')", token.Type, token.Lexeme)
 }
