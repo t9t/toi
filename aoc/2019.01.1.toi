@@ -3,6 +3,6 @@ i = inputLength - 1
 while i {
     i = i - 1
     num = inputNumber(i)
-    sum = (num / 3) - 2
+    sum = num / 3 - 2
 }
 print sum
