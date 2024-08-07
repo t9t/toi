@@ -52,13 +52,18 @@ func parseStatement(tokens []Token) (stmt Statement, next []Token, err error) {
 		if err != nil {
 			return nil, next, err
 		}
-	} else if tokens[0].Type == TokenIdentifier {
+	} else if len(tokens) >= 2 && tokens[0].Type == TokenIdentifier && tokens[1].Type == TokenEquals {
 		stmt, next, err = parseAssignmentStatement(tokens)
 		if err != nil {
 			return nil, next, err
 		}
 	} else {
-		return nil, tokens[1:], fmt.Errorf("unexpected token %s ('%s')", tokens[0].Type, tokens[0].Lexeme)
+		expr, nextTokens, err := parseExpression(tokens)
+		if err != nil {
+			return nil, nil, err
+		}
+		stmt = func(env Env) { expr(env) /* Discard return value */ }
+		next = nextTokens
 	}
 
 	if len(next) != 0 && next[0].Type != TokenNewline && next[0].Type != TokenBraceClose {
