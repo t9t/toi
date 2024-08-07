@@ -8,7 +8,7 @@ while i {
         j = j - 1
         right = inputNumber(j)
 
-        ifzero 2020 - left + right {
+        if 2020 - left + right == 0 {
             println(2020, left, right, left * right)
         }
     }

@@ -58,11 +58,6 @@ func parseStatement(tokens []Token) (stmt Statement, next []Token, err error) {
 		if err != nil {
 			return nil, next, err
 		}
-	} else if tokens[0].Type == TokenIfZero {
-		stmt, next, err = parseIfZeroStatement(tokens)
-		if err != nil {
-			return nil, next, err
-		}
 	} else if tokens[0].Type == TokenWhile {
 		stmt, next, err = parseWhileStatement(tokens)
 		if err != nil {
@@ -142,26 +137,6 @@ func parseIfStatement(tokens []Token) (Statement, []Token, error) {
 
 	return func(env Env) {
 		if isWeirdlyTrue(expr(env)) {
-			block(env)
-		}
-	}, next, nil
-}
-
-func parseIfZeroStatement(tokens []Token) (Statement, []Token, error) {
-	expr, next, err := parseExpression(tokens[1:])
-	if err != nil {
-		return nil, nil, err
-	}
-
-	block, next, err := parseBlock(next, "if")
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return func(env Env) {
-		v := expr(env)
-		//fmt.Printf("]] ifzero v: %v; tr: %v\n", v, tr)
-		if v == 0 {
 			block(env)
 		}
 	}, next, nil

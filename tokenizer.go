@@ -33,9 +33,8 @@ const (
 
 	TokenComma TokenType = "Comma"
 
-	TokenIf     TokenType = "If"
-	TokenIfZero TokenType = "IfZero"
-	TokenWhile  TokenType = "While"
+	TokenIf    TokenType = "If"
+	TokenWhile TokenType = "While"
 )
 
 type Token struct {
@@ -62,9 +61,8 @@ var singleCharTokens = map[rune]TokenType{
 }
 
 var keywordTokens = map[string]TokenType{
-	"if":     TokenIf,
-	"ifzero": TokenIfZero,
-	"while":  TokenWhile,
+	"if":    TokenIf,
+	"while": TokenWhile,
 }
 
 func tokenize(input string) (tokens []Token, errors []error) {
