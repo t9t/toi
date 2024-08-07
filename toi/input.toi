@@ -1,0 +1,2 @@
+print inputLength
+print inputNumber(0)

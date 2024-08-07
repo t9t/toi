@@ -17,6 +17,8 @@ const (
 	TokenMinus      TokenType = "Minus"
 	TokenEquals     TokenType = "Equals"
 
+	TokenParenOpen  TokenType = "ParenOpen"
+	TokenParenClose TokenType = "ParenClose"
 	TokenBraceOpen  TokenType = "BraceOpen"
 	TokenBraceClose TokenType = "BraceClose"
 
@@ -33,6 +35,8 @@ var singleCharTokens = map[rune]TokenType{
 	'\n': TokenNewline,
 	'\r': TokenNewline,
 
+	'(': TokenParenOpen,
+	')': TokenParenClose,
 	'{': TokenBraceOpen,
 	'}': TokenBraceClose,
 
