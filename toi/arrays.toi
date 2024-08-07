@@ -1,0 +1,22 @@
+// println(get(inputNumbers, 1))
+
+arr = array()
+set(arr, 0, 42)
+push(arr, 5521)
+println(len(arr), arr)
+set(arr, 1, 1337)
+
+println(len(arr), arr)
+push(arr, 666)
+println(len(arr), arr)
+
+println(get(arr, 0))
+
+set(arr, 3, 999)
+println(len(arr), arr)
+
+i = 0
+while i < len(arr) {
+    println(i, get(arr, i))
+    i = i + 1
+}

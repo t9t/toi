@@ -7,8 +7,8 @@ import (
 
 type Env map[string]any
 type Statement func(Env)
-type Expression func(Env) int
-type BuiltinFunc func(Env, []Expression) int
+type Expression func(Env) any
+type BuiltinFunc func(Env, []Expression) any
 
 type Builtin struct {
 	Arity int
@@ -16,9 +16,9 @@ type Builtin struct {
 }
 
 var builtins = map[string]Builtin{
-	"println": {-1, func(env Env, e []Expression) int {
+	"println": {-1, func(env Env, e []Expression) any {
 		var sb strings.Builder
-		var v int
+		var v any
 		for i, expr := range e {
 			if i != 0 {
 				sb.WriteString(", ")
@@ -29,7 +29,41 @@ var builtins = map[string]Builtin{
 		fmt.Println(sb.String())
 		return v
 	}},
-	"inputNumber": {1, func(env Env, e []Expression) int { return env["_inputNumbers"].([]int)[e[0](env)] }},
+	"inputNumber": {1, func(env Env, e []Expression) any { return env["_inputNumbers"].([]int)[e[0](env).(int)] }},
+
+	// "Arrays"
+	"array": {0, func(env Env, e []Expression) any { return &[]any{} }},
+	"get": {2, func(env Env, e []Expression) any {
+		// get(arr, 2)
+		arr := e[0](env).(*[]any)
+		idx := e[1](env).(int)
+		return (*arr)[idx]
+	}},
+	"push": {2, func(env Env, e []Expression) any {
+		// push(arr, 42)
+		arr := e[0](env).(*[]any)
+		v := e[1](env)
+		*arr = append(*arr, v)
+		return v
+	}},
+	"set": {3, func(env Env, e []Expression) any {
+		// set(arr, 2, 42)
+		arr := e[0](env).(*[]any)
+		idx := e[1](env).(int)
+		val := e[2](env)
+		if idx < len(*arr) {
+			(*arr)[idx] = val
+		} else if idx == len(*arr) {
+			*arr = append(*arr, val)
+		} else {
+			panic("index out of bounds")
+		}
+		return val
+	}},
+	"len": {1, func(env Env, e []Expression) any {
+		// len(arr)
+		return len(*(e[0](env).(*[]any)))
+	}},
 }
 
 func parse(tokens []Token) (statements []Statement, err error) {
@@ -234,9 +268,7 @@ func parseBinary(tokens []Token, tokenType TokenType, down func([]Token) (Expres
 		}
 
 		leftHand := left
-		left = func(env Env) int {
-			return op(leftHand(env), right(env))
-		}
+		left = func(env Env) any { return op(leftHand(env).(int), right(env).(int)) }
 
 		tokens = next
 	}
@@ -252,7 +284,7 @@ func parsePrimary(tokens []Token) (Expression, []Token, error) {
 	token := tokens[0]
 	if token.Type == TokenNumber {
 		value := tokens[0].Literal.(int)
-		return func(Env) int { return value }, tokens[1:], nil
+		return func(Env) any { return value }, tokens[1:], nil
 	} else if token.Type == TokenIdentifier {
 		identifier := token.Lexeme
 
@@ -261,12 +293,12 @@ func parsePrimary(tokens []Token) (Expression, []Token, error) {
 		}
 
 		// Variable access
-		return func(env Env) int {
+		return func(env Env) any {
 			val, found := env[identifier]
 			if found {
-				return val.(int)
+				return val
 			}
-			return 0
+			return nil
 		}, tokens[1:], nil
 	}
 
@@ -285,6 +317,12 @@ func parseFunctionCall(tokens []Token) (Expression, []Token, error) {
 
 	arguments := make([]Expression, 0)
 	for len(tokens) > 0 {
+		// TODO: remove duplication
+		if tokens[0].Type == TokenParenClose {
+			tokens = tokens[1:]
+			break
+		}
+
 		expr, next, err := parseExpression(tokens)
 		if err != nil {
 			return nil, nil, err
@@ -293,28 +331,25 @@ func parseFunctionCall(tokens []Token) (Expression, []Token, error) {
 		arguments = append(arguments, expr)
 		tokens = next
 		if len(tokens) > 0 {
-			if tokens[0].Type == TokenParenClose {
-				tokens = tokens[1:]
-				break
-			}
 			if tokens[0].Type == TokenComma {
 				tokens = tokens[1:]
-				continue
+			} else if tokens[0].Type != TokenParenClose {
+				return nil, nil, fmt.Errorf("expected ')' or ',' but got %s ('%s')", tokens[0].Type, tokens[0].Lexeme)
 			}
-			return nil, nil, fmt.Errorf("expected ')' or ',' but got %s ('%s')", tokens[0].Type, tokens[0].Lexeme)
+		} else {
+			return nil, nil, fmt.Errorf("expected ')' or ',' but got end of input")
 		}
-		return nil, nil, fmt.Errorf("expected ')' or ',' but got end of input")
 	}
 
 	if len(arguments) != builtin.Arity && builtin.Arity != -1 {
 		return nil, nil, fmt.Errorf("expected %d arguments but got %d for function '%s'", builtin.Arity, len(arguments), identifier)
 	}
 
-	return func(env Env) int { return builtin.Func(env, arguments) }, tokens, nil
+	return func(env Env) any { return builtin.Func(env, arguments) }, tokens, nil
 }
 
-func isWeirdlyTrue(i int) bool {
-	return i != 0
+func isWeirdlyTrue(v any) bool {
+	return v != 0
 }
 
 func boolToInt(b bool) int {
