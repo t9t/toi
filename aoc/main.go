@@ -7,6 +7,11 @@ import (
 
 type AocFunc func(string) any
 
+var funcs = map[string]AocFunc{
+	"1-1": day01part1,
+	"1-2": day01part2,
+}
+
 func main() {
 	if len(os.Args) != 3 {
 		panic("invalid arguments; need day + part")
@@ -17,10 +22,6 @@ func main() {
 
 	input, err := os.ReadFile("../aoc/input/2019/" + day + ".txt")
 	rip(err)
-
-	funcs := map[string]AocFunc{
-		"1-1": day01part1,
-	}
 
 	f, found := funcs[day+"-"+part]
 	if !found {
