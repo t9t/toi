@@ -11,11 +11,20 @@ const (
 	TokenNewline    TokenType = "Newline"
 	TokenIdentifier TokenType = "Identifier"
 	TokenNumber     TokenType = "Number"
-	TokenPlus       TokenType = "Plus"
-	TokenAsterisk   TokenType = "Asterisk"
-	TokenSlash      TokenType = "Slash"
-	TokenMinus      TokenType = "Minus"
-	TokenEquals     TokenType = "Equals"
+
+	TokenEqualEqual   TokenType = "EqualEqual"
+	TokenNotEqual     TokenType = "NotEqual"
+	TokenGreaterThan  TokenType = "GreaterThan"
+	TokenGreaterEqual TokenType = "GreaterEqual"
+	TokenLessThan     TokenType = "LessThan"
+	TokenLessEqual    TokenType = "LessEqual"
+
+	TokenPlus     TokenType = "Plus"
+	TokenMinus    TokenType = "Minus"
+	TokenAsterisk TokenType = "Asterisk"
+	TokenSlash    TokenType = "Slash"
+
+	TokenEquals TokenType = "Equals"
 
 	TokenParenOpen  TokenType = "ParenOpen"
 	TokenParenClose TokenType = "ParenClose"
@@ -50,7 +59,6 @@ var singleCharTokens = map[rune]TokenType{
 	'-': TokenMinus,
 	'*': TokenAsterisk,
 	'/': TokenSlash,
-	'=': TokenEquals,
 }
 
 var keywordTokens = map[string]TokenType{
@@ -84,6 +92,30 @@ func tokenize(input string) (tokens []Token, errors []error) {
 		switch {
 		case c == ' ' || c == '\t':
 			break
+		case c == '=':
+			if i != len(runes)-1 && runes[i+1] == '=' {
+				i += 1
+				addToken(Token{TokenEqualEqual, "==", nil})
+			} else {
+				addToken(Token{TokenEquals, "=", nil})
+			}
+		case c == '>':
+			if i != len(runes)-1 && runes[i+1] == '=' {
+				i += 1
+				addToken(Token{TokenGreaterEqual, ">=", nil})
+			} else {
+				addToken(Token{TokenGreaterThan, ">", nil})
+			}
+		case c == '<':
+			if i != len(runes)-1 && runes[i+1] == '=' {
+				i += 1
+				addToken(Token{TokenLessEqual, "<=", nil})
+			} else if i != len(runes)-1 && runes[i+1] == '>' {
+				i += 1
+				addToken(Token{TokenNotEqual, "<>", nil})
+			} else {
+				addToken(Token{TokenLessThan, "<", nil})
+			}
 		case isDigit(c):
 			token, err := tokenizeNumber(runes[i:])
 			if err != nil {

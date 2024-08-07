@@ -17,10 +17,10 @@ if i {
     println(4)
 }
 
-ifzero 0 {
+if 0 == 0 {
     println(5)
 }
 
-ifzero 99 {
+if 99 == 0 {
     println(6)
 }

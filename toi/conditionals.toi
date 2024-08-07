@@ -1,0 +1,66 @@
+a = 10
+
+if a == 9 {
+    println(1)
+}
+
+if a == 10 {
+    println(2)
+}
+
+
+if a <> 10 {
+    println(3)
+}
+
+if a <> 9 {
+    println(4)
+}
+
+
+if a < 9 {
+    println(5)
+}
+
+if a < 12 {
+    println(6)
+}
+
+
+if a <= 9 {
+    println(7)
+}
+
+if a <= 10 {
+    println(8)
+}
+
+if a <= 12 {
+    println(9)
+}
+
+
+if a > 9 {
+    println(10)
+}
+
+if a > 12 {
+    println(11)
+}
+
+if a > 10 {
+    println(12)
+}
+
+
+if a >= 9 {
+    println(13)
+}
+
+if a >= 12 {
+    println(14)
+}
+
+if a >= 10 {
+    println(15)
+}

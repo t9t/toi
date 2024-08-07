@@ -5,6 +5,5 @@ println(inputNumber(1))
 i = inputLength
 while i {
     i = i - 1
-    println(i)
-    println(inputNumber(i))
+    println(i, inputNumber(i))
 }

@@ -202,7 +202,31 @@ func parseAssignmentStatement(tokens []Token) (Statement, []Token, error) {
 }
 
 func parseExpression(tokens []Token) (Expression, []Token, error) {
-	return parseMinus(tokens)
+	return parseEqualEqual(tokens)
+}
+
+func parseEqualEqual(tokens []Token) (Expression, []Token, error) {
+	return parseBinary(tokens, TokenEqualEqual, parseNotEqual, func(l, r int) int { return boolToInt(l == r) })
+}
+
+func parseNotEqual(tokens []Token) (Expression, []Token, error) {
+	return parseBinary(tokens, TokenNotEqual, parseGreaterThan, func(l, r int) int { return boolToInt(l != r) })
+}
+
+func parseGreaterThan(tokens []Token) (Expression, []Token, error) {
+	return parseBinary(tokens, TokenGreaterThan, parseGreaterEqual, func(l, r int) int { return boolToInt(l > r) })
+}
+
+func parseGreaterEqual(tokens []Token) (Expression, []Token, error) {
+	return parseBinary(tokens, TokenGreaterEqual, parseLessThan, func(l, r int) int { return boolToInt(l >= r) })
+}
+
+func parseLessThan(tokens []Token) (Expression, []Token, error) {
+	return parseBinary(tokens, TokenLessThan, parseLessEqual, func(l, r int) int { return boolToInt(l < r) })
+}
+
+func parseLessEqual(tokens []Token) (Expression, []Token, error) {
+	return parseBinary(tokens, TokenLessEqual, parseMinus, func(l, r int) int { return boolToInt(l <= r) })
 }
 
 func parseMinus(tokens []Token) (Expression, []Token, error) {
@@ -315,5 +339,13 @@ func parseFunctionCall(tokens []Token) (Expression, []Token, error) {
 }
 
 func isWeirdlyTrue(i int) bool {
-	return i > 0
+	return i != 0
+}
+
+func boolToInt(b bool) int {
+	if b {
+		return 1
+	} else {
+		return 0
+	}
 }
