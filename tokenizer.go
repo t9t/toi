@@ -12,12 +12,22 @@ const (
 	TokenNewline TokenType = "Newline"
 	TokenNumber  TokenType = "Number"
 	TokenPlus    TokenType = "Plus"
+	TokenSlash   TokenType = "Slash"
+	TokenMinus   TokenType = "Minus"
 )
 
 type Token struct {
 	Type    TokenType
 	Lexeme  string
 	Literal any
+}
+
+var singleCharTokens = map[rune]TokenType{
+	'+':  TokenPlus,
+	'/':  TokenSlash,
+	'-':  TokenMinus,
+	'\n': TokenNewline,
+	'\r': TokenNewline,
 }
 
 func tokenize(input string) (tokens []Token, errors []error) {
@@ -36,13 +46,15 @@ func tokenize(input string) (tokens []Token, errors []error) {
 	for i := 0; i < len(runes); i++ {
 		c := runes[i]
 
+		tokenType, found := singleCharTokens[c]
+		if found {
+			addToken(Token{tokenType, string(c), nil})
+			continue
+		}
+
 		switch {
 		case c == ' ' || c == '\t':
 			break
-		case c == '\n' || c == '\r':
-			addToken(Token{TokenNewline, string(c), nil})
-		case c == '+':
-			addToken(Token{TokenPlus, string(c), nil})
 		case isDigit(c):
 			token, err := tokenizeNumber(runes[i:])
 			if err != nil {
