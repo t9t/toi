@@ -2,8 +2,9 @@ package main
 
 import "fmt"
 
-type Statement func()
-type Expression func() int
+type Env map[string]int
+type Statement func(env Env)
+type Expression func(env Env) int
 
 func parse(tokens []Token) (statements []Statement, err error) {
 	for len(tokens) > 0 {
@@ -61,7 +62,7 @@ func parsePrintStatement(tokens []Token) (Statement, []Token, error) {
 		return nil, nil, err
 	}
 
-	return func() { fmt.Printf("%v\n", expr()) }, next, nil
+	return func(env Env) { fmt.Printf("%v\n", expr(env)) }, next, nil
 }
 
 func parseAssignmentStatement(tokens []Token) (Statement, []Token, error) {
@@ -76,9 +77,8 @@ func parseAssignmentStatement(tokens []Token) (Statement, []Token, error) {
 		return nil, nil, err
 	}
 
-	varName := tokens[0].Lexeme
-
-	return func() { fmt.Printf("(assignment %v to %v)\n", expr(), varName) }, next, nil
+	identifier := tokens[0].Lexeme
+	return func(env Env) { env[identifier] = expr(env) }, next, nil
 }
 
 func parseExpression(tokens []Token) (Expression, []Token, error) {
@@ -99,8 +99,8 @@ func parseMinus(tokens []Token) (Expression, []Token, error) {
 		}
 
 		leftHand := left
-		left = func() int {
-			return leftHand() + right()
+		left = func(env Env) int {
+			return leftHand(env) + right(env)
 		}
 
 		tokens = next
@@ -123,8 +123,8 @@ func parsePlus(tokens []Token) (Expression, []Token, error) {
 		}
 
 		leftHand := left
-		left = func() int {
-			return leftHand() - right()
+		left = func(env Env) int {
+			return leftHand(env) - right(env)
 		}
 
 		tokens = next
@@ -134,21 +134,21 @@ func parsePlus(tokens []Token) (Expression, []Token, error) {
 }
 
 func parseDivide(tokens []Token) (Expression, []Token, error) {
-	left, next, err := parseNumber(tokens)
+	left, next, err := parsePrimary(tokens)
 	if err != nil {
 		return nil, nil, err
 	}
 	tokens = next
 
 	for len(tokens) != 0 && tokens[0].Type == TokenSlash {
-		right, next, err := parseNumber(tokens[1:])
+		right, next, err := parsePrimary(tokens[1:])
 		if err != nil {
 			return nil, nil, err
 		}
 
 		leftHand := left
-		left = func() int {
-			return leftHand() / right()
+		left = func(env Env) int {
+			return leftHand(env) / right(env)
 		}
 
 		tokens = next
@@ -157,15 +157,19 @@ func parseDivide(tokens []Token) (Expression, []Token, error) {
 	return left, tokens, nil
 }
 
-func parseNumber(tokens []Token) (Expression, []Token, error) {
+func parsePrimary(tokens []Token) (Expression, []Token, error) {
 	if len(tokens) == 0 {
-		return nil, nil, fmt.Errorf("expected number but reached end of data")
+		return nil, nil, fmt.Errorf("expected primary expression but reached end of data")
 	}
 
 	token := tokens[0]
-	if token.Type != TokenNumber {
-		return nil, nil, fmt.Errorf("expected number but got %s ('%s')", token.Type, token.Lexeme)
+	if token.Type == TokenNumber {
+		value := tokens[0].Literal.(int)
+		return func(Env) int { return value }, tokens[1:], nil
+	} else if token.Type == TokenIdentifier {
+		identifier := token.Lexeme
+		return func(env Env) int { return env[identifier] }, tokens[1:], nil
 	}
 
-	return func() int { return tokens[0].Literal.(int) }, tokens[1:], nil
+	return nil, nil, fmt.Errorf("expected number but got %s ('%s')", token.Type, token.Lexeme)
 }

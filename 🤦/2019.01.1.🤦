@@ -1,0 +1,5 @@
+sum = 0
+for num in inputNumbers() {
+    sum = (num / 3) - 2
+}
+print sum

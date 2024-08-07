@@ -31,8 +31,9 @@ func main() {
 
 	fmt.Printf("%d statements: %v\n", len(statements), statements)
 
+	vars := make(map[string]int)
 	for _, s := range statements {
-		s()
+		s(vars)
 	}
 }
 
