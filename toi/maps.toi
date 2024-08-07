@@ -1,0 +1,6 @@
+a = map()
+
+set(a, "hello", "world")
+set(a, "number", 42)
+
+println(get(a, "hello"), get(a, "number"))
