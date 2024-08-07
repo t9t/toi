@@ -67,7 +67,7 @@ func parseStatement(tokens []Token) (stmt Statement, next []Token, err error) {
 	}
 
 	if len(next) != 0 && next[0].Type != TokenNewline && next[0].Type != TokenBraceClose {
-		return nil, next, fmt.Errorf("expected newline after statement but got %s ('%s')", next[0].Type, next[0].Lexeme)
+		return nil, nil, fmt.Errorf("expected newline after statement but got %s ('%s')", next[0].Type, next[0].Lexeme)
 	}
 
 	if len(next) != 0 && next[0].Type == TokenNewline {
@@ -79,7 +79,7 @@ func parseStatement(tokens []Token) (stmt Statement, next []Token, err error) {
 
 func parsePrintStatement(tokens []Token) (Statement, []Token, error) {
 	if len(tokens) < 2 {
-		return nil, tokens[1:], fmt.Errorf("expected expression after 'print'")
+		return nil, nil, fmt.Errorf("expected expression after 'print'")
 	}
 
 	expr, next, err := parseExpression(tokens[1:])
@@ -101,7 +101,7 @@ func parseWhileStatement(tokens []Token) (Statement, []Token, error) {
 		if len(next) != 0 {
 			next = next[1:]
 		}
-		return nil, next, fmt.Errorf("expected '{' after while expression")
+		return nil, nil, fmt.Errorf("expected '{' after while expression")
 	}
 
 	next = next[1:]
@@ -122,7 +122,7 @@ func parseWhileStatement(tokens []Token) (Statement, []Token, error) {
 		if len(next) != 0 {
 			next = next[1:]
 		}
-		return nil, next, fmt.Errorf("expected '}' after while statements")
+		return nil, nil, fmt.Errorf("expected '}' after while statements")
 	}
 
 	return func(env Env) {
@@ -136,9 +136,9 @@ func parseWhileStatement(tokens []Token) (Statement, []Token, error) {
 
 func parseAssignmentStatement(tokens []Token) (Statement, []Token, error) {
 	if len(tokens) < 3 {
-		return nil, tokens[1:], fmt.Errorf("expected '=' and expression after identifier")
+		return nil, nil, fmt.Errorf("expected '=' and expression after identifier")
 	} else if tokens[1].Type != TokenEquals {
-		return nil, tokens[2:], fmt.Errorf("expected '=' after identifier")
+		return nil, nil, fmt.Errorf("expected '=' after identifier")
 	}
 
 	expr, next, err := parseExpression(tokens[2:])
