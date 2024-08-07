@@ -8,12 +8,14 @@ import (
 type TokenType string
 
 const (
-	TokenPrint   TokenType = "Print"
-	TokenNewline TokenType = "Newline"
-	TokenNumber  TokenType = "Number"
-	TokenPlus    TokenType = "Plus"
-	TokenSlash   TokenType = "Slash"
-	TokenMinus   TokenType = "Minus"
+	TokenNewline    TokenType = "Newline"
+	TokenPrint      TokenType = "Print"
+	TokenIdentifier TokenType = "Identifier"
+	TokenNumber     TokenType = "Number"
+	TokenPlus       TokenType = "Plus"
+	TokenSlash      TokenType = "Slash"
+	TokenMinus      TokenType = "Minus"
+	TokenEquals     TokenType = "Equals"
 )
 
 type Token struct {
@@ -23,11 +25,12 @@ type Token struct {
 }
 
 var singleCharTokens = map[rune]TokenType{
+	'\n': TokenNewline,
+	'\r': TokenNewline,
 	'+':  TokenPlus,
 	'/':  TokenSlash,
 	'-':  TokenMinus,
-	'\n': TokenNewline,
-	'\r': TokenNewline,
+	'=':  TokenEquals,
 }
 
 func tokenize(input string) (tokens []Token, errors []error) {
@@ -72,7 +75,7 @@ func tokenize(input string) (tokens []Token, errors []error) {
 			if identifier == "print" {
 				addToken(Token{TokenPrint, identifier, nil})
 			} else {
-				addError(fmt.Errorf("unsupported identifier '%s'", identifier))
+				addToken(Token{TokenIdentifier, identifier, nil})
 			}
 			i = j - 1
 		default:
