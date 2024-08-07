@@ -1,0 +1,8 @@
+println("Hello, world")
+
+println("Hello" _ ", concat " _ "world")
+
+a = "Hello"
+b = "world"
+
+println(a _ ", variable " _ b)

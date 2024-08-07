@@ -251,7 +251,29 @@ func parseDivide(tokens []Token) (Expression, []Token, error) {
 }
 
 func parseMultiply(tokens []Token) (Expression, []Token, error) {
-	return parseBinary(tokens, TokenAsterisk, parsePrimary, func(l, r int) int { return l * r })
+	return parseBinary(tokens, TokenAsterisk, parseUnderscore, func(l, r int) int { return l * r })
+}
+
+func parseUnderscore(tokens []Token) (Expression, []Token, error) {
+	left, next, err := parsePrimary(tokens)
+	if err != nil {
+		return nil, nil, err
+	}
+	tokens = next
+
+	for len(tokens) != 0 && tokens[0].Type == TokenUnderscore {
+		right, next, err := parsePrimary(tokens[1:])
+		if err != nil {
+			return nil, nil, err
+		}
+
+		leftHand := left
+		left = func(env Env) any { return leftHand(env).(string) + right(env).(string) }
+
+		tokens = next
+	}
+
+	return left, tokens, nil
 }
 
 func parseBinary(tokens []Token, tokenType TokenType, down func([]Token) (Expression, []Token, error), op func(int, int) int) (Expression, []Token, error) {
@@ -282,8 +304,11 @@ func parsePrimary(tokens []Token) (Expression, []Token, error) {
 	}
 
 	token := tokens[0]
-	if token.Type == TokenNumber {
-		value := tokens[0].Literal.(int)
+	if token.Type == TokenString {
+		value := tokens[0].Literal
+		return func(Env) any { return value }, tokens[1:], nil
+	} else if token.Type == TokenNumber {
+		value := tokens[0].Literal
 		return func(Env) any { return value }, tokens[1:], nil
 	} else if token.Type == TokenIdentifier {
 		identifier := token.Lexeme

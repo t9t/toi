@@ -11,6 +11,7 @@ const (
 	TokenNewline    TokenType = "Newline"
 	TokenIdentifier TokenType = "Identifier"
 	TokenNumber     TokenType = "Number"
+	TokenString     TokenType = "String"
 
 	TokenEqualEqual   TokenType = "EqualEqual"
 	TokenNotEqual     TokenType = "NotEqual"
@@ -19,10 +20,11 @@ const (
 	TokenLessThan     TokenType = "LessThan"
 	TokenLessEqual    TokenType = "LessEqual"
 
-	TokenPlus     TokenType = "Plus"
-	TokenMinus    TokenType = "Minus"
-	TokenAsterisk TokenType = "Asterisk"
-	TokenSlash    TokenType = "Slash"
+	TokenPlus       TokenType = "Plus"
+	TokenMinus      TokenType = "Minus"
+	TokenAsterisk   TokenType = "Asterisk"
+	TokenSlash      TokenType = "Slash"
+	TokenUnderscore TokenType = "Underscore"
 
 	TokenEquals TokenType = "Equals"
 
@@ -55,6 +57,7 @@ var singleCharTokens = map[rune]TokenType{
 	',': TokenComma,
 
 	'+': TokenPlus,
+	'_': TokenUnderscore,
 	'-': TokenMinus,
 	'*': TokenAsterisk,
 }
@@ -124,6 +127,10 @@ func tokenize(input string) (tokens []Token, errors []error) {
 			} else {
 				addToken(Token{TokenLessThan, "<", nil})
 			}
+		case c == '"':
+			token := tokenizeString(runes[i+1:])
+			addToken(token)
+			i += len(token.Lexeme) + 1
 		case isDigit(c):
 			token, err := tokenizeNumber(runes[i:])
 			if err != nil {
@@ -151,6 +158,17 @@ func tokenize(input string) (tokens []Token, errors []error) {
 	}
 
 	return
+}
+
+func tokenizeString(runes []rune) Token {
+	i := 0
+	for ; i < len(runes) && runes[i] != '"'; i++ {
+	}
+
+	lexeme := string(runes[0:i])
+	literal := lexeme
+
+	return Token{TokenString, lexeme, literal}
 }
 
 func tokenizeNumber(runes []rune) (Token, error) {
