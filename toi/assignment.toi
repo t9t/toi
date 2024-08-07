@@ -1,7 +1,7 @@
 i = 10
-print i
+println(i)
 i = i + 100
-print i
+println(i)
 i = i / 2
-print i
-print i - 13
+println(i)
+println(i - 13)

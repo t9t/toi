@@ -1,7 +1,7 @@
-print 42
+println(42)
 
-print inputNumber(10-9)
+println(inputNumber(10-9))
 
-print println(88)
+println(println(88))
 
 println(1337)

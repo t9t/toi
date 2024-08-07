@@ -42,12 +42,7 @@ func parseStatement(tokens []Token) (stmt Statement, next []Token, err error) {
 		return nil, tokens[1:], nil
 	}
 
-	if tokens[0].Type == TokenPrint {
-		stmt, next, err = parsePrintStatement(tokens)
-		if err != nil {
-			return nil, next, err
-		}
-	} else if tokens[0].Type == TokenWhile {
+	if tokens[0].Type == TokenWhile {
 		stmt, next, err = parseWhileStatement(tokens)
 		if err != nil {
 			return nil, next, err
@@ -75,19 +70,6 @@ func parseStatement(tokens []Token) (stmt Statement, next []Token, err error) {
 		next = next[1:]
 	}
 	return stmt, next, nil
-}
-
-func parsePrintStatement(tokens []Token) (Statement, []Token, error) {
-	if len(tokens) < 2 {
-		return nil, nil, fmt.Errorf("expected expression after 'print'")
-	}
-
-	expr, next, err := parseExpression(tokens[1:])
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return func(env Env) { fmt.Printf("%v\n", expr(env)) }, next, nil
 }
 
 func parseWhileStatement(tokens []Token) (Statement, []Token, error) {

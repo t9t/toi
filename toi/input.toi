@@ -1,10 +1,10 @@
-print inputLength
-print inputNumber(0)
-print inputNumber(1)
+println(inputLength)
+println(inputNumber(0))
+println(inputNumber(1))
 
 i = inputLength
 while i {
     i = i - 1
-    print i
-    print inputNumber(i)
+    println(i)
+    println(inputNumber(i))
 }
