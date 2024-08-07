@@ -1,47 +1,41 @@
 package main
 
 import (
-	"strconv"
-	"strings"
+	"slices"
 )
 
 func day01part1(input string) any {
-	nums := make([]int, 0)
-	for _, s := range strings.Split(input, "\n") {
-		if s == "" {
-			continue
-		}
-		n, err := strconv.Atoi(s)
-		rip(err)
-		nums = append(nums, n)
-	}
+	nums := numbers(input)
+	slices.Sort(nums)
 
-	for i, left := range nums {
-		for j := i + 1; j < len(nums); j++ {
-			right := nums[j]
-			if left+right == 2020 {
-				return left * right
-			}
+	target := 2020
+	l, r := 0, len(nums)-1
+	for l < r {
+		left, right := nums[l], nums[r]
+		sum := left + right
+		if sum == target {
+			return left * right
+		} else if sum > target {
+			r -= 1
+		} else {
+			l += 1
 		}
 	}
 	panic("no answer found")
 }
 
 func day01part2(input string) any {
-	sum := 0
-	payloads := strings.Split(input, "\n")
-	for i := 0; i < len(payloads); i++ {
-		s := payloads[i]
-		if s == "" {
-			continue
-		}
-		n, err := strconv.Atoi(s)
-		rip(err)
-		fuel := n/3 - 2
-		if fuel > 0 {
-			sum += fuel
-			payloads = append(payloads, strconv.Itoa(fuel))
+	nums := numbers(input)
+	for i, left := range nums {
+		for j := i + 1; j < len(nums); j++ {
+			middle := nums[j]
+			for k := j + 1; k < len(nums); k++ {
+				right := nums[k]
+				if left+middle+right == 2020 {
+					return left * middle * right
+				}
+			}
 		}
 	}
-	return sum
+	panic("no answer found")
 }

@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"os"
+	"strconv"
+	"strings"
 )
 
 type AocFunc func(string) any
@@ -38,4 +40,17 @@ func rip(err error) {
 
 func fatal(format string, a ...any) {
 	panic(fmt.Sprintf(format, a...))
+}
+
+func lines(s string) []string {
+	return strings.Split(strings.TrimSpace(s), "\n")
+}
+
+func numbers(s string) (nums []int) {
+	for _, line := range lines(s) {
+		n, err := strconv.Atoi(line)
+		rip(err)
+		nums = append(nums, n)
+	}
+	return
 }
