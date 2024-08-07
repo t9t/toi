@@ -51,14 +51,18 @@ func parseStatement(tokens []Token) (Statement, []Token, error) {
 }
 
 func parseExpression(tokens []Token) (Expression, []Token, error) {
-	left, next, err := parseNumber(tokens)
+	return parseMinus(tokens)
+}
+
+func parseMinus(tokens []Token) (Expression, []Token, error) {
+	left, next, err := parsePlus(tokens)
 	if err != nil {
 		return nil, nil, err
 	}
 	tokens = next
 
 	for len(tokens) != 0 && tokens[0].Type == TokenPlus {
-		right, next, err := parseNumber(tokens[1:])
+		right, next, err := parsePlus(tokens[1:])
 		if err != nil {
 			return nil, nil, err
 		}
@@ -66,6 +70,54 @@ func parseExpression(tokens []Token) (Expression, []Token, error) {
 		leftHand := left
 		left = func() float64 {
 			return leftHand() + right()
+		}
+
+		tokens = next
+	}
+
+	return left, tokens, nil
+}
+
+func parsePlus(tokens []Token) (Expression, []Token, error) {
+	left, next, err := parseDivide(tokens)
+	if err != nil {
+		return nil, nil, err
+	}
+	tokens = next
+
+	for len(tokens) != 0 && tokens[0].Type == TokenMinus {
+		right, next, err := parseDivide(tokens[1:])
+		if err != nil {
+			return nil, nil, err
+		}
+
+		leftHand := left
+		left = func() float64 {
+			return leftHand() - right()
+		}
+
+		tokens = next
+	}
+
+	return left, tokens, nil
+}
+
+func parseDivide(tokens []Token) (Expression, []Token, error) {
+	left, next, err := parseNumber(tokens)
+	if err != nil {
+		return nil, nil, err
+	}
+	tokens = next
+
+	for len(tokens) != 0 && tokens[0].Type == TokenSlash {
+		right, next, err := parseNumber(tokens[1:])
+		if err != nil {
+			return nil, nil, err
+		}
+
+		leftHand := left
+		left = func() float64 {
+			return leftHand() / right()
 		}
 
 		tokens = next

@@ -84,10 +84,6 @@ func tokenize(input string) (tokens []Token, errors []error) {
 }
 
 func tokenizeNumber(runes []rune) (Token, error) {
-	if runes[0] == '0' {
-		return Token{}, fmt.Errorf("numbers may not start with 0")
-	}
-
 	i := 0
 	for ; i < len(runes) && isDigit(runes[i]); i++ {
 	}
@@ -102,8 +98,13 @@ func tokenizeNumber(runes []rune) (Token, error) {
 	literal, err := strconv.ParseFloat(lexeme, 64)
 	if err != nil {
 		// TODO: better errors for really big numbers
-		panic(fmt.Sprint("error converting '%s' to float: %w", lexeme, err))
+		panic(fmt.Sprintf("error converting '%s' to float: %v", lexeme, err))
 	}
+
+	if len(lexeme) > 1 && lexeme[0] == '0' && lexeme[1] != '.' {
+		return Token{}, fmt.Errorf("numbers may not start with 0")
+	}
+
 	return Token{TokenNumber, lexeme, literal}, nil
 }
 
