@@ -106,7 +106,7 @@ func parseWhileStatement(tokens []Token) (Statement, []Token, error) {
 	}
 
 	return func(env Env) {
-		for expr(env) != 0 {
+		for expr(env) > 0 {
 			for _, stmt := range statements {
 				stmt(env)
 			}
