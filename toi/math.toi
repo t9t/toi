@@ -1,0 +1,9 @@
+println(42)
+
+println(11+31)
+
+println(420/10)
+
+println(55-13)
+
+println(10 + 357 / 11)

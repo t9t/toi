@@ -155,69 +155,33 @@ func parseExpression(tokens []Token) (Expression, []Token, error) {
 }
 
 func parseMinus(tokens []Token) (Expression, []Token, error) {
-	left, next, err := parsePlus(tokens)
-	if err != nil {
-		return nil, nil, err
-	}
-	tokens = next
-
-	for len(tokens) != 0 && tokens[0].Type == TokenPlus {
-		right, next, err := parsePlus(tokens[1:])
-		if err != nil {
-			return nil, nil, err
-		}
-
-		leftHand := left
-		left = func(env Env) int {
-			return leftHand(env) + right(env)
-		}
-
-		tokens = next
-	}
-
-	return left, tokens, nil
+	return parseBinary(tokens, TokenMinus, parsePlus, func(l, r int) int { return l - r })
 }
 
 func parsePlus(tokens []Token) (Expression, []Token, error) {
-	left, next, err := parseDivide(tokens)
-	if err != nil {
-		return nil, nil, err
-	}
-	tokens = next
-
-	for len(tokens) != 0 && tokens[0].Type == TokenMinus {
-		right, next, err := parseDivide(tokens[1:])
-		if err != nil {
-			return nil, nil, err
-		}
-
-		leftHand := left
-		left = func(env Env) int {
-			return leftHand(env) - right(env)
-		}
-
-		tokens = next
-	}
-
-	return left, tokens, nil
+	return parseBinary(tokens, TokenPlus, parseDivide, func(l, r int) int { return l + r })
 }
 
 func parseDivide(tokens []Token) (Expression, []Token, error) {
-	left, next, err := parsePrimary(tokens)
+	return parseBinary(tokens, TokenSlash, parsePrimary, func(l, r int) int { return l / r })
+}
+
+func parseBinary(tokens []Token, tokenType TokenType, down func([]Token) (Expression, []Token, error), op func(int, int) int) (Expression, []Token, error) {
+	left, next, err := down(tokens)
 	if err != nil {
 		return nil, nil, err
 	}
 	tokens = next
 
-	for len(tokens) != 0 && tokens[0].Type == TokenSlash {
-		right, next, err := parsePrimary(tokens[1:])
+	for len(tokens) != 0 && tokens[0].Type == tokenType {
+		right, next, err := down(tokens[1:])
 		if err != nil {
 			return nil, nil, err
 		}
 
 		leftHand := left
 		left = func(env Env) int {
-			return leftHand(env) / right(env)
+			return op(leftHand(env), right(env))
 		}
 
 		tokens = next
