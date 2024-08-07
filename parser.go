@@ -3,7 +3,7 @@ package main
 import "fmt"
 
 type Statement func()
-type Expression func() float64
+type Expression func() int
 
 func parse(tokens []Token) (statements []Statement, err error) {
 	for len(tokens) > 0 {
@@ -68,7 +68,7 @@ func parseMinus(tokens []Token) (Expression, []Token, error) {
 		}
 
 		leftHand := left
-		left = func() float64 {
+		left = func() int {
 			return leftHand() + right()
 		}
 
@@ -92,7 +92,7 @@ func parsePlus(tokens []Token) (Expression, []Token, error) {
 		}
 
 		leftHand := left
-		left = func() float64 {
+		left = func() int {
 			return leftHand() - right()
 		}
 
@@ -116,7 +116,7 @@ func parseDivide(tokens []Token) (Expression, []Token, error) {
 		}
 
 		leftHand := left
-		left = func() float64 {
+		left = func() int {
 			return leftHand() / right()
 		}
 
@@ -136,5 +136,5 @@ func parseNumber(tokens []Token) (Expression, []Token, error) {
 		return nil, nil, fmt.Errorf("expected number but got %s ('%s')", token.Type, token.Lexeme)
 	}
 
-	return func() float64 { return tokens[0].Literal.(float64) }, tokens[1:], nil
+	return func() int { return tokens[0].Literal.(int) }, tokens[1:], nil
 }

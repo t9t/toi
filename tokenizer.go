@@ -88,17 +88,19 @@ func tokenizeNumber(runes []rune) (Token, error) {
 	for ; i < len(runes) && isDigit(runes[i]); i++ {
 	}
 
+	/* TODO: float support disabled for now lol
 	if len(runes[i:]) >= 2 && runes[i] == '.' && isDigit(runes[i+1]) {
 		i += 1 // Consume the .
 		for ; i < len(runes) && isDigit(runes[i]); i++ {
 		}
 	}
+	*/
 
 	lexeme := string(runes[0:i])
-	literal, err := strconv.ParseFloat(lexeme, 64)
+	literal, err := strconv.Atoi(lexeme)
 	if err != nil {
 		// TODO: better errors for really big numbers
-		panic(fmt.Sprintf("error converting '%s' to float: %v", lexeme, err))
+		panic(fmt.Sprintf("error converting '%s' to int: %v", lexeme, err))
 	}
 
 	if len(lexeme) > 1 && lexeme[0] == '0' && lexeme[1] != '.' {
