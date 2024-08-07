@@ -1,6 +1,8 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+)
 
 type Env map[string]any
 type Statement func(Env)
@@ -77,91 +79,76 @@ func parseStatement(tokens []Token) (stmt Statement, next []Token, err error) {
 	return stmt, next, nil
 }
 
+func parseBlock(tokens []Token, typ string) (Statement, []Token, error) {
+	next := tokens
+
+	// TODO: parse blocks
+	if len(next) == 0 || next[0].Type != TokenBraceOpen {
+		if len(next) != 0 {
+			next = next[1:]
+		}
+		return nil, nil, fmt.Errorf("expected '{' after %s expression", typ)
+	}
+
+	next = next[1:]
+	statements := make([]Statement, 0)
+	for len(next) != 0 && next[0].Type != TokenBraceClose {
+		stmt, next2, err := parseStatement(next)
+		if err != nil {
+			return nil, next2, err
+		} else if stmt == nil {
+			next = next2
+			continue
+		}
+		statements = append(statements, stmt)
+		next = next2
+	}
+
+	if len(next) == 0 || next[0].Type != TokenBraceClose {
+		return nil, nil, fmt.Errorf("expected '}' after %s statements", typ)
+	}
+
+	return func(env Env) {
+		for _, stmt := range statements {
+			stmt(env)
+		}
+	}, next[1:], nil
+}
+
 func parseIfStatement(tokens []Token) (Statement, []Token, error) {
 	expr, next, err := parseExpression(tokens[1:])
 	if err != nil {
 		return nil, nil, err
 	}
 
-	// TODO: parse blocks
-	if len(next) == 0 || next[0].Type != TokenBraceOpen {
-		if len(next) != 0 {
-			next = next[1:]
-		}
-		return nil, nil, fmt.Errorf("expected '{' after if expression")
-	}
-
-	next = next[1:]
-	statements := make([]Statement, 0)
-	for len(next) != 0 && next[0].Type != TokenBraceClose {
-		stmt, next2, err := parseStatement(next)
-		if err != nil {
-			return nil, next2, err
-		} else if stmt == nil {
-			next = next2
-			continue
-		}
-		statements = append(statements, stmt)
-		next = next2
-	}
-
-	if len(next) == 0 || next[0].Type != TokenBraceClose {
-		if len(next) != 0 {
-			next = next[1:]
-		}
-		return nil, nil, fmt.Errorf("expected '}' after if statements")
+	block, next, err := parseBlock(next, "if")
+	if err != nil {
+		return nil, nil, err
 	}
 
 	return func(env Env) {
 		if isWeirdlyTrue(expr(env)) {
-			for _, stmt := range statements {
-				stmt(env)
-			}
+			block(env)
 		}
-	}, next[1:], nil
+	}, next, nil
 }
+
 func parseWhileStatement(tokens []Token) (Statement, []Token, error) {
 	expr, next, err := parseExpression(tokens[1:])
 	if err != nil {
 		return nil, nil, err
 	}
 
-	// TODO: parse blocks
-	if len(next) == 0 || next[0].Type != TokenBraceOpen {
-		if len(next) != 0 {
-			next = next[1:]
-		}
-		return nil, nil, fmt.Errorf("expected '{' after while expression")
-	}
-
-	next = next[1:]
-	statements := make([]Statement, 0)
-	for len(next) != 0 && next[0].Type != TokenBraceClose {
-		stmt, next2, err := parseStatement(next)
-		if err != nil {
-			return nil, next2, err
-		} else if stmt == nil {
-			next = next2
-			continue
-		}
-		statements = append(statements, stmt)
-		next = next2
-	}
-
-	if len(next) == 0 || next[0].Type != TokenBraceClose {
-		if len(next) != 0 {
-			next = next[1:]
-		}
-		return nil, nil, fmt.Errorf("expected '}' after while statements")
+	block, next, err := parseBlock(next, "while")
+	if err != nil {
+		return nil, nil, err
 	}
 
 	return func(env Env) {
 		for isWeirdlyTrue(expr(env)) {
-			for _, stmt := range statements {
-				stmt(env)
-			}
+			block(env)
 		}
-	}, next[1:], nil
+	}, next, nil
 }
 
 func parseAssignmentStatement(tokens []Token) (Statement, []Token, error) {
