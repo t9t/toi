@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-type BuiltinFunc func(Env, []Expression) any
+type BuiltinFunc func(Env, []Expression) (any, error)
 
 type Builtin struct {
 	Arity int
@@ -26,59 +26,130 @@ var builtins = map[string]Builtin{
 	"len":   {1, builtinLen},
 }
 
-func builtinPrintln(env Env, e []Expression) any {
+func builtinPrintln(env Env, e []Expression) (any, error) {
 	var sb strings.Builder
-	var v any
 	for i, expr := range e {
 		if i != 0 {
 			sb.WriteString(", ")
 		}
-		v = expr(env)
+		v, err := expr(env)
+		if err != nil {
+			return nil, err
+		}
 		sb.WriteString(fmt.Sprintf("%v", v))
 	}
 	fmt.Println(sb.String())
-	return v
+	return nil, nil
 }
 
-func builtinInputNumber(env Env, e []Expression) any {
-	return env["_inputNumbers"].([]int)[e[0](env).(int)]
-}
-
-func builtinArray(env Env, e []Expression) any {
-	return &[]any{}
-}
-
-func builtinGet(env Env, e []Expression) any {
-	// get(arr, 2)
-	arr := e[0](env).(*[]any)
-	idx := e[1](env).(int)
-	return (*arr)[idx]
-}
-
-func builtinPush(env Env, e []Expression) any {
-	// push(arr, 42)
-	arr := e[0](env).(*[]any)
-	v := e[1](env)
-	*arr = append(*arr, v)
-	return v
-}
-
-func builtinSet(env Env, e []Expression) any {
-	// set(arr, 2, 42)
-	arr := e[0](env).(*[]any)
-	idx := e[1](env).(int)
-	val := e[2](env)
-	if idx < len(*arr) {
-		(*arr)[idx] = val
-	} else if idx == len(*arr) {
-		*arr = append(*arr, val)
-	} else {
-		panic("index out of bounds")
+func builtinInputNumber(env Env, e []Expression) (any, error) {
+	index, err := e[0](env)
+	if err != nil {
+		return nil, err
 	}
-	return val
+	if i, ok := index.(int); ok {
+		return env["_inputNumbers"].([]int)[i], nil
+	} else {
+		return nil, fmt.Errorf("argument needs to be a number, but was '%v'", index)
+	}
 }
 
-func builtinLen(env Env, e []Expression) any {
+func builtinArray(env Env, e []Expression) (any, error) {
+	return &[]any{}, nil
+}
+
+func builtinGet(env Env, e []Expression) (any, error) {
+	// get(arr, 2)
+	arr, err := e[0](env)
+	if err != nil {
+		return nil, err
+	}
+
+	array, ok := arr.(*[]any)
+	if !ok {
+		return nil, fmt.Errorf("first argument needs to be an array, but was '%v'", arr)
+	}
+
+	idx, err := e[1](env)
+	if err != nil {
+		return nil, err
+	}
+
+	if i, ok := idx.(int); ok {
+		return (*array)[i], nil
+	} else {
+		return nil, fmt.Errorf("second argument needs to be a number, but was '%v'", idx)
+	}
+}
+
+func builtinPush(env Env, e []Expression) (any, error) {
+	// push(arr, 42)
+	arr, err := e[0](env)
+	if err != nil {
+		return nil, err
+	}
+
+	array, ok := arr.(*[]any)
+	if !ok {
+		return nil, fmt.Errorf("first argument needs to be an array, but was '%v'", arr)
+	}
+
+	if v, err := e[1](env); err != nil {
+		return nil, err
+	} else {
+		*array = append(*array, v)
+		return v, nil
+	}
+}
+
+func builtinSet(env Env, e []Expression) (any, error) {
+	// set(arr, 2, 42)
+	arr, err := e[0](env)
+	if err != nil {
+		return nil, err
+	}
+
+	array, ok := arr.(*[]any)
+	if !ok {
+		return nil, fmt.Errorf("first argument needs to be an array, but was '%v'", arr)
+	}
+
+	idx, err := e[1](env)
+	if err != nil {
+		return nil, err
+	}
+
+	i, ok := idx.(int)
+	if !ok {
+		return nil, fmt.Errorf("second argument needs to be a number, but was '%v'", idx)
+	}
+
+	v, err := e[2](env)
+	if err != nil {
+		return nil, err
+	}
+
+	if i < len(*array) {
+		(*array)[i] = v
+	} else if i == len(*array) {
+		*array = append(*array, v)
+	} else {
+		return nil, fmt.Errorf("index %d out of bounds (length %d)", i, len(*array))
+	}
+	return v, nil
+}
+
+func builtinLen(env Env, e []Expression) (any, error) {
 	// len(arr)
-	return len(*(e[0](env).(*[]any)))
+	arr, err := e[0](env)
+	if err != nil {
+		return nil, err
+	}
+
+	array, ok := arr.(*[]any)
+	if !ok {
+		return nil, fmt.Errorf("first argument needs to be an array, but was '%v'", arr)
+	}
+
+	return len(*array), nil
 }

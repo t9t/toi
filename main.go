@@ -62,7 +62,11 @@ func main() {
 	vars["inputLength"] = len(inputNumbers)
 	vars["_inputNumbers"] = inputNumbers
 	for _, s := range statements {
-		s(vars)
+		if err := s(vars); err != nil {
+			fmt.Fprintf(os.Stderr, "Execution error:\n\t%v\n", err)
+			os.Exit(1)
+			return
+		}
 	}
 }
 

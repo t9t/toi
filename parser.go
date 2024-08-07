@@ -5,8 +5,8 @@ import (
 )
 
 type Env map[string]any
-type Statement func(Env)
-type Expression func(Env) any
+type Statement func(Env) error
+type Expression func(Env) (any, error)
 
 func parse(tokens []Token) (statements []Statement, err error) {
 	for len(tokens) > 0 {
@@ -49,7 +49,11 @@ func parseStatement(tokens []Token) (stmt Statement, next []Token, err error) {
 		if err != nil {
 			return nil, nil, err
 		}
-		stmt = func(env Env) { expr(env) /* Discard return value */ }
+		stmt = func(env Env) error {
+			_, err := expr(env) /* Discard return value */
+			return err
+		}
+
 		next = nextTokens
 	}
 
@@ -93,10 +97,13 @@ func parseBlock(tokens []Token, typ string) (Statement, []Token, error) {
 		return nil, nil, fmt.Errorf("expected '}' after %s statements", typ)
 	}
 
-	return func(env Env) {
+	return func(env Env) error {
 		for _, stmt := range statements {
-			stmt(env)
+			if err := stmt(env); err != nil {
+				return err
+			}
 		}
+		return nil
 	}, next[1:], nil
 }
 
@@ -111,10 +118,15 @@ func parseIfStatement(tokens []Token) (Statement, []Token, error) {
 		return nil, nil, err
 	}
 
-	return func(env Env) {
-		if isWeirdlyTrue(expr(env)) {
-			block(env)
+	return func(env Env) error {
+		v, err := expr(env)
+		if err != nil {
+			return err
 		}
+		if isWeirdlyTrue(v) {
+			return block(env)
+		}
+		return nil
 	}, next, nil
 }
 
@@ -129,10 +141,21 @@ func parseWhileStatement(tokens []Token) (Statement, []Token, error) {
 		return nil, nil, err
 	}
 
-	return func(env Env) {
-		for isWeirdlyTrue(expr(env)) {
-			block(env)
+	return func(env Env) error {
+		for {
+			v, err := expr(env)
+			if err != nil {
+				return err
+			}
+			if !isWeirdlyTrue(v) {
+				break
+			}
+
+			if err := block(env); err != nil {
+				return err
+			}
 		}
+		return nil
 	}, next, nil
 }
 
@@ -149,7 +172,14 @@ func parseAssignmentStatement(tokens []Token) (Statement, []Token, error) {
 	}
 
 	identifier := tokens[0].Lexeme
-	return func(env Env) { env[identifier] = expr(env) }, next, nil
+	return func(env Env) error {
+		v, err := expr(env)
+		if err != nil {
+			return err
+		}
+		env[identifier] = v
+		return nil
+	}, next, nil
 }
 
 func parseExpression(tokens []Token) (Expression, []Token, error) {
@@ -210,7 +240,30 @@ func parseUnderscore(tokens []Token) (Expression, []Token, error) {
 		}
 
 		leftHand := left
-		left = func(env Env) any { return leftHand(env).(string) + right(env).(string) }
+		left = func(env Env) (any, error) {
+			var lv, rv any
+			var ls, rs string
+			var err error
+			var ok bool
+
+			if lv, err = leftHand(env); err != nil {
+				return nil, err
+			}
+
+			if ls, ok = lv.(string); !ok {
+				return nil, fmt.Errorf("left-hand operand of '_' should be a string but was '%v'", lv)
+			}
+
+			if rv, err = right(env); err != nil {
+				return nil, err
+			}
+
+			if rs, ok = rv.(string); !ok {
+				return nil, fmt.Errorf("right-hand operand of '_' should be a string but was '%v'", rv)
+			}
+
+			return ls + rs, nil
+		}
 
 		tokens = next
 	}
@@ -226,13 +279,38 @@ func parseBinary(tokens []Token, tokenType TokenType, down func([]Token) (Expres
 	tokens = next
 
 	for len(tokens) != 0 && tokens[0].Type == tokenType {
+		lexeme := tokens[0].Lexeme
+
 		right, next, err := down(tokens[1:])
 		if err != nil {
 			return nil, nil, err
 		}
 
 		leftHand := left
-		left = func(env Env) any { return op(leftHand(env).(int), right(env).(int)) }
+		left = func(env Env) (any, error) {
+			var lv, rv any
+			var li, ri int
+			var err error
+			var ok bool
+
+			if lv, err = leftHand(env); err != nil {
+				return nil, err
+			}
+
+			if li, ok = lv.(int); !ok {
+				return nil, fmt.Errorf("left-hand operand of '%s' should be an int but was '%v'", lexeme, lv)
+			}
+
+			if rv, err = right(env); err != nil {
+				return nil, err
+			}
+
+			if ri, ok = rv.(int); !ok {
+				return nil, fmt.Errorf("right-hand operand of '%s' should be an int but was '%v'", lexeme, rv)
+			}
+
+			return op(li, ri), nil
+		}
 
 		tokens = next
 	}
@@ -248,10 +326,10 @@ func parsePrimary(tokens []Token) (Expression, []Token, error) {
 	token := tokens[0]
 	if token.Type == TokenString {
 		value := tokens[0].Literal
-		return func(Env) any { return value }, tokens[1:], nil
+		return func(Env) (any, error) { return value, nil }, tokens[1:], nil
 	} else if token.Type == TokenNumber {
 		value := tokens[0].Literal
-		return func(Env) any { return value }, tokens[1:], nil
+		return func(Env) (any, error) { return value, nil }, tokens[1:], nil
 	} else if token.Type == TokenIdentifier {
 		identifier := token.Lexeme
 
@@ -260,12 +338,12 @@ func parsePrimary(tokens []Token) (Expression, []Token, error) {
 		}
 
 		// Variable access
-		return func(env Env) any {
+		return func(env Env) (any, error) {
 			val, found := env[identifier]
 			if found {
-				return val
+				return val, nil
 			}
-			return nil
+			return nil, fmt.Errorf("undefined variable '%s'", identifier)
 		}, tokens[1:], nil
 	}
 
@@ -312,7 +390,7 @@ func parseFunctionCall(tokens []Token) (Expression, []Token, error) {
 		return nil, nil, fmt.Errorf("expected %d arguments but got %d for function '%s'", builtin.Arity, len(arguments), identifier)
 	}
 
-	return func(env Env) any { return builtin.Func(env, arguments) }, tokens, nil
+	return func(env Env) (any, error) { return builtin.Func(env, arguments) }, tokens, nil
 }
 
 func isWeirdlyTrue(v any) bool {
@@ -325,4 +403,29 @@ func boolToInt(b bool) int {
 	} else {
 		return 0
 	}
+}
+
+func bla(left Expression, right Expression, env Env, tok string, op func(int, int) int) (any, error) {
+	var lv, rv any
+	var li, ri int
+	var err error
+	var ok bool
+
+	if lv, err = left(env); err != nil {
+		return nil, err
+	}
+
+	if li, ok = lv.(int); !ok {
+		return nil, fmt.Errorf("left-hand operand of '%s' should be a string but was '%v'", tok, lv)
+	}
+
+	if rv, err = right(env); err != nil {
+		return nil, err
+	}
+
+	if ri, ok = rv.(int); !ok {
+		return nil, fmt.Errorf("right-hand operand of '%s' should be a string but was '%v'", tok, rv)
+	}
+
+	return op(li, ri), nil
 }
