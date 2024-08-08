@@ -23,6 +23,7 @@ while i < len(lines) {
         if get(passwordChars, j) == policyLetter {
             letterCount = letterCount + 1
         }
+        j = j + 1
     }
 
     if letterCount >= min {

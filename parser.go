@@ -187,7 +187,7 @@ func parseExpression(tokens []Token) (Expression, []Token, error) {
 }
 
 func parseEqualEqual(tokens []Token) (Expression, []Token, error) {
-	return parseBinary(tokens, TokenEqualEqual, parseNotEqual, func(l, r int) int { return boolToInt(l == r) })
+	return parseBinary2(tokens, TokenEqualEqual, parseNotEqual, func(l, r any) any { return boolToInt(l == r) })
 }
 
 func parseNotEqual(tokens []Token) (Expression, []Token, error) {
@@ -310,6 +310,41 @@ func parseBinary(tokens []Token, tokenType TokenType, down func([]Token) (Expres
 			}
 
 			return op(li, ri), nil
+		}
+
+		tokens = next
+	}
+
+	return left, tokens, nil
+}
+
+func parseBinary2(tokens []Token, tokenType TokenType, down func([]Token) (Expression, []Token, error), op func(any, any) any) (Expression, []Token, error) {
+	left, next, err := down(tokens)
+	if err != nil {
+		return nil, nil, err
+	}
+	tokens = next
+
+	for len(tokens) != 0 && tokens[0].Type == tokenType {
+		right, next, err := down(tokens[1:])
+		if err != nil {
+			return nil, nil, err
+		}
+
+		leftHand := left
+		left = func(env Env) (any, error) {
+			var lv, rv any
+			var err error
+
+			if lv, err = leftHand(env); err != nil {
+				return nil, err
+			}
+
+			if rv, err = right(env); err != nil {
+				return nil, err
+			}
+
+			return op(lv, rv), nil
 		}
 
 		tokens = next
