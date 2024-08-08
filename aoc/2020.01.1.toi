@@ -1,4 +1,4 @@
-i = inputLength
+i = inputLength()
 while i {
     i = i - 1
     left = inputNumber(i)

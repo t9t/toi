@@ -16,6 +16,7 @@ const ArityVariadic = -1
 
 var builtins = map[string]Builtin{
 	"println":     {ArityVariadic, builtinPrintln},
+	"inputLength": {0, builtinInputLength},
 	"inputNumber": {1, builtinInputNumber},
 
 	// "Arrays" & "Maps"
@@ -43,13 +44,27 @@ func builtinPrintln(env Env, e []Expression) (any, error) {
 	return nil, nil
 }
 
+func builtinInputLength(env Env, e []Expression) (any, error) {
+	getInputNumbers := (env["_getInputNumbers"]).(func() ([]int, error))
+	inputNumbers, err := getInputNumbers()
+	if err != nil {
+		return nil, err
+	}
+	return len(inputNumbers), nil
+}
+
 func builtinInputNumber(env Env, e []Expression) (any, error) {
 	index, err := e[0](env)
 	if err != nil {
 		return nil, err
 	}
 	if i, ok := index.(int); ok {
-		return env["_inputNumbers"].([]int)[i], nil
+		getInputNumbers := (env["_getInputNumbers"]).(func() ([]int, error))
+		inputNumbers, err := getInputNumbers()
+		if err != nil {
+			return nil, err
+		}
+		return inputNumbers[i], nil
 	} else {
 		return nil, fmt.Errorf("argument needs to be a number, but was '%v'", index)
 	}

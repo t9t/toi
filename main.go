@@ -17,27 +17,20 @@ func main() {
 		return
 	}
 
-	var data []byte
+	var scriptData []byte
 	var err error
-	inputNumbers := []int{}
+	var stdin []byte
 	if len(os.Args) == 1 {
-		data, err = io.ReadAll(os.Stdin)
+		scriptData, err = io.ReadAll(os.Stdin)
 	} else {
-		data, err = os.ReadFile(os.Args[1])
-		stdin, err := io.ReadAll(os.Stdin)
+		scriptData, err = os.ReadFile(os.Args[1])
 		ohno(err)
-		for _, line := range strings.Split(string(stdin), "\n") {
-			if line == "" {
-				continue
-			}
-			n, err := strconv.Atoi(line)
-			ohno(err)
-			inputNumbers = append(inputNumbers, n)
-		}
+		stdin, err = io.ReadAll(os.Stdin)
+		ohno(err)
 	}
 	ohno(err)
 
-	tokens, errors := tokenize(string(data))
+	tokens, errors := tokenize(string(scriptData))
 	if len(errors) != 0 {
 		fmt.Fprintf(os.Stderr, "Got %d errors:\n", len(errors))
 		for i, err := range errors {
@@ -59,8 +52,33 @@ func main() {
 	fmt.Printf("%d statements: %v\n", len(statements), statements)
 
 	vars := make(map[string]any)
-	vars["inputLength"] = len(inputNumbers)
-	vars["_inputNumbers"] = inputNumbers
+
+	var inputNumbersCache []int = nil
+	populateInputNumbersCache := func() error {
+		inputNumbersCache = make([]int, 0)
+		for _, line := range strings.Split(string(stdin), "\n") {
+			if line == "" {
+				continue
+			}
+			n, err := strconv.Atoi(line)
+			if err != nil {
+				return err
+			}
+			inputNumbersCache = append(inputNumbersCache, n)
+		}
+		return nil
+	}
+
+	getInputNumbers := func() ([]int, error) {
+		if inputNumbersCache == nil {
+			if err := populateInputNumbersCache(); err != nil {
+				return nil, err
+			}
+		}
+		return inputNumbersCache, nil
+	}
+
+	vars["_getInputNumbers"] = getInputNumbers
 	for _, s := range statements {
 		if err := s(vars); err != nil {
 			fmt.Fprintf(os.Stderr, "Execution error:\n\t%v\n", err)

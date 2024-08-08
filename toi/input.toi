@@ -1,8 +1,8 @@
-println(inputLength)
+println(inputLength())
 println(inputNumber(0))
 println(inputNumber(1))
 
-i = inputLength
+i = inputLength()
 while i {
     i = i - 1
     println(i, inputNumber(i))
