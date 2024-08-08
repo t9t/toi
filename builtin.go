@@ -20,6 +20,8 @@ var builtins = map[string]Builtin{
 	"inputNumber": {1, builtinInputNumber},
 	"inputLines":  {0, builtinInputLines},
 
+	"split": {2, builtinSplit},
+
 	// "Arrays" & "Maps"
 	"array": {0, builtinArray},
 	"map":   {0, builtinMap},
@@ -73,11 +75,30 @@ func builtinInputNumber(env Env, e []Expression) (any, error) {
 
 func builtinInputLines(env Env, e []Expression) (any, error) {
 	stdin := env["_stdin"].([]byte)
-	lines := make([]any, 0)
-	for _, line := range strings.Split(strings.TrimSpace(string(stdin)), "\n") {
-		lines = append(lines, line)
-	}
+	lines := anyfy(strings.Split(strings.TrimSpace(string(stdin)), "\n"))
 	return &lines, nil
+}
+
+func builtinSplit(env Env, e []Expression) (any, error) {
+	var maybeStr, maybeSep any
+	var str, sep string
+	var ok bool
+	var err error
+
+	if maybeStr, err = e[0](env); err != nil {
+		return nil, err
+	} else if maybeSep, err = e[1](env); err != nil {
+		return nil, err
+	}
+
+	if str, ok = maybeStr.(string); !ok {
+		return nil, fmt.Errorf("first argument needs to be a string, but was '%v'", maybeStr)
+	} else if sep, ok = maybeSep.(string); !ok {
+		return nil, fmt.Errorf("second argument needs to be a string, but was '%v'", maybeSep)
+	}
+
+	parts := anyfy(strings.Split(str, sep))
+	return &parts, nil
 }
 
 func builtinArray(env Env, e []Expression) (any, error) {
@@ -228,4 +249,12 @@ func builtinLen(env Env, e []Expression) (any, error) {
 	} else {
 		return len(*map_), nil
 	}
+}
+
+func anyfy(strings []string) []any {
+	ret := make([]any, len(strings))
+	for i, s := range strings {
+		ret[i] = s
+	}
+	return ret
 }
