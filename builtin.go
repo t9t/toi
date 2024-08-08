@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 )
 
@@ -21,6 +22,8 @@ var builtins = map[string]Builtin{
 	"inputLines":  {0, builtinInputLines},
 
 	"split": {2, builtinSplit},
+
+	"int": {1, builtinInt},
 
 	// "Arrays" & "Maps"
 	"array": {0, builtinArray},
@@ -99,6 +102,22 @@ func builtinSplit(env Env, e []Expression) (any, error) {
 
 	parts := anyfy(strings.Split(str, sep))
 	return &parts, nil
+}
+
+func builtinInt(env Env, e []Expression) (any, error) {
+	v, err := e[0](env)
+	if err != nil {
+		return nil, err
+	}
+	if s, ok := v.(string); !ok {
+		return nil, fmt.Errorf("argument needs to be a string, but was '%v'", v)
+	} else {
+		i, err := strconv.Atoi(s)
+		if err != nil {
+			return nil, err
+		}
+		return i, nil
+	}
 }
 
 func builtinArray(env Env, e []Expression) (any, error) {

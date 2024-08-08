@@ -9,3 +9,24 @@ println(1337)
 i = 3
 j = 13
 println(println(1, 1, i, 5, 8, j, j+8))
+
+println("lines:")
+lines = inputLines()
+i = 0
+while i < len(lines) {
+    println(get(lines, i))
+    i = i + 1
+}
+
+println("split:")
+s = "a;b;c,d;e"
+parts = split(s, ";")
+i = 0
+while i < len(parts) {
+    println(get(parts, i))
+    i = i + 1
+}
+
+println("int:")
+s = "39"
+println(int(s) + 3)
