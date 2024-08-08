@@ -41,7 +41,7 @@ func builtinPrintln(env Env, e []Expression) (any, error) {
 		if i != 0 {
 			sb.WriteString(", ")
 		}
-		v, err := expr(env)
+		v, err := expr.evaluate(env)
 		if err != nil {
 			return nil, err
 		}
@@ -61,7 +61,7 @@ func builtinInputLength(env Env, e []Expression) (any, error) {
 }
 
 func builtinInputNumber(env Env, e []Expression) (any, error) {
-	index, err := e[0](env)
+	index, err := e[0].evaluate(env)
 	if err != nil {
 		return nil, err
 	}
@@ -89,9 +89,9 @@ func builtinSplit(env Env, e []Expression) (any, error) {
 	var ok bool
 	var err error
 
-	if maybeStr, err = e[0](env); err != nil {
+	if maybeStr, err = e[0].evaluate(env); err != nil {
 		return nil, err
-	} else if maybeSep, err = e[1](env); err != nil {
+	} else if maybeSep, err = e[1].evaluate(env); err != nil {
 		return nil, err
 	}
 
@@ -106,7 +106,7 @@ func builtinSplit(env Env, e []Expression) (any, error) {
 }
 
 func builtinChars(env Env, e []Expression) (any, error) {
-	v, err := e[0](env)
+	v, err := e[0].evaluate(env)
 	if err != nil {
 		return nil, err
 	}
@@ -121,7 +121,7 @@ func builtinChars(env Env, e []Expression) (any, error) {
 }
 
 func builtinInt(env Env, e []Expression) (any, error) {
-	v, err := e[0](env)
+	v, err := e[0].evaluate(env)
 	if err != nil {
 		return nil, err
 	}
@@ -145,7 +145,7 @@ func builtinMap(env Env, e []Expression) (any, error) {
 }
 
 func getSliceOrMap(env Env, e []Expression) (*[]any, *map[string]any, error) {
-	v, err := e[0](env)
+	v, err := e[0].evaluate(env)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -164,7 +164,7 @@ func getSliceOrMap(env Env, e []Expression) (*[]any, *map[string]any, error) {
 }
 
 func getArrayIndex(env Env, e Expression) (int, error) {
-	v, err := e(env)
+	v, err := e.evaluate(env)
 	if err != nil {
 		return 0, err
 	}
@@ -177,7 +177,7 @@ func getArrayIndex(env Env, e Expression) (int, error) {
 }
 
 func getMapKey(env Env, e Expression) (string, error) {
-	v, err := e(env)
+	v, err := e.evaluate(env)
 	if err != nil {
 		return "", err
 	}
@@ -227,7 +227,7 @@ func builtinGet(env Env, e []Expression) (any, error) {
 
 func builtinPush(env Env, e []Expression) (any, error) {
 	// push(arr, 42)
-	arr, err := e[0](env)
+	arr, err := e[0].evaluate(env)
 	if err != nil {
 		return nil, err
 	}
@@ -237,7 +237,7 @@ func builtinPush(env Env, e []Expression) (any, error) {
 		return nil, fmt.Errorf("first argument needs to be an array, but was '%v'", arr)
 	}
 
-	if v, err := e[1](env); err != nil {
+	if v, err := e[1].evaluate(env); err != nil {
 		return nil, err
 	} else {
 		*array = append(*array, v)
@@ -250,7 +250,7 @@ func builtinSet(env Env, e []Expression) (any, error) {
 	return arrayOrMapOp(env, e,
 		func(slice *[]any, idx int, env Env, e []Expression) (any, error) {
 			// set(arr, 2, 42)
-			v, err := e[2](env)
+			v, err := e[2].evaluate(env)
 			if err != nil {
 				return nil, err
 			}
@@ -264,7 +264,7 @@ func builtinSet(env Env, e []Expression) (any, error) {
 			return v, nil
 		}, func(map_ *map[string]any, key string, env Env, e []Expression) (any, error) {
 			// set(arr, "hello", 42)
-			v, err := e[2](env)
+			v, err := e[2].evaluate(env)
 			if err != nil {
 				return nil, err
 			}

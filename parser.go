@@ -5,8 +5,6 @@ import (
 )
 
 type Env map[string]any
-type Statement func(Env) error
-type Expression func(Env) (any, error)
 
 func parse(tokens []Token) (statements []Statement, err error) {
 	for len(tokens) > 0 {
@@ -49,11 +47,7 @@ func parseStatement(tokens []Token) (stmt Statement, next []Token, err error) {
 		if err != nil {
 			return nil, nil, err
 		}
-		stmt = func(env Env) error {
-			_, err := expr(env) /* Discard return value */
-			return err
-		}
-
+		stmt = &ExpressionStatement{Expression: expr}
 		next = nextTokens
 	}
 
@@ -97,14 +91,7 @@ func parseBlock(tokens []Token, typ string) (Statement, []Token, error) {
 		return nil, nil, fmt.Errorf("expected '}' after %s statements", typ)
 	}
 
-	return func(env Env) error {
-		for _, stmt := range statements {
-			if err := stmt(env); err != nil {
-				return err
-			}
-		}
-		return nil
-	}, next[1:], nil
+	return &BlockStatement{Statements: statements}, next[1:], nil
 }
 
 func parseIfStatement(tokens []Token) (Statement, []Token, error) {
@@ -118,16 +105,7 @@ func parseIfStatement(tokens []Token) (Statement, []Token, error) {
 		return nil, nil, err
 	}
 
-	return func(env Env) error {
-		v, err := expr(env)
-		if err != nil {
-			return err
-		}
-		if isWeirdlyTrue(v) {
-			return block(env)
-		}
-		return nil
-	}, next, nil
+	return &IfStatement{Condition: expr, Then: block}, next, nil
 }
 
 func parseWhileStatement(tokens []Token) (Statement, []Token, error) {
@@ -141,22 +119,7 @@ func parseWhileStatement(tokens []Token) (Statement, []Token, error) {
 		return nil, nil, err
 	}
 
-	return func(env Env) error {
-		for {
-			v, err := expr(env)
-			if err != nil {
-				return err
-			}
-			if !isWeirdlyTrue(v) {
-				break
-			}
-
-			if err := block(env); err != nil {
-				return err
-			}
-		}
-		return nil
-	}, next, nil
+	return &WhileStatement{Condition: expr, Body: block}, next, nil
 }
 
 func parseAssignmentStatement(tokens []Token) (Statement, []Token, error) {
@@ -171,15 +134,7 @@ func parseAssignmentStatement(tokens []Token) (Statement, []Token, error) {
 		return nil, nil, err
 	}
 
-	identifier := tokens[0].Lexeme
-	return func(env Env) error {
-		v, err := expr(env)
-		if err != nil {
-			return err
-		}
-		env[identifier] = v
-		return nil
-	}, next, nil
+	return &AssignmentStatement{Identifier: tokens[0], Expression: expr}, next, nil
 }
 
 func parseExpression(tokens []Token) (Expression, []Token, error) {
@@ -187,43 +142,43 @@ func parseExpression(tokens []Token) (Expression, []Token, error) {
 }
 
 func parseEqualEqual(tokens []Token) (Expression, []Token, error) {
-	return parseBinary2(tokens, TokenEqualEqual, parseNotEqual, func(l, r any) any { return boolToInt(l == r) })
+	return parseBinary2(tokens, TokenEqualEqual, parseNotEqual)
 }
 
 func parseNotEqual(tokens []Token) (Expression, []Token, error) {
-	return parseBinary(tokens, TokenNotEqual, parseGreaterThan, func(l, r int) int { return boolToInt(l != r) })
+	return parseBinary(tokens, TokenNotEqual, parseGreaterThan)
 }
 
 func parseGreaterThan(tokens []Token) (Expression, []Token, error) {
-	return parseBinary(tokens, TokenGreaterThan, parseGreaterEqual, func(l, r int) int { return boolToInt(l > r) })
+	return parseBinary(tokens, TokenGreaterThan, parseGreaterEqual)
 }
 
 func parseGreaterEqual(tokens []Token) (Expression, []Token, error) {
-	return parseBinary(tokens, TokenGreaterEqual, parseLessThan, func(l, r int) int { return boolToInt(l >= r) })
+	return parseBinary(tokens, TokenGreaterEqual, parseLessThan)
 }
 
 func parseLessThan(tokens []Token) (Expression, []Token, error) {
-	return parseBinary(tokens, TokenLessThan, parseLessEqual, func(l, r int) int { return boolToInt(l < r) })
+	return parseBinary(tokens, TokenLessThan, parseLessEqual)
 }
 
 func parseLessEqual(tokens []Token) (Expression, []Token, error) {
-	return parseBinary(tokens, TokenLessEqual, parseMinus, func(l, r int) int { return boolToInt(l <= r) })
+	return parseBinary(tokens, TokenLessEqual, parseMinus)
 }
 
 func parseMinus(tokens []Token) (Expression, []Token, error) {
-	return parseBinary(tokens, TokenMinus, parsePlus, func(l, r int) int { return l - r })
+	return parseBinary(tokens, TokenMinus, parsePlus)
 }
 
 func parsePlus(tokens []Token) (Expression, []Token, error) {
-	return parseBinary(tokens, TokenPlus, parseDivide, func(l, r int) int { return l + r })
+	return parseBinary(tokens, TokenPlus, parseDivide)
 }
 
 func parseDivide(tokens []Token) (Expression, []Token, error) {
-	return parseBinary(tokens, TokenSlash, parseMultiply, func(l, r int) int { return l / r })
+	return parseBinary(tokens, TokenSlash, parseMultiply)
 }
 
 func parseMultiply(tokens []Token) (Expression, []Token, error) {
-	return parseBinary(tokens, TokenAsterisk, parseUnderscore, func(l, r int) int { return l * r })
+	return parseBinary(tokens, TokenAsterisk, parseUnderscore)
 }
 
 func parseUnderscore(tokens []Token) (Expression, []Token, error) {
@@ -239,86 +194,14 @@ func parseUnderscore(tokens []Token) (Expression, []Token, error) {
 			return nil, nil, err
 		}
 
-		leftHand := left
-		left = func(env Env) (any, error) {
-			var lv, rv any
-			var ls, rs string
-			var err error
-			var ok bool
-
-			if lv, err = leftHand(env); err != nil {
-				return nil, err
-			}
-
-			if ls, ok = lv.(string); !ok {
-				return nil, fmt.Errorf("left-hand operand of '_' should be a string but was '%v'", lv)
-			}
-
-			if rv, err = right(env); err != nil {
-				return nil, err
-			}
-
-			if rs, ok = rv.(string); !ok {
-				return nil, fmt.Errorf("right-hand operand of '_' should be a string but was '%v'", rv)
-			}
-
-			return ls + rs, nil
-		}
-
+		left = &BinaryExpression{Left: left, Operator: tokens[0], Right: right}
 		tokens = next
 	}
 
 	return left, tokens, nil
 }
 
-func parseBinary(tokens []Token, tokenType TokenType, down func([]Token) (Expression, []Token, error), op func(int, int) int) (Expression, []Token, error) {
-	left, next, err := down(tokens)
-	if err != nil {
-		return nil, nil, err
-	}
-	tokens = next
-
-	for len(tokens) != 0 && tokens[0].Type == tokenType {
-		lexeme := tokens[0].Lexeme
-
-		right, next, err := down(tokens[1:])
-		if err != nil {
-			return nil, nil, err
-		}
-
-		leftHand := left
-		left = func(env Env) (any, error) {
-			var lv, rv any
-			var li, ri int
-			var err error
-			var ok bool
-
-			if lv, err = leftHand(env); err != nil {
-				return nil, err
-			}
-
-			if li, ok = lv.(int); !ok {
-				return nil, fmt.Errorf("left-hand operand of '%s' should be an int but was '%v'", lexeme, lv)
-			}
-
-			if rv, err = right(env); err != nil {
-				return nil, err
-			}
-
-			if ri, ok = rv.(int); !ok {
-				return nil, fmt.Errorf("right-hand operand of '%s' should be an int but was '%v'", lexeme, rv)
-			}
-
-			return op(li, ri), nil
-		}
-
-		tokens = next
-	}
-
-	return left, tokens, nil
-}
-
-func parseBinary2(tokens []Token, tokenType TokenType, down func([]Token) (Expression, []Token, error), op func(any, any) any) (Expression, []Token, error) {
+func parseBinary(tokens []Token, tokenType TokenType, down func([]Token) (Expression, []Token, error)) (Expression, []Token, error) {
 	left, next, err := down(tokens)
 	if err != nil {
 		return nil, nil, err
@@ -331,22 +214,27 @@ func parseBinary2(tokens []Token, tokenType TokenType, down func([]Token) (Expre
 			return nil, nil, err
 		}
 
-		leftHand := left
-		left = func(env Env) (any, error) {
-			var lv, rv any
-			var err error
+		left = &BinaryExpression{Left: left, Operator: tokens[0], Right: right}
+		tokens = next
+	}
 
-			if lv, err = leftHand(env); err != nil {
-				return nil, err
-			}
+	return left, tokens, nil
+}
 
-			if rv, err = right(env); err != nil {
-				return nil, err
-			}
+func parseBinary2(tokens []Token, tokenType TokenType, down func([]Token) (Expression, []Token, error)) (Expression, []Token, error) {
+	left, next, err := down(tokens)
+	if err != nil {
+		return nil, nil, err
+	}
+	tokens = next
 
-			return op(lv, rv), nil
+	for len(tokens) != 0 && tokens[0].Type == tokenType {
+		right, next, err := down(tokens[1:])
+		if err != nil {
+			return nil, nil, err
 		}
 
+		left = &BinaryExpression{Left: left, Operator: tokens[0], Right: right}
 		tokens = next
 	}
 
@@ -359,41 +247,30 @@ func parsePrimary(tokens []Token) (Expression, []Token, error) {
 	}
 
 	token := tokens[0]
-	if token.Type == TokenString {
-		value := tokens[0].Literal
-		return func(Env) (any, error) { return value, nil }, tokens[1:], nil
-	} else if token.Type == TokenNumber {
-		value := tokens[0].Literal
-		return func(Env) (any, error) { return value, nil }, tokens[1:], nil
+	if token.Type == TokenString || token.Type == TokenNumber {
+		return &LiteralExpression{Token: token}, tokens[1:], nil
 	} else if token.Type == TokenIdentifier {
-		identifier := token.Lexeme
-
 		if len(tokens) >= 2 && tokens[1].Type == TokenParenOpen {
 			return parseFunctionCall(tokens)
 		}
 
 		// Variable access
-		return func(env Env) (any, error) {
-			val, found := env[identifier]
-			if found {
-				return val, nil
-			}
-			return nil, fmt.Errorf("undefined variable '%s'", identifier)
-		}, tokens[1:], nil
+		return &VariableExpression{Token: token}, tokens[1:], nil
 	}
 
 	return nil, nil, fmt.Errorf("expected primary expression but got %s ('%s')", token.Type, token.Lexeme)
 }
 
 func parseFunctionCall(tokens []Token) (Expression, []Token, error) {
-	identifier := tokens[0].Lexeme
+	callToken := tokens[0]
+	identifier := callToken.Lexeme
 
 	builtin, found := builtins[identifier]
 	if !found {
 		return nil, nil, fmt.Errorf("no such builtin function '%s'", identifier)
 	}
 
-	tokens = tokens[2:] // Consume '('
+	tokens = tokens[2:] // Consume identifier and '('
 
 	arguments := make([]Expression, 0)
 	for len(tokens) > 0 {
@@ -425,17 +302,5 @@ func parseFunctionCall(tokens []Token) (Expression, []Token, error) {
 		return nil, nil, fmt.Errorf("expected %d arguments but got %d for function '%s'", builtin.Arity, len(arguments), identifier)
 	}
 
-	return func(env Env) (any, error) { return builtin.Func(env, arguments) }, tokens, nil
-}
-
-func isWeirdlyTrue(v any) bool {
-	return v != 0
-}
-
-func boolToInt(b bool) int {
-	if b {
-		return 1
-	} else {
-		return 0
-	}
+	return &FunctionCallExpression{Token: callToken, Arguments: arguments}, tokens, nil
 }
