@@ -22,6 +22,7 @@ var builtins = map[string]Builtin{
 	"inputLines":  {0, builtinInputLines},
 
 	"split": {2, builtinSplit},
+	"chars": {1, builtinChars},
 
 	"int": {1, builtinInt},
 
@@ -102,6 +103,21 @@ func builtinSplit(env Env, e []Expression) (any, error) {
 
 	parts := anyfy(strings.Split(str, sep))
 	return &parts, nil
+}
+
+func builtinChars(env Env, e []Expression) (any, error) {
+	v, err := e[0](env)
+	if err != nil {
+		return nil, err
+	}
+
+	s, ok := v.(string)
+	if !ok {
+		return nil, fmt.Errorf("argument needs to be a string, but was '%v'", v)
+	}
+
+	list := anyfy(strings.Split(s, ""))
+	return &list, nil
 }
 
 func builtinInt(env Env, e []Expression) (any, error) {

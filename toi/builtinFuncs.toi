@@ -30,3 +30,12 @@ while i < len(parts) {
 println("int:")
 s = "39"
 println(int(s) + 3)
+
+println("chars:")
+s = "Hello, world"
+c = chars(s)
+i = 0
+while i < len(c) {
+    println(get(c, i))
+    i = i + 1
+}
