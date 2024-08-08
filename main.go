@@ -79,6 +79,7 @@ func main() {
 	}
 
 	vars["_getInputNumbers"] = getInputNumbers
+	vars["_stdin"] = stdin
 	for _, s := range statements {
 		if err := s(vars); err != nil {
 			fmt.Fprintf(os.Stderr, "Execution error:\n\t%v\n", err)

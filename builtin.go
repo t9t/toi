@@ -18,6 +18,7 @@ var builtins = map[string]Builtin{
 	"println":     {ArityVariadic, builtinPrintln},
 	"inputLength": {0, builtinInputLength},
 	"inputNumber": {1, builtinInputNumber},
+	"inputLines":  {0, builtinInputLines},
 
 	// "Arrays" & "Maps"
 	"array": {0, builtinArray},
@@ -68,6 +69,15 @@ func builtinInputNumber(env Env, e []Expression) (any, error) {
 	} else {
 		return nil, fmt.Errorf("argument needs to be a number, but was '%v'", index)
 	}
+}
+
+func builtinInputLines(env Env, e []Expression) (any, error) {
+	stdin := env["_stdin"].([]byte)
+	lines := make([]any, 0)
+	for _, line := range strings.Split(strings.TrimSpace(string(stdin)), "\n") {
+		lines = append(lines, line)
+	}
+	return &lines, nil
 }
 
 func builtinArray(env Env, e []Expression) (any, error) {

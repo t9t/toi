@@ -1,0 +1,9 @@
+lines = inputLines()
+
+println(len(lines))
+
+i = 0
+while i < len(lines) {
+    println(get(lines, i))
+    i = i + 1
+}
