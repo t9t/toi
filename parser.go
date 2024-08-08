@@ -142,7 +142,7 @@ func parseExpression(tokens []Token) (Expression, []Token, error) {
 }
 
 func parseEqualEqual(tokens []Token) (Expression, []Token, error) {
-	return parseBinary2(tokens, TokenEqualEqual, parseNotEqual)
+	return parseBinary(tokens, TokenEqualEqual, parseNotEqual)
 }
 
 func parseNotEqual(tokens []Token) (Expression, []Token, error) {
@@ -182,46 +182,10 @@ func parseMultiply(tokens []Token) (Expression, []Token, error) {
 }
 
 func parseUnderscore(tokens []Token) (Expression, []Token, error) {
-	left, next, err := parsePrimary(tokens)
-	if err != nil {
-		return nil, nil, err
-	}
-	tokens = next
-
-	for len(tokens) != 0 && tokens[0].Type == TokenUnderscore {
-		right, next, err := parsePrimary(tokens[1:])
-		if err != nil {
-			return nil, nil, err
-		}
-
-		left = &BinaryExpression{Left: left, Operator: tokens[0], Right: right}
-		tokens = next
-	}
-
-	return left, tokens, nil
+	return parseBinary(tokens, TokenUnderscore, parsePrimary)
 }
 
 func parseBinary(tokens []Token, tokenType TokenType, down func([]Token) (Expression, []Token, error)) (Expression, []Token, error) {
-	left, next, err := down(tokens)
-	if err != nil {
-		return nil, nil, err
-	}
-	tokens = next
-
-	for len(tokens) != 0 && tokens[0].Type == tokenType {
-		right, next, err := down(tokens[1:])
-		if err != nil {
-			return nil, nil, err
-		}
-
-		left = &BinaryExpression{Left: left, Operator: tokens[0], Right: right}
-		tokens = next
-	}
-
-	return left, tokens, nil
-}
-
-func parseBinary2(tokens []Token, tokenType TokenType, down func([]Token) (Expression, []Token, error)) (Expression, []Token, error) {
 	left, next, err := down(tokens)
 	if err != nil {
 		return nil, nil, err
