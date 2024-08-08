@@ -404,28 +404,3 @@ func boolToInt(b bool) int {
 		return 0
 	}
 }
-
-func bla(left Expression, right Expression, env Env, tok string, op func(int, int) int) (any, error) {
-	var lv, rv any
-	var li, ri int
-	var err error
-	var ok bool
-
-	if lv, err = left(env); err != nil {
-		return nil, err
-	}
-
-	if li, ok = lv.(int); !ok {
-		return nil, fmt.Errorf("left-hand operand of '%s' should be a string but was '%v'", tok, lv)
-	}
-
-	if rv, err = right(env); err != nil {
-		return nil, err
-	}
-
-	if ri, ok = rv.(int); !ok {
-		return nil, fmt.Errorf("right-hand operand of '%s' should be a string but was '%v'", tok, rv)
-	}
-
-	return op(li, ri), nil
-}
