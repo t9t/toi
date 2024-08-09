@@ -1,12 +1,15 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"os"
 	"strconv"
 	"strings"
 )
+
+var toiStdout bytes.Buffer
 
 func main() {
 	if len(os.Args) != 1 && len(os.Args) != 2 {
@@ -74,15 +77,21 @@ func main() {
 		return inputNumbersCache, nil
 	}
 
+	dumpStdout := func() {
+		toiStdout.WriteTo(os.Stdout)
+	}
+
 	vars["_getInputNumbers"] = getInputNumbers
 	vars["_stdin"] = stdin
 	for _, s := range statements {
 		if err := s.execute(vars); err != nil {
+			dumpStdout()
 			fmt.Fprintf(os.Stderr, "Execution error:\n\t%v\n", err)
 			os.Exit(1)
 			return
 		}
 	}
+	dumpStdout()
 }
 
 func ohno(err error) {

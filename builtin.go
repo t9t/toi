@@ -36,18 +36,17 @@ var builtins = map[string]Builtin{
 }
 
 func builtinPrintln(env Env, e []Expression) (any, error) {
-	var sb strings.Builder
 	for i, expr := range e {
 		if i != 0 {
-			sb.WriteString(", ")
+			toiStdout.WriteString(", ")
 		}
 		v, err := expr.evaluate(env)
 		if err != nil {
 			return nil, err
 		}
-		sb.WriteString(fmt.Sprintf("%v", v))
+		toiStdout.WriteString(fmt.Sprintf("%v", v))
 	}
-	fmt.Println(sb.String())
+	toiStdout.WriteRune('\n')
 	return nil, nil
 }
 
