@@ -20,34 +20,43 @@ func main() {
 		return
 	}
 
-	var scriptData []byte
+	var stdout string
 	var err error
-	var stdin []byte
-	if len(os.Args) == 1 {
-		scriptData, err = io.ReadAll(os.Stdin)
-	} else {
-		scriptData, err = os.ReadFile(os.Args[1])
-		ohno(err)
-		stdin, err = io.ReadAll(os.Stdin)
-		ohno(err)
-	}
+	stdin, err := io.ReadAll(os.Stdin)
 	ohno(err)
 
+	if len(os.Args) == 1 {
+		stdout, err = runScript(stdin, "")
+	} else if len(os.Args) == 2 {
+		stdout, err = runScriptFile(os.Args[1], string(stdin))
+	}
+
+	fmt.Print(stdout)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error executing script '%s': %v\n", os.Args[1], err)
+		os.Exit(1)
+	}
+	return
+}
+
+func runScript(scriptData []byte, stdin string) (string, error) {
 	tokens, errors := tokenize(string(scriptData))
 	if len(errors) != 0 {
 		fmt.Fprintf(os.Stderr, "Got %d errors:\n", len(errors))
 		for i, err := range errors {
 			fmt.Fprintf(os.Stderr, "  %d: %v\n", i, err)
 		}
+		// TODO: no exit here
 		os.Exit(1)
-		return
+		return "", nil
 	}
 
 	statements, err := parse(tokens)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Parse error: %v\n", err)
 		os.Exit(1)
-		return
+		// TODO: no exit here
+		return "", nil
 	}
 
 	vars := make(map[string]any)
@@ -55,7 +64,7 @@ func main() {
 	var inputNumbersCache []int = nil
 	populateInputNumbersCache := func() error {
 		inputNumbersCache = make([]int, 0)
-		for _, line := range strings.Split(string(stdin), "\n") {
+		for _, line := range strings.Split(stdin, "\n") {
 			if line == "" {
 				continue
 			}
@@ -77,21 +86,33 @@ func main() {
 		return inputNumbersCache, nil
 	}
 
-	dumpStdout := func() {
-		toiStdout.WriteTo(os.Stdout)
-	}
+	// TODO: better state management instead of global
+	toiStdout = bytes.Buffer{}
 
 	vars["_getInputNumbers"] = getInputNumbers
 	vars["_stdin"] = stdin
 	for _, s := range statements {
 		if err := s.execute(vars); err != nil {
-			dumpStdout()
+			toiStdout.WriteTo(os.Stdout)
 			fmt.Fprintf(os.Stderr, "Execution error:\n\t%v\n", err)
+			// TODO: no exit here
 			os.Exit(1)
-			return
+			return "", nil
 		}
 	}
-	dumpStdout()
+
+	return toiStdout.String(), nil
+}
+
+func runScriptFile(filepath string, stdin string) (string, error) {
+	var scriptData []byte
+	var err error
+	scriptData, err = os.ReadFile(filepath)
+	if err != nil {
+		return "", err
+	}
+
+	return runScript(scriptData, stdin)
 }
 
 func ohno(err error) {

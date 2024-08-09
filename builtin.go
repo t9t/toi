@@ -44,7 +44,18 @@ func builtinPrintln(env Env, e []Expression) (any, error) {
 		if err != nil {
 			return nil, err
 		}
-		toiStdout.WriteString(fmt.Sprintf("%v", v))
+		if array, ok := v.(*[]any); ok {
+			toiStdout.WriteRune('[')
+			for i, element := range *array {
+				if i != 0 {
+					toiStdout.WriteString(", ")
+				}
+				toiStdout.WriteString(fmt.Sprintf("%v", element))
+			}
+			toiStdout.WriteRune(']')
+		} else {
+			toiStdout.WriteString(fmt.Sprintf("%v", v))
+		}
 	}
 	toiStdout.WriteRune('\n')
 	return nil, nil
@@ -77,8 +88,8 @@ func builtinInputNumber(env Env, e []Expression) (any, error) {
 }
 
 func builtinInputLines(env Env, e []Expression) (any, error) {
-	stdin := env["_stdin"].([]byte)
-	lines := anyfy(strings.Split(strings.TrimSpace(string(stdin)), "\n"))
+	stdin := env["_stdin"].(string)
+	lines := anyfy(strings.Split(strings.TrimSpace(stdin), "\n"))
 	return &lines, nil
 }
 
