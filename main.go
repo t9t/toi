@@ -40,16 +40,12 @@ func main() {
 		return
 	}
 
-	fmt.Printf("%d tokens: %v\n", len(tokens), tokens)
-
 	statements, err := parse(tokens)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Parse error: %v\n", err)
 		os.Exit(1)
 		return
 	}
-
-	fmt.Printf("%d statements: %v\n", len(statements), statements)
 
 	vars := make(map[string]any)
 
