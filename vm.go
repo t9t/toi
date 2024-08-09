@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"slices"
+	"time"
 )
 
 // TODO: don't want to be casting `byte(opcode)` all the time
@@ -71,6 +72,7 @@ func execute(ops []byte) error {
 		stack[stackPos] = v
 	}
 
+	start := time.Now()
 	for ip < len(ops) {
 		// TODO: end of program condition
 		instruction := readByte()
@@ -106,7 +108,7 @@ func execute(ops []byte) error {
 				bop = "/"
 
 			case OpBinaryEqual:
-				result = boolToInt(left.(int) == right.(int))
+				result = boolToInt(left == right)
 				bop = "="
 			case OpBinaryGreaterThan:
 				result = boolToInt(left.(int) > right.(int))
@@ -210,5 +212,6 @@ func execute(ops []byte) error {
 			push(v)
 		}
 	}
+	fmt.Printf("VM run time: %v\n", time.Since(start))
 	return nil
 }

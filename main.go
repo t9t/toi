@@ -7,6 +7,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 )
 
 // TODO: definitely not globals
@@ -103,8 +104,7 @@ func runScript(scriptData []byte, stdin string) (string, error) {
 
 	execute(ops)
 
-	return toiStdout.String(), nil
-
+	start := time.Now()
 	if err := scriptStatement.execute(vars); err != nil {
 		toiStdout.WriteTo(os.Stdout)
 		fmt.Fprintf(os.Stderr, "Execution error:\n\t%v\n", err)
@@ -112,6 +112,8 @@ func runScript(scriptData []byte, stdin string) (string, error) {
 		os.Exit(1)
 		return "", nil
 	}
+
+	fmt.Printf("Tree interpreter run time: %v\n", time.Since(start))
 
 	return toiStdout.String(), nil
 }
