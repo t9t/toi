@@ -2,10 +2,12 @@ package main
 
 type Statement interface {
 	execute(env Env) error
+	compile() []byte
 }
 
 type Expression interface {
 	evaluate(env Env) (any, error)
+	compile() []byte
 }
 
 type BlockStatement struct {

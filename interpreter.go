@@ -157,3 +157,10 @@ func boolToInt(b bool) int {
 		return 0
 	}
 }
+
+func intToBool(i int) bool {
+	if i == 0 {
+		return false
+	}
+	return true
+}

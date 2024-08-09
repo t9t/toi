@@ -9,7 +9,9 @@ import (
 	"strings"
 )
 
+// TODO: definitely not globals
 var toiStdout bytes.Buffer
+var toiStdin string
 
 func main() {
 	if len(os.Args) != 1 && len(os.Args) != 2 {
@@ -26,8 +28,10 @@ func main() {
 	ohno(err)
 
 	if len(os.Args) == 1 {
+		toiStdin = ""
 		stdout, err = runScript(stdin, "")
 	} else if len(os.Args) == 2 {
+		toiStdin = string(stdin)
 		stdout, err = runScriptFile(os.Args[1], string(stdin))
 	}
 
@@ -51,7 +55,7 @@ func runScript(scriptData []byte, stdin string) (string, error) {
 		return "", nil
 	}
 
-	statements, err := parse(tokens)
+	scriptStatement, err := parse(tokens)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Parse error: %v\n", err)
 		os.Exit(1)
@@ -91,14 +95,22 @@ func runScript(scriptData []byte, stdin string) (string, error) {
 
 	vars["_getInputNumbers"] = getInputNumbers
 	vars["_stdin"] = stdin
-	for _, s := range statements {
-		if err := s.execute(vars); err != nil {
-			toiStdout.WriteTo(os.Stdout)
-			fmt.Fprintf(os.Stderr, "Execution error:\n\t%v\n", err)
-			// TODO: no exit here
-			os.Exit(1)
-			return "", nil
-		}
+
+	ops := scriptStatement.compile()
+	decompile(ops)
+
+	fmt.Println("===== exec =====")
+
+	execute(ops)
+
+	return toiStdout.String(), nil
+
+	if err := scriptStatement.execute(vars); err != nil {
+		toiStdout.WriteTo(os.Stdout)
+		fmt.Fprintf(os.Stderr, "Execution error:\n\t%v\n", err)
+		// TODO: no exit here
+		os.Exit(1)
+		return "", nil
 	}
 
 	return toiStdout.String(), nil
