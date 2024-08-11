@@ -1,0 +1,191 @@
+lines = inputLines()
+lineCount = len(lines)
+
+nil = get(map(), "...")
+true = 1
+false = 0
+
+i = 0
+passport = map()
+validCount = 0
+while i <= lineCount {
+    if i == lineCount {
+        line = ""
+    }
+    if i <> lineCount {
+        line = get(lines, i)
+    }
+
+    if line == "" {
+        if len(passport) == 8 {
+            validCount = validCount + 1
+        }
+        if len(passport) == 7 {
+            if get(passport, "cid") == nil {
+                validCount = validCount + 1
+            }
+        }
+        passport = map()
+    }
+
+    if line <> "" {
+        parts = split(line, " ")
+        p = 0
+        while p < len(parts) {
+            elems = split(get(parts, p), ":")
+            key = get(elems, 0)
+            value = get(elems, 1)
+            valid = true
+
+            if key == "byr" {
+                byr = int(value)
+                if byr < 1920 { valid = false }
+                if byr > 2002 { valid = false }
+            }
+
+            if key == "iyr" {
+                iyr = int(value)
+                if iyr < 2010 { valid = false }
+                if iyr > 2020 { valid = false }
+            }
+
+            if key == "eyr" {
+                eyr = int(value)
+                if eyr < 2020 { valid = false }
+                if eyr > 2030 { valid = false }
+            }
+
+            ch = chars(value)
+            chl = len(ch)
+
+            if key == "hgt" {
+                if get(ch, chl-2) == "c" {
+                    if get(ch, chl-1) == "m" {
+                        cm = int(get(split(value, "cm"), 0))
+                        if cm < 150 { valid = false }
+                        if cm > 193 { valid = false }
+                    }
+                }
+                if get(ch, chl-2) == "i" {
+                    if get(ch, chl-1) == "n" {
+                        cm = int(get(split(value, "in"), 0))
+                        if cm < 59 { valid = false }
+                        if cm > 76 { valid = false }
+                    }
+                }
+
+                if get(ch, chl-2) <> "c" {
+                    if get(ch, chl-1) <> "m" {
+                        if get(ch, chl-2) <> "i" {
+                            if get(ch, chl-1) <> "n" {
+                                valid = false
+                            }
+                        }
+                    }
+                }
+            }
+
+            if key == "hcl" {
+                if chl <> 7 { valid = false }
+                if get(ch, 0) <> "#" { valid = false }
+                ci = 1
+                while ci < chl {
+                    c = get(ch, ci)
+                    ci = ci + 1
+                    if c <> "0" {
+                        if c <> "1" {
+                        if c <> "2" {
+                        if c <> "3" {
+                        if c <> "4" {
+                        if c <> "5" {
+                        if c <> "6" {
+                        if c <> "7" {
+                        if c <> "8" {
+                        if c <> "9" {
+                        if c <> "a" {
+                        if c <> "b" {
+                        if c <> "c" {
+                        if c <> "d" {
+                        if c <> "e" {
+                        if c <> "f" {
+                            valid = false
+                        }
+                        }
+                        }
+                        }
+                        }
+                        }
+                        }
+                        }
+                        }
+                        }
+                        }
+                        }
+                        }
+                        }
+                        }
+                    }
+                }
+            }
+
+            if key == "ecl" {
+                if value <> "amb" {
+                    if value <> "blu" {
+                        if value <> "brn" {
+                            if value <> "gry" {
+                                if value <> "grn" {
+                                    if value <> "hzl" {
+                                        if value <> "oth" {
+                                            valid = false
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            if key == "pid" {
+                if chl <> 9 { valid = false }
+                ci = 0
+                while ci < chl {
+                    c = get(ch, ci)
+                    ci = ci + 1
+                    if c <> "0" {
+                    if c <> "1" {
+                    if c <> "2" {
+                    if c <> "3" {
+                    if c <> "4" {
+                    if c <> "5" {
+                    if c <> "6" {
+                    if c <> "7" {
+                    if c <> "8" {
+                    if c <> "9" {
+                        valid = false
+                    }
+                    }
+                    }
+                    }
+                    }
+                    }
+                    }
+                    }
+                    }
+                    }
+                }
+            }
+
+            if key == "cid" {}
+
+            if valid {
+                set(passport, get(elems, 0), get(elems, 1))
+            }
+            p = p + 1
+        }
+    }
+
+    i = i + 1
+}
+
+println(validCount)
