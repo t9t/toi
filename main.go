@@ -62,19 +62,17 @@ func runScript(scriptData []byte, stdin string) (string, error) {
 		return "", nil
 	}
 
+	// TODO: better state management instead of globals
 	toiStdin = stdin
-	vars := make(map[string]any)
-	// TODO: better state management instead of global
 	toiStdout = bytes.Buffer{}
 
-	vars["_getInputNumbers"] = getInputNumbers
-	vars["_stdin"] = stdin
-
 	ops := scriptStatement.compile()
-
 	execute(ops)
+
 	vmOutput := toiStdout.String()
 	toiStdout.Reset()
+
+	vars := make(map[string]any)
 
 	start := time.Now()
 	if err := scriptStatement.execute(vars); err != nil {

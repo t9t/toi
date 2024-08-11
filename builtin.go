@@ -117,14 +117,11 @@ func getInputNumbers() ([]int, error) {
 }
 
 func builtinInputLines(env Env, e []Expression) (any, error) {
-	stdin := env["_stdin"].(string)
-	lines := anyfy(strings.Split(strings.TrimSpace(stdin), "\n"))
-	return &lines, nil
+	return toToiArray(strings.Split(strings.TrimSpace(toiStdin), "\n")), nil
 }
 
 func builtinInputLinesVm(arguments []any) (any, error) {
-	lines := anyfy(strings.Split(strings.TrimSpace(toiStdin), "\n"))
-	return &lines, nil
+	return toToiArray(strings.Split(strings.TrimSpace(toiStdin), "\n")), nil
 }
 
 func builtinInputNumbers(env Env, e []Expression) (any, error) {
@@ -132,8 +129,7 @@ func builtinInputNumbers(env Env, e []Expression) (any, error) {
 	if err != nil {
 		return nil, err
 	}
-	ret := anyfy(numbers)
-	return &ret, nil
+	return toToiArray(numbers), nil
 }
 
 func builtinInputNumbersVm(arguments []any) (any, error) {
@@ -141,8 +137,7 @@ func builtinInputNumbersVm(arguments []any) (any, error) {
 	if err != nil {
 		return nil, err
 	}
-	ret := anyfy(numbers)
-	return &ret, nil
+	return toToiArray(numbers), nil
 }
 
 func builtinSplit(env Env, e []Expression) (any, error) {
@@ -163,8 +158,7 @@ func builtinSplit(env Env, e []Expression) (any, error) {
 		return nil, fmt.Errorf("second argument needs to be a string, but was '%v'", maybeSep)
 	}
 
-	parts := anyfy(strings.Split(str, sep))
-	return &parts, nil
+	return toToiArray(strings.Split(str, sep)), nil
 }
 
 func builtinSplitVm(arguments []any) (any, error) {
@@ -178,8 +172,7 @@ func builtinSplitVm(arguments []any) (any, error) {
 		return nil, fmt.Errorf("second argument needs to be a string, but was '%v'", maybeSep)
 	}
 
-	parts := anyfy(strings.Split(str, sep))
-	return &parts, nil
+	return toToiArray(strings.Split(str, sep)), nil
 }
 
 func builtinChars(env Env, e []Expression) (any, error) {
@@ -193,8 +186,7 @@ func builtinChars(env Env, e []Expression) (any, error) {
 		return nil, fmt.Errorf("argument needs to be a string, but was '%v'", v)
 	}
 
-	list := anyfy(strings.Split(s, ""))
-	return &list, nil
+	return toToiArray(strings.Split(s, "")), nil
 }
 
 func builtinCharsVm(arguments []any) (any, error) {
@@ -204,8 +196,7 @@ func builtinCharsVm(arguments []any) (any, error) {
 		return nil, fmt.Errorf("argument needs to be a string, but was '%v'", v)
 	}
 
-	list := anyfy(strings.Split(s, ""))
-	return &list, nil
+	return toToiArray(strings.Split(s, "")), nil
 }
 
 func builtinInt(env Env, e []Expression) (any, error) {
@@ -511,10 +502,10 @@ func builtinLenVm(arguments []any) (any, error) {
 	}
 }
 
-func anyfy[T any](l []T) []any {
-	ret := make([]any, len(l))
+func toToiArray[T any](l []T) *[]any {
+	array := make([]any, len(l))
 	for i, s := range l {
-		ret[i] = s
+		array[i] = s
 	}
-	return ret
+	return &array
 }
