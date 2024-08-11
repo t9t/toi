@@ -5,6 +5,8 @@ import "fmt"
 // TODO: no global state
 var constants = make([]any, 0)
 
+// TODO: use a bytebuffer instead of slices for efficiency; although slices are nice and easy to patch jumps
+
 // Statements
 
 func (s *BlockStatement) compile() ([]byte, error) {
@@ -224,7 +226,6 @@ func ensureConstant(value any) (byte, error) {
 	}
 
 	if len(constants) == MaxConstants {
-		// TODO: return error
 		return 0, fmt.Errorf("cannot add constant '%v' because the maximum of %d was reached", value, MaxConstants)
 	}
 

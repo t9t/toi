@@ -67,7 +67,6 @@ func parseStatement(tokens []Token) (stmt Statement, next []Token, err error) {
 func parseBlock(tokens []Token, typ string) (Statement, []Token, error) {
 	next := tokens
 
-	// TODO: parse blocks
 	if len(next) == 0 || next[0].Type != TokenBraceOpen {
 		if len(next) != 0 {
 			next = next[1:]

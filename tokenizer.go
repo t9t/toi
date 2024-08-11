@@ -188,7 +188,7 @@ func tokenizeNumber(runes []rune) (Token, error) {
 	literal, err := strconv.Atoi(lexeme)
 	if err != nil {
 		// TODO: better errors for really big numbers
-		panic(fmt.Sprintf("error converting '%s' to int: %v", lexeme, err))
+		return Token{}, fmt.Errorf("error converting '%s' to int: %v", lexeme, err)
 	}
 
 	if len(lexeme) > 1 && lexeme[0] == '0' && lexeme[1] != '.' {

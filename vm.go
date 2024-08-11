@@ -6,9 +6,9 @@ import (
 	"time"
 )
 
-// TODO: don't want to be casting `byte(opcode)` all the time
 // type Opcode byte
 // type BinaryOpcode byte
+// TODO: don't want to be casting `byte(opcode)` all the time
 
 const (
 	OpPop byte = iota
@@ -64,11 +64,11 @@ func execute(ops []byte) error {
 	stack := make([]any, maxStack)
 	variables := make(map[string]any, 0)
 	stackNext := 0
-	pop := func() any {
+	popStack := func() any {
 		stackNext -= 1
 		return stack[stackNext]
 	}
-	push := func(v any) {
+	pushStack := func(v any) {
 		if stackNext == maxStack {
 			panic(fmt.Sprintf("stack overflow: attempting to push '%v' onto the stack with maximum size %d", v, maxStack))
 		}
@@ -82,11 +82,11 @@ func execute(ops []byte) error {
 
 		switch instruction {
 		case OpPop:
-			_ = pop()
+			_ = popStack()
 		case OpBinary:
 			binop := readOpByte()
-			right := pop()
-			left := pop()
+			right := popStack()
+			left := popStack()
 
 			var result any
 			var err error
@@ -116,17 +116,17 @@ func execute(ops []byte) error {
 				return err
 			}
 
-			push(result)
+			pushStack(result)
 		case OpNot:
-			v := pop()
+			v := popStack()
 			i, ok := v.(int)
 			if !ok {
 				return fmt.Errorf("operand of not operation must be int, but was '%v'", v)
 			}
-			push(boolToInt(!intToBool(i)))
+			pushStack(boolToInt(!intToBool(i)))
 		case OpJumpIfTrue:
 			jumpAmount := int(readOpByte())
-			v := pop()
+			v := popStack()
 			if isWeirdlyTrue(v) {
 				ip += jumpAmount
 			}
@@ -135,10 +135,10 @@ func execute(ops []byte) error {
 			ip -= jumpAmount
 		case OpInlineNumber:
 			v := int(readOpByte())
-			push(v)
+			pushStack(v)
 		case OpLoadConstant:
 			index := int(readOpByte())
-			push(constants[index])
+			pushStack(constants[index])
 		case OpReadVariable:
 			variableName, err := readConstantString()
 			if err != nil {
@@ -148,13 +148,13 @@ func execute(ops []byte) error {
 			if !found {
 				return fmt.Errorf("variable '%v' not defined", variableName)
 			}
-			push(value)
+			pushStack(value)
 		case OpSetVariable:
 			variableName, err := readConstantString()
 			if err != nil {
 				return err
 			}
-			variables[variableName] = pop()
+			variables[variableName] = popStack()
 		case OpCallBuiltin:
 			functionName, err := readConstantString()
 			if err != nil {
@@ -166,26 +166,26 @@ func execute(ops []byte) error {
 			}
 			arguments := make([]any, builtin.Arity)
 			for i := 0; i < builtin.Arity; i++ {
-				arguments[i] = pop()
+				arguments[i] = popStack()
 			}
 			slices.Reverse(arguments) // Arguments were pushed onto the stack in left-to-right order, so we read them right-to-left
 			returnValue, err := builtin.VmFunc(arguments)
 			if err != nil {
 				return err
 			}
-			push(returnValue)
+			pushStack(returnValue)
 		case OpPrintln:
 			argumentCount := int(readOpByte())
 			arguments := make([]any, argumentCount)
 			for i := 0; i < argumentCount; i++ {
-				arguments[i] = pop()
+				arguments[i] = popStack()
 			}
 			slices.Reverse(arguments) // Arguments were pushed onto the stack in left-to-right order, so we read them right-to-left
 			returnValue, err := builtinPrintlnVm(arguments)
 			if err != nil {
 				return err
 			}
-			push(returnValue)
+			pushStack(returnValue)
 		}
 	}
 
