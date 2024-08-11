@@ -1,17 +1,17 @@
 numbers = inputNumbers()
 i = len(numbers)
 
-while i {
+while i <> 0 {
     i = i - 1
     left = get(numbers, i)
 
     j = i
-    while j {
+    while j <> 0 {
         j = j - 1
         middle = get(numbers, j)
 
         k = j
-        while k {
+        while k <> 0 {
             k = k - 1
             right = get(numbers, k)
 
