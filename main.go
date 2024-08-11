@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"strconv"
-	"strings"
 	"time"
 )
 
@@ -64,33 +62,8 @@ func runScript(scriptData []byte, stdin string) (string, error) {
 		return "", nil
 	}
 
+	toiStdin = stdin
 	vars := make(map[string]any)
-
-	var inputNumbersCache []int = nil
-	populateInputNumbersCache := func() error {
-		inputNumbersCache = make([]int, 0)
-		for _, line := range strings.Split(stdin, "\n") {
-			if line == "" {
-				continue
-			}
-			n, err := strconv.Atoi(line)
-			if err != nil {
-				return err
-			}
-			inputNumbersCache = append(inputNumbersCache, n)
-		}
-		return nil
-	}
-
-	getInputNumbers := func() ([]int, error) {
-		if inputNumbersCache == nil {
-			if err := populateInputNumbersCache(); err != nil {
-				return nil, err
-			}
-		}
-		return inputNumbersCache, nil
-	}
-
 	// TODO: better state management instead of global
 	toiStdout = bytes.Buffer{}
 
@@ -102,7 +75,7 @@ func runScript(scriptData []byte, stdin string) (string, error) {
 
 	fmt.Println("===== exec =====")
 
-	execute(ops)
+	// execute(ops)
 
 	start := time.Now()
 	if err := scriptStatement.execute(vars); err != nil {

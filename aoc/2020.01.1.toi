@@ -1,12 +1,14 @@
-i = inputLength()
+numbers = inputNumbers()
+i = len(numbers)
+
 while i {
     i = i - 1
-    left = inputNumber(i)
+    left = get(numbers, i)
 
     j = i
     while j {
         j = j - 1
-        right = inputNumber(j)
+        right = get(numbers, j)
 
         if 2020 - left + right == 0 {
             println(2020, left, right, left * right)

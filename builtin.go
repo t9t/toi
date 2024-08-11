@@ -18,10 +18,10 @@ type Builtin struct {
 const ArityVariadic = -1
 
 var builtins = map[string]Builtin{
-	"println":     {ArityVariadic, builtinPrintln, builtinPrintlnVm},
-	"inputLength": {0, builtinInputLength, builtinInputLengthVm},
-	"inputNumber": {1, builtinInputNumber, builtinInputNumberVm},
-	"inputLines":  {0, builtinInputLines, builtinInputLinesVm},
+	"println":      {ArityVariadic, builtinPrintln, builtinPrintlnVm},
+	"inputLength":  {0, builtinInputLength, builtinInputLengthVm},
+	"inputNumbers": {0, builtinInputNumbers, builtinInputNumbersVm},
+	"inputLines":   {0, builtinInputLines, builtinInputLinesVm},
 
 	"split": {2, builtinSplit, builtinSplitVm},
 	"chars": {1, builtinChars, builtinCharsVm},
@@ -116,36 +116,6 @@ func getInputNumbers() ([]int, error) {
 	return inputNumbers, nil
 }
 
-func builtinInputNumber(env Env, e []Expression) (any, error) {
-	index, err := e[0].evaluate(env)
-	if err != nil {
-		return nil, err
-	}
-	if i, ok := index.(int); ok {
-		getInputNumbers := (env["_getInputNumbers"]).(func() ([]int, error))
-		inputNumbers, err := getInputNumbers()
-		if err != nil {
-			return nil, err
-		}
-		return inputNumbers[i], nil
-	} else {
-		return nil, fmt.Errorf("argument needs to be a number, but was '%v'", index)
-	}
-}
-
-func builtinInputNumberVm(arguments []any) (any, error) {
-	index := arguments[0]
-	if i, ok := index.(int); ok {
-		inputNumbers, err := getInputNumbers()
-		if err != nil {
-			return nil, err
-		}
-		return inputNumbers[i], nil
-	} else {
-		return nil, fmt.Errorf("argument needs to be a number, but was '%v'", index)
-	}
-}
-
 func builtinInputLines(env Env, e []Expression) (any, error) {
 	stdin := env["_stdin"].(string)
 	lines := anyfy(strings.Split(strings.TrimSpace(stdin), "\n"))
@@ -155,6 +125,24 @@ func builtinInputLines(env Env, e []Expression) (any, error) {
 func builtinInputLinesVm(arguments []any) (any, error) {
 	lines := anyfy(strings.Split(strings.TrimSpace(toiStdin), "\n"))
 	return &lines, nil
+}
+
+func builtinInputNumbers(env Env, e []Expression) (any, error) {
+	numbers, err := getInputNumbers()
+	if err != nil {
+		return nil, err
+	}
+	ret := anyfy(numbers)
+	return &ret, nil
+}
+
+func builtinInputNumbersVm(arguments []any) (any, error) {
+	numbers, err := getInputNumbers()
+	if err != nil {
+		return nil, err
+	}
+	ret := anyfy(numbers)
+	return &ret, nil
 }
 
 func builtinSplit(env Env, e []Expression) (any, error) {
@@ -523,9 +511,9 @@ func builtinLenVm(arguments []any) (any, error) {
 	}
 }
 
-func anyfy(strings []string) []any {
-	ret := make([]any, len(strings))
-	for i, s := range strings {
+func anyfy[T any](l []T) []any {
+	ret := make([]any, len(l))
+	for i, s := range l {
 		ret[i] = s
 	}
 	return ret

@@ -1,6 +1,7 @@
 println(42)
 
-println(inputNumber(10-9))
+numbers = inputNumbers()
+println(get(numbers, 10-9))
 
 println(println(88))
 

@@ -1,9 +1,11 @@
-println(inputLength())
-println(inputNumber(0))
-println(inputNumber(1))
+numbers = inputNumbers()
 
-i = inputLength()
+println(len(numbers))
+println(get(numbers, 0))
+println(get(numbers, 1))
+
+i = len(numbers)
 while i {
     i = i - 1
-    println(i, inputNumber(i))
+    println(i, get(numbers, i))
 }
