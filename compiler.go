@@ -7,44 +7,59 @@ var constants = make([]any, 0)
 
 // Statements
 
-func (s *BlockStatement) compile() []byte {
+func (s *BlockStatement) compile() ([]byte, error) {
 	ops := make([]byte, 0)
 	for _, stmt := range s.Statements {
-		ops = append(ops, stmt.compile()...)
+		stmtOps, err := stmt.compile()
+		if err != nil {
+			return nil, err
+		}
+		ops = append(ops, stmtOps...)
 	}
-	return ops
+	return ops, nil
 }
 
-func (s *IfStatement) compile() []byte {
-	condition := s.Condition.compile()
+func (s *IfStatement) compile() ([]byte, error) {
+	condition, err := s.Condition.compile()
+	if err != nil {
+		return nil, err
+	}
+
 	not := []byte{OpNot} // We don't have a "jump if false", so we need to NOT the result
 	jump := []byte{OpJumpIfTrue, InvalidOp}
 
-	then := s.Then.compile()
+	then, err := s.Then.compile()
+	if err != nil {
+		return nil, err
+	}
 
 	if len(then) > MaxBlockSize {
-		// TODO: compile should return error
 		// TODO: keep tokens for error reporting
-		panic(fmt.Sprintf("if's then block of %d statements exceeds %d operations (token %s; '%s')", len(then), MaxBlockSize, "oops", "oops"))
+		return nil, fmt.Errorf("if's then block of %d statements exceeds %d operations (token %s; '%s')", len(then), MaxBlockSize, "oops", "oops")
 	}
 
 	// Patch jump now that we know the number of instructions to jump over
 	jump[1] = byte(len(then))
 
-	return combine(condition, not, jump, then)
+	return combine(condition, not, jump, then), nil
 }
 
-func (s *WhileStatement) compile() []byte {
-	condition := s.Condition.compile()
+func (s *WhileStatement) compile() ([]byte, error) {
+	condition, err := s.Condition.compile()
+	if err != nil {
+		return nil, err
+	}
 	not := []byte{OpNot} // We don't have a "jump if false", so we need to NOT the result
 	jump := []byte{OpJumpIfTrue, InvalidOp}
 
-	body := s.Body.compile()
+	body, err := s.Body.compile()
+	if err != nil {
+		return nil, err
+	}
 
 	if len(body) > MaxBlockSize {
-		// TODO: compile should return error
 		// TODO: keep tokens for error reporting
-		panic(fmt.Sprintf("while body of %d statements exceeds %d operations (token %s; '%s')", len(body), MaxBlockSize, "oops", "oops"))
+		return nil, fmt.Errorf("while body of %d statements exceeds %d operations (token %s; '%s')", len(body), MaxBlockSize, "oops", "oops")
 	}
 
 	/*
@@ -56,36 +71,51 @@ func (s *WhileStatement) compile() []byte {
 	*/
 	jumpBackCount := len(condition) + len(not) + len(jump) + len(body) + 2 // + 2 for jumpBack + count
 	if jumpBackCount > MaxBlockSize {
-		// TODO: compile should return error
 		// TODO: keep tokens for error reporting
-		panic(fmt.Sprintf("backjump of %d statements exceeds %d operations (token %s; '%s')", jumpBackCount, MaxBlockSize, "oops", "oops"))
+		return nil, fmt.Errorf("backjump of %d statements exceeds %d operations (token %s; '%s')", jumpBackCount, MaxBlockSize, "oops", "oops")
 	}
 	jumpBack := []byte{OpJumpBack, byte(jumpBackCount)}
 
 	// Patch jump now that we know the number of instructions to jump over
 	jump[1] = byte(len(body) + 2) // +2 to jump over the OpJumpBack instruction and its argument
 
-	return combine(condition, not, jump, body, jumpBack)
+	return combine(condition, not, jump, body, jumpBack), nil
 }
 
-func (s *AssignmentStatement) compile() []byte {
-	index := ensureConstant(s.Identifier.Lexeme)
+func (s *AssignmentStatement) compile() ([]byte, error) {
+	index, err := ensureConstant(s.Identifier.Lexeme)
+	if err != nil {
+		return nil, err
+	}
 
-	expression := s.Expression.compile()
+	expression, err := s.Expression.compile()
+	if err != nil {
+		return nil, err
+	}
 
-	return combine(expression, []byte{OpSetVariable, index})
+	return combine(expression, []byte{OpSetVariable, index}), nil
 }
 
-func (s *ExpressionStatement) compile() []byte {
+func (s *ExpressionStatement) compile() ([]byte, error) {
 	/* Discard return value afterwards using pop */
-	return combine(s.Expression.compile(), []byte{OpPop})
+	ops, err := s.Expression.compile()
+	if err != nil {
+		return nil, err
+	}
+	return combine(ops, []byte{OpPop}), nil
 }
 
 // Expressions
 
-func (e *BinaryExpression) compile() []byte {
-	leftOps := e.Left.compile()
-	rightOps := e.Right.compile()
+func (e *BinaryExpression) compile() ([]byte, error) {
+	leftOps, err := e.Left.compile()
+	if err != nil {
+		return nil, err
+	}
+	rightOps, err := e.Right.compile()
+	if err != nil {
+		return nil, err
+	}
 
 	var binaryOp byte
 	appendNot := false
@@ -123,42 +153,59 @@ func (e *BinaryExpression) compile() []byte {
 	if appendNot {
 		ops = append(ops, OpNot)
 	}
-	return combine(leftOps, rightOps, ops)
+	return combine(leftOps, rightOps, ops), nil
 }
 
-func (e *FunctionCallExpression) compile() []byte {
+func (e *FunctionCallExpression) compile() ([]byte, error) {
 	if e.Token.Lexeme == "println" {
 		// TODO: better
 		ops := make([]byte, 0)
 		for _, arg := range e.Arguments {
-			ops = append(ops, arg.compile()...)
+			exprOps, err := arg.compile()
+			if err != nil {
+				return nil, err
+			}
+			ops = append(ops, exprOps...)
 		}
 		// TODO: handle byte overflow
-		return append(ops, []byte{OpPrintln, byte(len(e.Arguments))}...)
+		return append(ops, []byte{OpPrintln, byte(len(e.Arguments))}...), nil
 	}
 
-	index := ensureConstant(e.Token.Lexeme)
+	index, err := ensureConstant(e.Token.Lexeme)
+	if err != nil {
+		return nil, err
+	}
 	ops := make([]byte, 0)
 	for _, arg := range e.Arguments {
-		ops = append(ops, arg.compile()...)
+		exprOps, err := arg.compile()
+		if err != nil {
+			return nil, err
+		}
+		ops = append(ops, exprOps...)
 	}
-	return append(ops, []byte{OpCallBuiltin, index}...)
+	return append(ops, []byte{OpCallBuiltin, index}...), nil
 }
 
-func (e *LiteralExpression) compile() []byte {
+func (e *LiteralExpression) compile() ([]byte, error) {
 	if i, ok := e.Token.Literal.(int); ok && i <= 0xFF {
-		return []byte{OpInlineNumber, byte(i)}
+		return []byte{OpInlineNumber, byte(i)}, nil
 	}
 
-	index := ensureConstant(e.Token.Literal)
-	return []byte{OpLoadConstant, index}
+	index, err := ensureConstant(e.Token.Literal)
+	if err != nil {
+		return nil, err
+	}
+	return []byte{OpLoadConstant, index}, nil
 }
 
-func (e *VariableExpression) compile() []byte {
+func (e *VariableExpression) compile() ([]byte, error) {
 	identifier := e.Token.Lexeme
-	index := ensureConstant(identifier)
+	index, err := ensureConstant(identifier)
+	if err != nil {
+		return nil, err
+	}
 
-	return []byte{OpReadVariable, index}
+	return []byte{OpReadVariable, index}, nil
 }
 
 func combine(slices ...[]byte) []byte {
@@ -169,20 +216,18 @@ func combine(slices ...[]byte) []byte {
 	return target
 }
 
-func ensureConstant(value any) byte {
+func ensureConstant(value any) (byte, error) {
 	for i, v := range constants {
 		if v == value {
-			// TODO: remove debug logging
-			fmt.Printf("re-using id %d for duplicate constant '%v'\n", i, v)
-			return byte(i)
+			return byte(i), nil
 		}
 	}
 
 	if len(constants) == MaxConstants {
 		// TODO: return error
-		panic(fmt.Sprintf("cannot add constant '%v' because the maximum of %d was reached", value, MaxConstants))
+		return 0, fmt.Errorf("cannot add constant '%v' because the maximum of %d was reached", value, MaxConstants)
 	}
 
 	constants = append(constants, value)
-	return byte(len(constants) - 1)
+	return byte(len(constants) - 1), nil
 }

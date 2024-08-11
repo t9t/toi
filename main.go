@@ -66,7 +66,13 @@ func runScript(scriptData []byte, stdin string) (string, error) {
 	toiStdin = stdin
 	toiStdout = bytes.Buffer{}
 
-	ops := scriptStatement.compile()
+	ops, err := scriptStatement.compile()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Compilation error: %v\n", err)
+		os.Exit(1)
+		// TODO: no exit here
+		return "", nil
+	}
 	execute(ops)
 
 	vmOutput := toiStdout.String()
