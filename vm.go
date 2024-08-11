@@ -50,8 +50,17 @@ func execute(ops []byte) error {
 		ip++
 		return op
 	}
+	readConstantString := func() (string, error) {
+		index := int(readByte())
+		constant := constants[index]
+		constantString, ok := constant.(string)
+		if !ok {
+			return "", fmt.Errorf("expected constant %d to be a string, but was '%v'", index, constant)
+		}
+		return constantString, nil
+	}
 
-	maxStack := 100
+	maxStack := 20
 	stack := make([]any, maxStack)
 	variables := make(map[string]any, 0)
 	stackPos := 0
@@ -60,13 +69,9 @@ func execute(ops []byte) error {
 		stackPos--
 		return v
 	}
-	popInt := func() int {
-		// TODO: proper error handling
-		return pop().(int)
-	}
 	push := func(v any) {
 		if stackPos == maxStack {
-			panic("stack overflow")
+			panic(fmt.Sprintf("stack overflow: attempting to push '%v' onto the stack with maximum size %d", v, maxStack))
 		}
 		stackPos++
 		stack[stackPos] = v
@@ -74,144 +79,117 @@ func execute(ops []byte) error {
 
 	start := time.Now()
 	for ip < len(ops) {
-		// TODO: end of program condition
 		instruction := readByte()
-		//fmt.Printf("instruction: %d", instruction)
-		//fmt.Printf("; stack (%d): %+v\n", stackPos, stack[:stackPos+1])
 
 		switch instruction {
 		case OpPop:
 			_ = pop()
-			//fmt.Printf("  pop '%v'\n", v)
 		case OpBinary:
 			binop := readByte()
-			//fmt.Printf("  binary op %d; values:\n", binop)
 			right := pop()
 			left := pop()
-			//fmt.Printf("    left: '%v'\n    right: '%v'\n", left, right)
 
 			var result any
-			bop := ""
-			// TODO: proper type checking
+			var err error
+
 			switch binop {
 			case OpBinaryPlus:
-				result = left.(int) + right.(int)
-				bop = "+"
+				result, err = intBinaryOp(left, right, "+", func(l int, r int) int { return l + r })
 			case OpBinarySubtract:
-				result = left.(int) - right.(int)
-				bop = "-"
+				result, err = intBinaryOp(left, right, "-", func(l int, r int) int { return l - r })
 			case OpBinaryMultiply:
-				result = left.(int) * right.(int)
-				bop = "*"
+				result, err = intBinaryOp(left, right, "*", func(l int, r int) int { return l * r })
 			case OpBinaryDivide:
-				result = left.(int) / right.(int)
-				bop = "/"
+				result, err = intBinaryOp(left, right, "/", func(l int, r int) int { return l / r })
 
 			case OpBinaryEqual:
 				result = boolToInt(left == right)
-				bop = "="
 			case OpBinaryGreaterThan:
-				result = boolToInt(left.(int) > right.(int))
-				bop = ">"
+				result, err = intBinaryOp(left, right, ">", func(l int, r int) int { return boolToInt(l > r) })
 			case OpBinaryLessThan:
-				result = boolToInt(left.(int) < right.(int))
-				bop = "<"
+				result, err = intBinaryOp(left, right, "<", func(l int, r int) int { return boolToInt(l < r) })
 
 			case OpBinaryConcat:
-				result = left.(string) + right.(string)
-				bop = "_"
+				result, err = stringConcat(left, right)
 			}
 
-			//fmt.Printf("    -> op: %v; result: '%v'\n", bop, result)
-			func(any) {}(bop)
+			if err != nil {
+				return err
+			}
+
 			push(result)
 		case OpNot:
-			v := popInt()
-			p := boolToInt(!intToBool(v))
-			//fmt.Printf("  not popped: '%v'; pushing: '%v'\n", v, p)
-			push(p)
+			v := pop()
+			i, ok := v.(int)
+			if !ok {
+				return fmt.Errorf("operand of not operation must be int, but was '%v'", v)
+			}
+			push(boolToInt(!intToBool(i)))
 		case OpJumpIfTrue:
 			jumpAmount := int(readByte())
 			v := pop()
-			//fmt.Printf("  jump if true amount: %d; v: '%v'\n", jumpAmount, v)
 			if isWeirdlyTrue(v) {
-				//fmt.Printf("    -> jumping ip %d + %d = %d\n", ip, jumpAmount, ip+jumpAmount)
 				ip += jumpAmount
-			} else {
-				//fmt.Printf("    -> not jumping\n")
 			}
 		case OpJumpBack:
 			jumpAmount := int(readByte())
-			//fmt.Printf("  jumping back %d; from %d to %d\n", jumpAmount, ip, ip-jumpAmount)
 			ip -= jumpAmount
 		case OpInlineNumber:
 			v := int(readByte())
-			//fmt.Printf("  read and pushing inline number %d\n", v)
 			push(v)
 		case OpLoadConstant:
 			index := int(readByte())
-			constantValue := constants[index]
-			//fmt.Printf("  loading and pushing constant %d ('%v')\n", index, constantValue)
-			push(constantValue)
+			push(constants[index])
 		case OpReadVariable:
-			index := int(readByte())
-			constantValue := constants[index]
-			//fmt.Printf("  reading and pushing variable %d ('%v')\n", index, constantValue)
-			value, found := variables[constantValue.(string)]
-			if !found {
-				// TODO: better error handling
-				panic(fmt.Sprintf("variable '%v' not defined", constantValue))
+			variableName, err := readConstantString()
+			if err != nil {
+				return err
 			}
-			//fmt.Printf("    -> value: '%v'\n", value)
+			value, found := variables[variableName]
+			if !found {
+				return fmt.Errorf("variable '%v' not defined", variableName)
+			}
 			push(value)
 		case OpSetVariable:
-			index := int(readByte())
-			constantValue := constants[index]
-			//fmt.Printf("  storing variable %d ('%v')\n", index, constantValue)
-			newValue := pop()
-			//oldValue := variables[constantValue.(string)]
-			//fmt.Printf("    -> changing value from '%v' to '%v'\n", oldValue, newValue)
-			variables[constantValue.(string)] = newValue
+			variableName, err := readConstantString()
+			if err != nil {
+				return err
+			}
+			variables[variableName] = pop()
 		case OpCallBuiltin:
-			index := int(readByte())
-			constantValue := constants[index]
-			if constantValue == "println" {
-				// TODO: do better
-				panic("println not supported by OpCallBuiltin")
+			functionName, err := readConstantString()
+			if err != nil {
+				return err
 			}
-			//fmt.Printf("  calling builtin function %d ('%v')\n", index, constantValue)
-			f, found := builtins[constantValue.(string)]
+			builtin, found := builtins[functionName]
 			if !found {
-				// TODO: better error handling; or do we need it at all?
-				panic(fmt.Sprintf("builtin function '%v' not found", constantValue))
+				return fmt.Errorf("builtin function '%v' not found", functionName)
 			}
-			arguments := make([]any, f.Arity)
-			for i := 0; i < f.Arity; i++ {
+			arguments := make([]any, builtin.Arity)
+			for i := 0; i < builtin.Arity; i++ {
 				arguments[i] = pop()
 			}
 			slices.Reverse(arguments) // Arguments were pushed onto the stack in left-to-right order, so we read them right-to-left
-			v, err := f.VmFunc(arguments)
+			returnValue, err := builtin.VmFunc(arguments)
 			if err != nil {
-				// TODO: don't panic
-				panic(fmt.Sprintf("error calling builtin '%v': %v", constantValue, err))
+				return err
 			}
-			push(v)
+			push(returnValue)
 		case OpPrintln:
 			argumentCount := int(readByte())
-			//fmt.Printf("  calling println with %d arguments\n", argumentCount)
 			arguments := make([]any, argumentCount)
 			for i := 0; i < argumentCount; i++ {
 				arguments[i] = pop()
 			}
 			slices.Reverse(arguments) // Arguments were pushed onto the stack in left-to-right order, so we read them right-to-left
-			v, err := builtinPrintlnVm(arguments)
+			returnValue, err := builtinPrintlnVm(arguments)
 			if err != nil {
-				// TODO: don't panic
-				panic(fmt.Sprintf("error calling println: %v", err))
+				return err
 			}
-			push(v)
+			push(returnValue)
 		}
 	}
+
 	fmt.Printf("VM run time: %v\n", time.Since(start))
 	return nil
 }

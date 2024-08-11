@@ -69,60 +69,61 @@ func (e *BinaryExpression) evaluate(env Env) (any, error) {
 	}
 
 	token := e.Operator
+	operator := token.Lexeme
 
 	switch e.Operator.Type {
 	case TokenPlus:
-		return intBinaryOp(left, right, token, func(l int, r int) int { return l + r })
+		return intBinaryOp(left, right, operator, func(l int, r int) int { return l + r })
 	case TokenMinus:
-		return intBinaryOp(left, right, token, func(l int, r int) int { return l - r })
+		return intBinaryOp(left, right, operator, func(l int, r int) int { return l - r })
 	case TokenAsterisk:
-		return intBinaryOp(left, right, token, func(l int, r int) int { return l * r })
+		return intBinaryOp(left, right, operator, func(l int, r int) int { return l * r })
 	case TokenSlash:
-		return intBinaryOp(left, right, token, func(l int, r int) int { return l / r })
+		return intBinaryOp(left, right, operator, func(l int, r int) int { return l / r })
 
 	case TokenUnderscore:
-		return stringConcat(left, right, token)
+		return stringConcat(left, right)
 
 	case TokenEqualEqual:
 		return boolToInt(left == right), nil
 	case TokenNotEqual:
 		return boolToInt(left != right), nil
 	case TokenGreaterThan:
-		return intBinaryOp(left, right, token, func(l int, r int) int { return boolToInt(l > r) })
+		return intBinaryOp(left, right, operator, func(l int, r int) int { return boolToInt(l > r) })
 	case TokenGreaterEqual:
-		return intBinaryOp(left, right, token, func(l int, r int) int { return boolToInt(l >= r) })
+		return intBinaryOp(left, right, operator, func(l int, r int) int { return boolToInt(l >= r) })
 	case TokenLessThan:
-		return intBinaryOp(left, right, token, func(l int, r int) int { return boolToInt(l < r) })
+		return intBinaryOp(left, right, operator, func(l int, r int) int { return boolToInt(l < r) })
 	case TokenLessEqual:
-		return intBinaryOp(left, right, token, func(l int, r int) int { return boolToInt(l <= r) })
+		return intBinaryOp(left, right, operator, func(l int, r int) int { return boolToInt(l <= r) })
 	}
 
 	return nil, nil
 }
 
-func intBinaryOp(left, right any, operator Token, op func(int, int) int) (any, error) {
+func intBinaryOp(left, right any, operator string, op func(int, int) int) (any, error) {
 	leftInt, ok := left.(int)
 	if !ok {
-		return nil, fmt.Errorf("left-hand operand of '%s' should be an int but was '%v'", operator.Lexeme, left)
+		return nil, fmt.Errorf("left-hand operand of '%s' should be an int but was '%v'", operator, left)
 	}
 
 	rightInt, ok := right.(int)
 	if !ok {
-		return nil, fmt.Errorf("right-hand operand of '%s' should be an int but was '%v'", operator.Lexeme, right)
+		return nil, fmt.Errorf("right-hand operand of '%s' should be an int but was '%v'", operator, right)
 	}
 
 	return op(leftInt, rightInt), nil
 }
 
-func stringConcat(left, right any, operator Token) (any, error) {
+func stringConcat(left, right any) (any, error) {
 	leftString, ok := left.(string)
 	if !ok {
-		return nil, fmt.Errorf("left-hand operand of '%s' should be a string but was '%v'", operator.Lexeme, left)
+		return nil, fmt.Errorf("left-hand operand of '_' should be a string but was '%v'", left)
 	}
 
 	rightString, ok := right.(string)
 	if !ok {
-		return nil, fmt.Errorf("right-hand operand of '%s' should be a string but was '%v'", operator.Lexeme, right)
+		return nil, fmt.Errorf("right-hand operand of '_' should be a string but was '%v'", right)
 	}
 
 	return leftString + rightString, nil
