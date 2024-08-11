@@ -1,17 +1,17 @@
-numbers = inputNumbers()
-i = len(numbers)
+Set numbers to: inputNumbers().
+Set i to: len(numbers).
 
-while i <> 0 {
-    i = i - 1
-    left = get(numbers, i)
+Loop while i is not equal to 0:
+    Set i to: i - 1.
+    Set left to: get(numbers, i).
 
-    j = i
-    while j <> 0 {
-        j = j - 1
-        right = get(numbers, j)
+    Set j to: i.
+    Loop while j is greater than 0:
+        Set j to: j - 1.
+        Set right to: get(numbers, j).
 
-        if 2020 - left + right == 0 {
-            println(2020, left, right, left * right)
-        }
-    }
-}
+        if left + right is equal to 2020:
+            println(2020, left, right, left * right).
+        .
+    .
+.

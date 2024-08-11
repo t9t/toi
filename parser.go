@@ -23,10 +23,10 @@ func parse(tokens []Token) (Statement, error) {
 }
 
 func parseStatement(tokens []Token) (stmt Statement, next []Token, err error) {
-	if tokens[0].Type == TokenNewline {
-		// Skip over empty lines
-		return nil, tokens[1:], nil
-	}
+	/*if tokens[0].Type == TokenDot {
+	// Skip over empty lines
+	return nil, tokens[1:], nil
+	}*/
 
 	if tokens[0].Type == TokenIf {
 		stmt, next, err = parseIfStatement(tokens)
@@ -35,6 +35,20 @@ func parseStatement(tokens []Token) (stmt Statement, next []Token, err error) {
 		}
 	} else if tokens[0].Type == TokenWhile {
 		stmt, next, err = parseWhileStatement(tokens)
+		if err != nil {
+			return nil, next, err
+		}
+	} else if tokens[0].Type == TokenLoop {
+		if len(tokens) < 2 || tokens[1].Type != TokenWhile {
+			return nil, nil, fmt.Errorf("expected 'while' after 'Loop'")
+		}
+
+		stmt, next, err = parseWhileStatement(tokens[1:])
+		if err != nil {
+			return nil, next, err
+		}
+	} else if tokens[0].Type == TokenSet {
+		stmt, next, err = parseSetAssignmentStatement(tokens[1:])
 		if err != nil {
 			return nil, next, err
 		}
@@ -52,11 +66,11 @@ func parseStatement(tokens []Token) (stmt Statement, next []Token, err error) {
 		next = nextTokens
 	}
 
-	if len(next) != 0 && next[0].Type != TokenNewline && next[0].Type != TokenBraceClose {
-		return nil, nil, fmt.Errorf("expected newline after statement but got %s ('%s')", next[0].Type, next[0].Lexeme)
+	if len(next) != 0 && next[0].Type != TokenDot && next[0].Type != TokenBraceClose {
+		return nil, nil, fmt.Errorf("expected '.' after statement but got %s ('%s')", next[0].Type, next[0].Lexeme)
 	}
 
-	if len(next) != 0 && next[0].Type == TokenNewline {
+	if len(next) != 0 && next[0].Type == TokenDot {
 		// Consume newline
 		next = next[1:]
 	}
@@ -66,16 +80,16 @@ func parseStatement(tokens []Token) (stmt Statement, next []Token, err error) {
 func parseBlock(tokens []Token, typ string) (Statement, []Token, error) {
 	next := tokens
 
-	if len(next) == 0 || next[0].Type != TokenBraceOpen {
+	if len(next) == 0 || next[0].Type != TokenColon {
 		if len(next) != 0 {
 			next = next[1:]
 		}
-		return nil, nil, fmt.Errorf("expected '{' after %s expression", typ)
+		return nil, nil, fmt.Errorf("expected ':' after %s expression", typ)
 	}
 
 	next = next[1:]
 	statements := make([]Statement, 0)
-	for len(next) != 0 && next[0].Type != TokenBraceClose {
+	for len(next) != 0 && next[0].Type != TokenDot {
 		stmt, next2, err := parseStatement(next)
 		if err != nil {
 			return nil, next2, err
@@ -87,11 +101,11 @@ func parseBlock(tokens []Token, typ string) (Statement, []Token, error) {
 		next = next2
 	}
 
-	if len(next) == 0 || next[0].Type != TokenBraceClose {
-		return nil, nil, fmt.Errorf("expected '}' after %s statements", typ)
+	if len(next) == 0 || next[0].Type != TokenDot {
+		return nil, nil, fmt.Errorf("expected '.' after %s statements", typ)
 	}
 
-	return &BlockStatement{Statements: statements}, next[1:], nil
+	return &BlockStatement{Statements: statements}, next, nil
 }
 
 func parseIfStatement(tokens []Token) (Statement, []Token, error) {
@@ -122,6 +136,24 @@ func parseWhileStatement(tokens []Token) (Statement, []Token, error) {
 	return &WhileStatement{Condition: expr, Body: block}, next, nil
 }
 
+func parseSetAssignmentStatement(tokens []Token) (Statement, []Token, error) {
+	// Set x to: 25
+	// 'Set' already consumed
+
+	if len(tokens) < 4 {
+		return nil, nil, fmt.Errorf("expected 'to' and ':' and expression after identifier")
+	} else if tokens[1].Type != TokenTo && tokens[2].Type != TokenColon {
+		return nil, nil, fmt.Errorf("expected 'to' and ':' after identifier")
+	}
+
+	expr, next, err := parseExpression(tokens[3:])
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return &AssignmentStatement{Identifier: tokens[0], Expression: expr}, next, nil
+}
+
 func parseAssignmentStatement(tokens []Token) (Statement, []Token, error) {
 	if len(tokens) < 3 {
 		return nil, nil, fmt.Errorf("expected '=' and expression after identifier")
@@ -138,7 +170,64 @@ func parseAssignmentStatement(tokens []Token) (Statement, []Token, error) {
 }
 
 func parseExpression(tokens []Token) (Expression, []Token, error) {
-	return parseEqualEqual(tokens)
+	return parseIs(tokens)
+}
+
+func parseIs(tokens []Token) (Expression, []Token, error) {
+	left, next, err := parseEqualEqual(tokens)
+	if err != nil {
+		return nil, nil, err
+	}
+	tokens = next
+
+	if len(tokens) == 0 || tokens[0].Type != TokenIs {
+		return left, tokens, nil
+	}
+	tokens = tokens[1:] // Consume 'is'
+
+	areNext := func(search ...TokenType) bool {
+		if len(tokens) < len(search) {
+			return false
+		}
+		for i, tok := range search {
+			if tokens[i].Type != tok {
+				return false
+			}
+		}
+		tokens = tokens[len(search):]
+		return true
+	}
+
+	operator := ""
+	var tokType TokenType
+	if areNext(TokenGreater, TokenThan, TokenOr, TokenEqual, TokenTo) {
+		// is greater than or equal to; >=
+		operator, tokType = ">=", TokenGreaterEqual
+	} else if areNext(TokenLess, TokenThan, TokenOr, TokenEqual, TokenTo) {
+		// is less than or equal to; <=
+		operator, tokType = "<=", TokenLessEqual
+	} else if areNext(TokenGreater, TokenThan) {
+		// is greater than; >
+		operator, tokType = ">", TokenGreaterThan
+	} else if areNext(TokenLess, TokenThan) {
+		// is less than; <
+		operator, tokType = "<", TokenLessThan
+	} else if areNext(TokenEqual, TokenTo) {
+		// is equal to; ==
+		operator, tokType = "==", TokenEqualEqual
+	} else if areNext(TokenNot, TokenEqual, TokenTo) {
+		// is not equal to; <> / !=
+		operator, tokType = "<>", TokenNotEqual
+	} else {
+		panic("don't know what's next")
+	}
+
+	right, next, err := parseEqualEqual(tokens)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return &BinaryExpression{Left: left, Operator: Token{Type: tokType, Lexeme: operator}, Right: right}, next, nil
 }
 
 func parseEqualEqual(tokens []Token) (Expression, []Token, error) {

@@ -8,7 +8,7 @@ import (
 type TokenType string
 
 const (
-	TokenNewline    TokenType = "Newline"
+	TokenDot        TokenType = "Dot"
 	TokenIdentifier TokenType = "Identifier"
 	TokenNumber     TokenType = "Number"
 	TokenString     TokenType = "String"
@@ -37,6 +37,18 @@ const (
 
 	TokenIf    TokenType = "If"
 	TokenWhile TokenType = "While"
+
+	TokenSet     TokenType = "Set"
+	TokenColon   TokenType = ":"
+	TokenTo      TokenType = "To"
+	TokenLoop    TokenType = "Loop"
+	TokenIs      TokenType = "Is"
+	TokenNot     TokenType = "Not"
+	TokenEqual   TokenType = "Equal"
+	TokenLess    TokenType = "Less"
+	TokenGreater TokenType = "Greater"
+	TokenThan    TokenType = "Than"
+	TokenOr      TokenType = "Or"
 )
 
 type Token struct {
@@ -46,8 +58,7 @@ type Token struct {
 }
 
 var singleCharTokens = map[rune]TokenType{
-	'\n': TokenNewline,
-	'\r': TokenNewline,
+	'.': TokenDot,
 
 	'(': TokenParenOpen,
 	')': TokenParenClose,
@@ -60,11 +71,24 @@ var singleCharTokens = map[rune]TokenType{
 	'_': TokenUnderscore,
 	'-': TokenMinus,
 	'*': TokenAsterisk,
+
+	':': TokenColon,
 }
 
 var keywordTokens = map[string]TokenType{
 	"if":    TokenIf,
 	"while": TokenWhile,
+
+	"Set":     TokenSet,
+	"to":      TokenTo,
+	"Loop":    TokenLoop,
+	"is":      TokenIs,
+	"not":     TokenNot,
+	"less":    TokenLess,
+	"greater": TokenGreater,
+	"equal":   TokenEqual,
+	"than":    TokenThan,
+	"or":      TokenOr,
 }
 
 func tokenize(input string) (tokens []Token, errors []error) {
@@ -90,7 +114,7 @@ func tokenize(input string) (tokens []Token, errors []error) {
 		}
 
 		switch {
-		case c == ' ' || c == '\t':
+		case c == ' ' || c == '\t' || c == '\n' || c == '\r':
 			break
 		case c == '/':
 			if i != len(runes)-1 && runes[i+1] == '/' {
