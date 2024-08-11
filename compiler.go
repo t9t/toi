@@ -159,24 +159,10 @@ func (e *BinaryExpression) compile() ([]byte, error) {
 }
 
 func (e *FunctionCallExpression) compile() ([]byte, error) {
-	if e.Token.Lexeme == "println" {
-		// TODO: better
-		ops := make([]byte, 0)
-		for _, arg := range e.Arguments {
-			exprOps, err := arg.compile()
-			if err != nil {
-				return nil, err
-			}
-			ops = append(ops, exprOps...)
-		}
-		// TODO: handle byte overflow
-		return append(ops, []byte{OpPrintln, byte(len(e.Arguments))}...), nil
+	if len(e.Arguments) > 50 {
+		return nil, fmt.Errorf("functions don't support more than 50 arguments (was %d for '%v')", len(e.Arguments), e.Token.Lexeme)
 	}
 
-	index, err := ensureConstant(e.Token.Lexeme)
-	if err != nil {
-		return nil, err
-	}
 	ops := make([]byte, 0)
 	for _, arg := range e.Arguments {
 		exprOps, err := arg.compile()
@@ -184,6 +170,15 @@ func (e *FunctionCallExpression) compile() ([]byte, error) {
 			return nil, err
 		}
 		ops = append(ops, exprOps...)
+	}
+
+	if e.Token.Lexeme == "println" {
+		return append(ops, []byte{OpPrintln, byte(len(e.Arguments))}...), nil
+	}
+
+	index, err := ensureConstant(e.Token.Lexeme)
+	if err != nil {
+		return nil, err
 	}
 	return append(ops, []byte{OpCallBuiltin, index}...), nil
 }
