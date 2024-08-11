@@ -1,0 +1,28 @@
+lines = inputLines()
+grid = array()
+
+i = 0
+while i < len(lines) {
+    set(grid, i, split(get(lines, i), ""))
+    i = i + 1
+}
+
+lineCount = len(lines)
+lineLength = len(get(grid, 0))
+y = 1
+x = 3
+treeCount = 0
+while y < lineCount {
+    char = get(get(grid, y), x)
+    if char == "#" {
+        treeCount = treeCount + 1
+    }
+
+    y = y + 1
+    x = x + 3
+    if x >= lineLength {
+        x = x - lineLength
+    }
+}
+
+println(treeCount)
