@@ -45,13 +45,13 @@ const (
 
 func execute(ops []byte) error {
 	ip := 0
-	readByte := func() byte {
+	readOpByte := func() byte {
 		op := ops[ip]
 		ip++
 		return op
 	}
 	readConstantString := func() (string, error) {
-		index := int(readByte())
+		index := int(readOpByte())
 		constant := constants[index]
 		constantString, ok := constant.(string)
 		if !ok {
@@ -63,29 +63,28 @@ func execute(ops []byte) error {
 	maxStack := 20
 	stack := make([]any, maxStack)
 	variables := make(map[string]any, 0)
-	stackPos := 0
+	stackNext := 0
 	pop := func() any {
-		v := stack[stackPos]
-		stackPos--
-		return v
+		stackNext -= 1
+		return stack[stackNext]
 	}
 	push := func(v any) {
-		if stackPos == maxStack {
+		if stackNext == maxStack {
 			panic(fmt.Sprintf("stack overflow: attempting to push '%v' onto the stack with maximum size %d", v, maxStack))
 		}
-		stackPos++
-		stack[stackPos] = v
+		stack[stackNext] = v
+		stackNext += 1
 	}
 
 	start := time.Now()
 	for ip < len(ops) {
-		instruction := readByte()
+		instruction := readOpByte()
 
 		switch instruction {
 		case OpPop:
 			_ = pop()
 		case OpBinary:
-			binop := readByte()
+			binop := readOpByte()
 			right := pop()
 			left := pop()
 
@@ -126,19 +125,19 @@ func execute(ops []byte) error {
 			}
 			push(boolToInt(!intToBool(i)))
 		case OpJumpIfTrue:
-			jumpAmount := int(readByte())
+			jumpAmount := int(readOpByte())
 			v := pop()
 			if isWeirdlyTrue(v) {
 				ip += jumpAmount
 			}
 		case OpJumpBack:
-			jumpAmount := int(readByte())
+			jumpAmount := int(readOpByte())
 			ip -= jumpAmount
 		case OpInlineNumber:
-			v := int(readByte())
+			v := int(readOpByte())
 			push(v)
 		case OpLoadConstant:
-			index := int(readByte())
+			index := int(readOpByte())
 			push(constants[index])
 		case OpReadVariable:
 			variableName, err := readConstantString()
@@ -176,7 +175,7 @@ func execute(ops []byte) error {
 			}
 			push(returnValue)
 		case OpPrintln:
-			argumentCount := int(readByte())
+			argumentCount := int(readOpByte())
 			arguments := make([]any, argumentCount)
 			for i := 0; i < argumentCount; i++ {
 				arguments[i] = pop()
