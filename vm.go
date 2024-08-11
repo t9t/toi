@@ -26,7 +26,7 @@ const (
 
 const (
 	InvalidOp    byte = 0xFF
-	MaxBlockSize      = 250
+	MaxBlockSize      = 60_000
 	MaxConstants      = 255
 )
 
@@ -125,13 +125,17 @@ func execute(ops []byte) error {
 			}
 			pushStack(boolToInt(!intToBool(i)))
 		case OpJumpIfTrue:
-			jumpAmount := int(readOpByte())
+			b1 := int(readOpByte())
+			b2 := int(readOpByte())
+			jumpAmount := b1*256 + b2
 			v := popStack()
 			if isWeirdlyTrue(v) {
 				ip += jumpAmount
 			}
 		case OpJumpBack:
-			jumpAmount := int(readOpByte())
+			b1 := int(readOpByte())
+			b2 := int(readOpByte())
+			jumpAmount := b1*256 + b2
 			ip -= jumpAmount
 		case OpInlineNumber:
 			v := int(readOpByte())

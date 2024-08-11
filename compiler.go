@@ -28,20 +28,23 @@ func (s *IfStatement) compile() ([]byte, error) {
 	}
 
 	not := []byte{OpNot} // We don't have a "jump if false", so we need to NOT the result
-	jump := []byte{OpJumpIfTrue, InvalidOp}
+	jump := []byte{OpJumpIfTrue, InvalidOp, InvalidOp}
 
 	then, err := s.Then.compile()
 	if err != nil {
 		return nil, err
 	}
 
-	if len(then) > MaxBlockSize {
+	jumpAmount := len(then)
+	if jumpAmount > MaxBlockSize {
 		// TODO: keep tokens for error reporting
-		return nil, fmt.Errorf("if's then block of %d statements exceeds %d operations (token %s; '%s')", len(then), MaxBlockSize, "oops", "oops")
+		return nil, fmt.Errorf("if's then block of %d statements exceeds %d operations (token %s; '%s')", jumpAmount, MaxBlockSize, "oops", "oops")
 	}
 
 	// Patch jump now that we know the number of instructions to jump over
-	jump[1] = byte(len(then))
+	b1, b2 := byte(jumpAmount/256), byte(jumpAmount%256)
+	jump[1] = b1
+	jump[2] = b2
 
 	return combine(condition, not, jump, then), nil
 }
@@ -52,16 +55,11 @@ func (s *WhileStatement) compile() ([]byte, error) {
 		return nil, err
 	}
 	not := []byte{OpNot} // We don't have a "jump if false", so we need to NOT the result
-	jump := []byte{OpJumpIfTrue, InvalidOp}
+	jump := []byte{OpJumpIfTrue, InvalidOp, InvalidOp}
 
 	body, err := s.Body.compile()
 	if err != nil {
 		return nil, err
-	}
-
-	if len(body) > MaxBlockSize {
-		// TODO: keep tokens for error reporting
-		return nil, fmt.Errorf("while body of %d statements exceeds %d operations (token %s; '%s')", len(body), MaxBlockSize, "oops", "oops")
 	}
 
 	/*
@@ -71,15 +69,19 @@ func (s *WhileStatement) compile() ([]byte, error) {
 			- 2 (op+arg) for jump if true
 			- N for body
 	*/
-	jumpBackCount := len(condition) + len(not) + len(jump) + len(body) + 2 // + 2 for jumpBack + count
-	if jumpBackCount > MaxBlockSize {
+	jumpAmount := len(condition) + len(not) + len(jump) + len(body) + 3 // + 3 for jumpBack + count
+	if jumpAmount > MaxBlockSize {
 		// TODO: keep tokens for error reporting
-		return nil, fmt.Errorf("backjump of %d statements exceeds %d operations (token %s; '%s')", jumpBackCount, MaxBlockSize, "oops", "oops")
+		return nil, fmt.Errorf("backjump of %d statements exceeds %d operations (token %s; '%s')", jumpAmount, MaxBlockSize, "oops", "oops")
 	}
-	jumpBack := []byte{OpJumpBack, byte(jumpBackCount)}
+	b1, b2 := byte(jumpAmount/256), byte(jumpAmount%256)
+	jumpBack := []byte{OpJumpBack, b1, b2}
 
 	// Patch jump now that we know the number of instructions to jump over
-	jump[1] = byte(len(body) + 2) // +2 to jump over the OpJumpBack instruction and its argument
+	jumpAmount = len(body) + 3 // +3 to jump over the OpJumpBack instruction and its argument
+	b1, b2 = byte(jumpAmount/256), byte(jumpAmount%256)
+	jump[1] = b1
+	jump[2] = b2
 
 	return combine(condition, not, jump, body, jumpBack), nil
 }
