@@ -48,7 +48,6 @@ func parseStatement(tokens []Token) (stmt Statement, next []Token, err error) {
 		if err != nil {
 			return nil, nil, err
 		}
-		fmt.Printf("Parsed expression statement: %+v\n    (next):%+v)\n", tokens, nextTokens)
 		stmt = &ExpressionStatement{Expression: expr}
 		next = nextTokens
 	}

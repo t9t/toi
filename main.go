@@ -27,10 +27,8 @@ func main() {
 	ohno(err)
 
 	if len(os.Args) == 1 {
-		toiStdin = ""
 		stdout, err = runScript(stdin, "")
 	} else if len(os.Args) == 2 {
-		toiStdin = string(stdin)
 		stdout, err = runScriptFile(os.Args[1], string(stdin))
 	}
 
@@ -49,17 +47,12 @@ func runScript(scriptData []byte, stdin string) (string, error) {
 		for i, err := range errors {
 			fmt.Fprintf(os.Stderr, "  %d: %v\n", i, err)
 		}
-		// TODO: no exit here
-		os.Exit(1)
-		return "", nil
+		return "", fmt.Errorf("tokenization error")
 	}
 
 	scriptStatement, err := parse(tokens)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Parse error: %v\n", err)
-		os.Exit(1)
-		// TODO: no exit here
-		return "", nil
+		return "", fmt.Errorf("parse error: %w", err)
 	}
 
 	// TODO: better state management instead of globals
@@ -68,10 +61,7 @@ func runScript(scriptData []byte, stdin string) (string, error) {
 
 	ops, err := scriptStatement.compile()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Compilation error: %v\n", err)
-		os.Exit(1)
-		// TODO: no exit here
-		return "", nil
+		return "", fmt.Errorf("Compilation error: %w", err)
 	}
 	execute(ops)
 
@@ -84,9 +74,7 @@ func runScript(scriptData []byte, stdin string) (string, error) {
 	if err := scriptStatement.execute(vars); err != nil {
 		toiStdout.WriteTo(os.Stdout)
 		fmt.Fprintf(os.Stderr, "Execution error:\n\t%v\n", err)
-		// TODO: no exit here
-		os.Exit(1)
-		return "", nil
+		return "", fmt.Errorf("execution error")
 	}
 
 	fmt.Printf("Tree interpreter run time: %v\n", time.Since(start))
