@@ -71,11 +71,10 @@ func runScript(scriptData []byte, stdin string) (string, error) {
 	vars["_stdin"] = stdin
 
 	ops := scriptStatement.compile()
-	decompile(ops)
 
-	fmt.Println("===== exec =====")
-
-	// execute(ops)
+	execute(ops)
+	vmOutput := toiStdout.String()
+	toiStdout.Reset()
 
 	start := time.Now()
 	if err := scriptStatement.execute(vars); err != nil {
@@ -88,7 +87,18 @@ func runScript(scriptData []byte, stdin string) (string, error) {
 
 	fmt.Printf("Tree interpreter run time: %v\n", time.Since(start))
 
-	return toiStdout.String(), nil
+	treeOutput := toiStdout.String()
+
+	if vmOutput != treeOutput {
+		fmt.Fprintln(os.Stderr, "Different output from VM than tree interpreter:")
+		fmt.Fprintln(os.Stderr, "===== VM: =====")
+		fmt.Fprintln(os.Stderr, vmOutput)
+		fmt.Fprintln(os.Stderr, "===== Tree: =====")
+		fmt.Fprintln(os.Stderr, treeOutput)
+		panic("output mismatch")
+	}
+
+	return treeOutput, nil
 }
 
 func runScriptFile(filepath string, stdin string) (string, error) {
