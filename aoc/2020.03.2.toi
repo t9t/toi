@@ -1,0 +1,52 @@
+lines = inputLines()
+grid = array()
+
+i = 0
+while i < len(lines) {
+    set(grid, i, split(get(lines, i), ""))
+    i = i + 1
+}
+
+lineCount = len(lines)
+lineLength = len(get(grid, 0))
+
+rights = array()
+push(rights, 1)
+push(rights, 3)
+push(rights, 5)
+push(rights, 7)
+push(rights, 1)
+
+downs = array()
+push(downs, 1)
+push(downs, 1)
+push(downs, 1)
+push(downs, 1)
+push(downs, 2)
+
+i = 0
+product = 1
+while i < len(rights) {
+    right = get(rights, i)
+    down = get(downs, i)
+    i = i + 1
+
+    y = down
+    x = right
+    treeCount = 0
+    while y < lineCount {
+        char = get(get(grid, y), x)
+        if char == "#" {
+            treeCount = treeCount + 1
+        }
+
+        y = y + down
+        x = x + right
+        if x >= lineLength {
+            x = x - lineLength
+        }
+    }
+    product = product * treeCount
+}
+
+println(product)
