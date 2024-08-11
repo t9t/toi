@@ -1,0 +1,43 @@
+lines = inputLines()
+lineCount = len(lines)
+
+nil = get(map(), "...")
+
+i = 0
+passport = map()
+validCount = 0
+while i <= lineCount {
+    if i == lineCount {
+        line = ""
+    }
+    if i <> lineCount {
+        line = get(lines, i)
+    }
+
+    if line == "" {
+        if len(passport) == 8 {
+            validCount = validCount + 1
+        }
+        if len(passport) == 7 {
+            if get(passport, "cid") == nil {
+                validCount = validCount + 1
+            }
+        }
+        passport = map()
+    }
+
+    if line <> "" {
+        parts = split(line, " ")
+        p = 0
+        while p < len(parts) {
+            elems = split(get(parts, p), ":")
+            set(passport, get(elems, 0), get(elems, 1))
+
+            p = p + 1
+        }
+    }
+
+    i = i + 1
+}
+
+println(validCount)
