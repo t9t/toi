@@ -82,13 +82,17 @@ while i <= lineCount {
                 while ci < chl {
                     c = get(ch, ci)
                     ci = ci + 1
-                    if c <> "0" & c <> "1" & c <> "2" & c <> "3" & c <> "4" & c <> "5" & c <> "6" & c <> "7" & c <> "8" & c <> "9" & c <> "a" & c <> "b" & c <> "c" & c <> "d" & c <> "e" & c <> "f" {
+                    if c <> "0" & c <> "1" & c <> "2" & c <> "3" & c <> "4" & //
+                        c <> "5" & c <> "6" & c <> "7" & c <> "8" & c <> "9" & //
+                        c <> "a" & c <> "b" & c <> "c" & c <> "d" & c <> "e" & //
+                        c <> "f" {
                         valid = false
                     }
                 }
             }
 
-            if key == "ecl" & value <> "amb" & value <> "blu" & value <> "brn" & value <> "gry" & value <> "grn" & value <> "hzl" & value <> "oth" {
+            if key == "ecl" & value <> "amb" & value <> "blu" & value <> "brn" & //
+                value <> "gry" & value <> "grn" & value <> "hzl" & value <> "oth" {
                 valid = false
             }
 
@@ -98,7 +102,8 @@ while i <= lineCount {
                 while ci < chl {
                     c = get(ch, ci)
                     ci = ci + 1
-                    if c <> "0" & c <> "1" & c <> "2" & c <> "3" & c <> "4" & c <> "5" & c <> "6" & c <> "7" & c <> "8" & c <> "9" {
+                    if c <> "0" & c <> "1" & c <> "2" & c <> "3" & c <> "4" & //
+                        c <> "5" & c <> "6" & c <> "7" & c <> "8" & c <> "9" {
                         valid = false
                     }
                 }

@@ -1,2 +1,10 @@
 println(1 + 2) // Comment
 println(3 + 4)
+
+// This comments out the newline:
+println  //
+(        //
+    5    //
+    +    //
+    6    //
+)

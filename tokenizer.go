@@ -100,10 +100,15 @@ func tokenize(input string) (tokens []Token, errors []error) {
 			if i != len(runes)-1 && runes[i+1] == '/' {
 				// Comment
 				j := i + 1
-				// Discard until end of line
-				for ; j < len(runes) && (runes[j] != '\r' && runes[j] != '\n'); j++ {
+				if runes[j+1] == '\r' || runes[j+1] == '\n' {
+					// Commenting out the newline
+					i = j + 1
+				} else {
+					// Discard until end of line; but keep the newline
+					for ; j < len(runes) && (runes[j] != '\r' && runes[j] != '\n'); j++ {
+					}
+					i = j - 1
 				}
-				i = j - 1
 			} else {
 				addToken(Token{TokenSlash, "/", nil})
 			}
