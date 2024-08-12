@@ -20,10 +20,8 @@ while i <= lineCount {
         if len(passport) == 8 {
             validCount = validCount + 1
         }
-        if len(passport) == 7 {
-            if get(passport, "cid") == nil {
-                validCount = validCount + 1
-            }
+        if len(passport) == 7 & get(passport, "cid") == nil {
+            validCount = validCount + 1
         }
         passport = map()
     }
@@ -59,28 +57,20 @@ while i <= lineCount {
             chl = len(ch)
 
             if key == "hgt" {
-                if get(ch, chl-2) == "c" {
-                    if get(ch, chl-1) == "m" {
-                        cm = int(get(split(value, "cm"), 0))
-                        if cm < 150 { valid = false }
-                        if cm > 193 { valid = false }
-                    }
+                if get(ch, chl-2) == "c" & get(ch, chl-1) == "m" {
+                    cm = int(get(split(value, "cm"), 0))
+                    if cm < 150 { valid = false }
+                    if cm > 193 { valid = false }
                 }
-                if get(ch, chl-2) == "i" {
-                    if get(ch, chl-1) == "n" {
-                        cm = int(get(split(value, "in"), 0))
-                        if cm < 59 { valid = false }
-                        if cm > 76 { valid = false }
-                    }
+                if get(ch, chl-2) == "i" & get(ch, chl-1) == "n" {
+                    cm = int(get(split(value, "in"), 0))
+                    if cm < 59 { valid = false }
+                    if cm > 76 { valid = false }
                 }
 
-                if get(ch, chl-2) <> "c" {
-                    if get(ch, chl-1) <> "m" {
-                        if get(ch, chl-2) <> "i" {
-                            if get(ch, chl-1) <> "n" {
-                                valid = false
-                            }
-                        }
+                if get(ch, chl-2) <> "c" & get(ch, chl-1) <> "m" {
+                    if get(ch, chl-2) <> "i" & get(ch, chl-1) <> "n" {
+                        valid = false
                     }
                 }
             }
@@ -92,58 +82,14 @@ while i <= lineCount {
                 while ci < chl {
                     c = get(ch, ci)
                     ci = ci + 1
-                    if c <> "0" {
-                        if c <> "1" {
-                        if c <> "2" {
-                        if c <> "3" {
-                        if c <> "4" {
-                        if c <> "5" {
-                        if c <> "6" {
-                        if c <> "7" {
-                        if c <> "8" {
-                        if c <> "9" {
-                        if c <> "a" {
-                        if c <> "b" {
-                        if c <> "c" {
-                        if c <> "d" {
-                        if c <> "e" {
-                        if c <> "f" {
-                            valid = false
-                        }
-                        }
-                        }
-                        }
-                        }
-                        }
-                        }
-                        }
-                        }
-                        }
-                        }
-                        }
-                        }
-                        }
-                        }
+                    if c <> "0" & c <> "1" & c <> "2" & c <> "3" & c <> "4" & c <> "5" & c <> "6" & c <> "7" & c <> "8" & c <> "9" & c <> "a" & c <> "b" & c <> "c" & c <> "d" & c <> "e" & c <> "f" {
+                        valid = false
                     }
                 }
             }
 
-            if key == "ecl" {
-                if value <> "amb" {
-                    if value <> "blu" {
-                        if value <> "brn" {
-                            if value <> "gry" {
-                                if value <> "grn" {
-                                    if value <> "hzl" {
-                                        if value <> "oth" {
-                                            valid = false
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+            if key == "ecl" & value <> "amb" & value <> "blu" & value <> "brn" & value <> "gry" & value <> "grn" & value <> "hzl" & value <> "oth" {
+                valid = false
             }
 
             if key == "pid" {
@@ -152,24 +98,8 @@ while i <= lineCount {
                 while ci < chl {
                     c = get(ch, ci)
                     ci = ci + 1
-                    if c <> "0" & c <> "1" {
-                    if c <> "2" {
-                    if c <> "3" {
-                    if c <> "4" {
-                    if c <> "5" {
-                    if c <> "6" {
-                    if c <> "7" {
-                    if c <> "8" {
-                    if c <> "9" {
+                    if c <> "0" & c <> "1" & c <> "2" & c <> "3" & c <> "4" & c <> "5" & c <> "6" & c <> "7" & c <> "8" & c <> "9" {
                         valid = false
-                    }
-                    }
-                    }
-                    }
-                    }
-                    }
-                    }
-                    }
                     }
                 }
             }
