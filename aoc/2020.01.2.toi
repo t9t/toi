@@ -16,7 +16,7 @@ while i <> 0 {
             right = get(numbers, k)
 
             if 2020 - left + middle + right == 0 {
-                println(2020, left, middle, right, left * middle * right)
+                println(left * middle * right)
             }
         }
     }

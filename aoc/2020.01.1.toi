@@ -11,7 +11,7 @@ while i <> 0 {
         right = get(numbers, j)
 
         if 2020 - left + right == 0 {
-            println(2020, left, right, left * right)
+            println(left * right)
         }
     }
 }
