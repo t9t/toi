@@ -26,7 +26,8 @@ var builtins = map[string]Builtin{
 	"split": {2, builtinSplit, builtinSplitVm},
 	"chars": {1, builtinChars, builtinCharsVm},
 
-	"int": {1, builtinInt, builtinIntVm},
+	"int":    {1, builtinInt, builtinIntVm},
+	"string": {1, builtinString, builtinStringVm},
 
 	// "Arrays" & "Maps"
 	"array": {0, builtinArray, builtinArrayVm},
@@ -197,6 +198,27 @@ func builtinCharsVm(arguments []any) (any, error) {
 	}
 
 	return toToiArray(strings.Split(s, "")), nil
+}
+
+func builtinString(env Env, e []Expression) (any, error) {
+	v, err := e[0].evaluate(env)
+	if err != nil {
+		return nil, err
+	}
+	if i, ok := v.(int); !ok {
+		return nil, fmt.Errorf("argument needs to be an int, but was '%v'", v)
+	} else {
+		return strconv.Itoa(i), nil
+	}
+}
+
+func builtinStringVm(arguments []any) (any, error) {
+	v := arguments[0]
+	if i, ok := v.(int); !ok {
+		return nil, fmt.Errorf("argument needs to be an int, but was '%v'", v)
+	} else {
+		return strconv.Itoa(i), nil
+	}
 }
 
 func builtinInt(env Env, e []Expression) (any, error) {

@@ -1,6 +1,6 @@
 lines = inputLines()
 
-highestId = 0
+ids = map()
 i = 0
 while i < len(lines) {
     line = get(lines, i)
@@ -35,9 +35,19 @@ while i < len(lines) {
     }
 
     id = row * 8 + col
-    if id > highestId {
-        highestId = id
-    }
+    set(ids, string(id), 1)
 }
 
-println(highestId)
+i = 1
+nil = get(map(), "nil")
+while i < 1023 {
+    min1 = get(ids, string(i - 1))
+    this = get(ids, string(i))
+    plus1 = get(ids, string(i + 1))
+
+    if min1 <> nil & this == nil & plus1 <> nil {
+        println(i)
+    }
+
+    i = i + 1
+}
