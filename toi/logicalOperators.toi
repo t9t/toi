@@ -1,11 +1,13 @@
-println(0 & 1)
-println(1 & 0)
+println(42 & 1337) // prints right operand
+println(42 & 0) // prints right operand
+println(0 & 42) // prints left operand
+println(0 & 0) // prints left operand
 
-a = 1
-b = 2
+a = 11
+b = 22
 println(a & b)
 
 println(0 & a & b)
 
 arr = array()
-//println(0 & get(arr, 3)) // should not give an index out of range because of short-circuit
+println(0 & get(arr, 3)) // should not give an index out of range because of short-circuit

@@ -39,8 +39,6 @@ func decompile(ops []byte) {
 				fmt.Print(" LessThan")
 			case OpBinaryConcat:
 				fmt.Print(" Concat")
-			case OpBinaryLogicalAnd:
-				fmt.Print(" LogicalAnd")
 			}
 		case OpNot:
 			fmt.Print("Not")
@@ -78,6 +76,8 @@ func decompile(ops []byte) {
 			i++
 			constantValue := constants[index]
 			fmt.Printf("Builtin %d '%v'", index, constantValue)
+		case OpDuplicate:
+			fmt.Print("Duplicate")
 		case InvalidOp:
 			fmt.Print("!! Invalid op !!")
 		}

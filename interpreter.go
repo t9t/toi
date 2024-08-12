@@ -58,6 +58,10 @@ func (s *ExpressionStatement) execute(env Env) error {
 // Expressions
 
 func (e *BinaryExpression) evaluate(env Env) (any, error) {
+	if e.Operator.Type == TokenAmpersand {
+		return e.evaluateAnd(env)
+	}
+
 	left, err := e.Left.evaluate(env)
 	if err != nil {
 		return nil, err
@@ -96,25 +100,59 @@ func (e *BinaryExpression) evaluate(env Env) (any, error) {
 		return intBinaryOp(left, right, operator, func(l int, r int) int { return boolToInt(l < r) })
 	case TokenLessEqual:
 		return intBinaryOp(left, right, operator, func(l int, r int) int { return boolToInt(l <= r) })
-	case TokenAmpersand:
-		return intBinaryOp(left, right, operator, func(l int, r int) int { return boolToInt(intToBool(l) && intToBool(r)) })
 	}
 
 	return nil, fmt.Errorf("unsupported binary operator %v ('%v')", token.Type, token.Lexeme)
 }
 
-func intBinaryOp(left, right any, operator string, op func(int, int) int) (any, error) {
-	leftInt, ok := left.(int)
-	if !ok {
-		return nil, fmt.Errorf("left-hand operand of '%s' should be an int but was '%v'", operator, left)
+func (e *BinaryExpression) evaluateAnd(env Env) (any, error) {
+	left, err := e.Left.evaluate(env)
+	if err != nil {
+		return nil, err
 	}
 
-	rightInt, ok := right.(int)
-	if !ok {
-		return nil, fmt.Errorf("right-hand operand of '%s' should be an int but was '%v'", operator, right)
+	leftInt, err := castToInt(left, "left", e.Operator.Lexeme)
+	if err != nil {
+		return nil, err
+	}
+
+	if !isWeirdlyTrue(leftInt) {
+		return leftInt, nil
+	}
+
+	right, err := e.Right.evaluate(env)
+	if err != nil {
+		return nil, err
+	}
+
+	rightInt, err := castToInt(right, "right", e.Operator.Lexeme)
+	if err != nil {
+		return nil, err
+	}
+
+	return rightInt, nil
+}
+
+func intBinaryOp(left, right any, operator string, op func(int, int) int) (any, error) {
+	leftInt, err := castToInt(left, "left", operator)
+	if err != nil {
+		return nil, err
+	}
+
+	rightInt, err := castToInt(right, "right", operator)
+	if err != nil {
+		return nil, err
 	}
 
 	return op(leftInt, rightInt), nil
+}
+
+func castToInt(v any, side, operator string) (int, error) {
+	int, ok := v.(int)
+	if !ok {
+		return 0, fmt.Errorf("%s-hand operand of '%s' should be an int but was '%v'", side, operator, v)
+	}
+	return int, nil
 }
 
 func stringConcat(left, right any) (any, error) {

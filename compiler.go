@@ -42,7 +42,7 @@ func (s *IfStatement) compile() ([]byte, error) {
 	}
 
 	// Patch jump now that we know the number of instructions to jump over
-	b1, b2 := byte(jumpAmount/256), byte(jumpAmount%256)
+	b1, b2 := encodeJumpAmount(jumpAmount)
 	jump[1] = b1
 	jump[2] = b2
 
@@ -74,16 +74,20 @@ func (s *WhileStatement) compile() ([]byte, error) {
 		// TODO: keep tokens for error reporting
 		return nil, fmt.Errorf("backjump of %d statements exceeds %d operations (token %s; '%s')", jumpAmount, MaxBlockSize, "oops", "oops")
 	}
-	b1, b2 := byte(jumpAmount/256), byte(jumpAmount%256)
+	b1, b2 := encodeJumpAmount(jumpAmount)
 	jumpBack := []byte{OpJumpBack, b1, b2}
 
 	// Patch jump now that we know the number of instructions to jump over
 	jumpAmount = len(body) + 3 // +3 to jump over the OpJumpBack instruction and its argument
-	b1, b2 = byte(jumpAmount/256), byte(jumpAmount%256)
+	b1, b2 = encodeJumpAmount(jumpAmount)
 	jump[1] = b1
 	jump[2] = b2
 
 	return combine(condition, not, jump, body, jumpBack), nil
+}
+
+func encodeJumpAmount(amount int) (byte, byte) {
+	return byte(amount / 256), byte(amount % 256)
 }
 
 func (s *AssignmentStatement) compile() ([]byte, error) {
@@ -112,6 +116,10 @@ func (s *ExpressionStatement) compile() ([]byte, error) {
 // Expressions
 
 func (e *BinaryExpression) compile() ([]byte, error) {
+	if e.Operator.Type == TokenAmpersand {
+		return e.compileAnd()
+	}
+
 	leftOps, err := e.Left.compile()
 	if err != nil {
 		return nil, err
@@ -151,8 +159,6 @@ func (e *BinaryExpression) compile() ([]byte, error) {
 	case TokenLessEqual:
 		binaryOp = OpBinaryGreaterThan
 		appendNot = true
-	case TokenAmpersand:
-		binaryOp = OpBinaryLogicalAnd
 	default:
 		return nil, fmt.Errorf("unsupported binary operator %v ('%v')", e.Operator.Type, e.Operator.Lexeme)
 	}
@@ -162,6 +168,25 @@ func (e *BinaryExpression) compile() ([]byte, error) {
 		ops = append(ops, OpNot)
 	}
 	return combine(leftOps, rightOps, ops), nil
+}
+
+func (e *BinaryExpression) compileAnd() ([]byte, error) {
+	leftOps, err := e.Left.compile()
+	if err != nil {
+		return nil, err
+	}
+
+	rightOps, err := e.Right.compile()
+	if err != nil {
+		return nil, err
+	}
+
+	jumpAmount := len(rightOps) + 1 // include the Pop
+	b1, b2 := encodeJumpAmount(jumpAmount)
+
+	conditional := []byte{OpDuplicate, OpNot, OpJumpIfTrue, b1, b2, OpPop}
+
+	return combine(leftOps, conditional, rightOps), nil
 }
 
 func (e *FunctionCallExpression) compile() ([]byte, error) {

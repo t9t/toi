@@ -22,6 +22,7 @@ const (
 	OpSetVariable
 	OpCallBuiltin
 	OpPrintln // Special op because it's variadic
+	OpDuplicate
 )
 
 const (
@@ -41,8 +42,6 @@ const (
 	OpBinaryLessThan
 
 	OpBinaryConcat
-
-	OpBinaryLogicalAnd
 )
 
 func execute(ops []byte) error {
@@ -113,9 +112,6 @@ func execute(ops []byte) error {
 			case OpBinaryConcat:
 				result, err = stringConcat(left, right)
 
-			case OpBinaryLogicalAnd:
-				result, err = intBinaryOp(left, right, "<", func(l int, r int) int { return boolToInt(intToBool(l) && intToBool(r)) })
-
 			default:
 				return fmt.Errorf("unsupported binary operator %v", binop)
 			}
@@ -129,7 +125,7 @@ func execute(ops []byte) error {
 			v := popStack()
 			i, ok := v.(int)
 			if !ok {
-				return fmt.Errorf("operand of not operation must be int, but was '%v'", v)
+				return fmt.Errorf("operand of NOT operation must be int, but was '%v'", v)
 			}
 			pushStack(boolToInt(!intToBool(i)))
 		case OpJumpIfTrue:
@@ -198,6 +194,12 @@ func execute(ops []byte) error {
 				return err
 			}
 			pushStack(returnValue)
+		case OpDuplicate:
+			v := popStack()
+			pushStack(v)
+			pushStack(v)
+		default:
+			return fmt.Errorf("unknown instruction %v", instruction)
 		}
 	}
 
