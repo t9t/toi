@@ -96,9 +96,11 @@ func (e *BinaryExpression) evaluate(env Env) (any, error) {
 		return intBinaryOp(left, right, operator, func(l int, r int) int { return boolToInt(l < r) })
 	case TokenLessEqual:
 		return intBinaryOp(left, right, operator, func(l int, r int) int { return boolToInt(l <= r) })
+	case TokenAmpersand:
+		return intBinaryOp(left, right, operator, func(l int, r int) int { return boolToInt(intToBool(l) && intToBool(r)) })
 	}
 
-	return nil, nil
+	return nil, fmt.Errorf("unsupported binary operator %v ('%v')", token.Type, token.Lexeme)
 }
 
 func intBinaryOp(left, right any, operator string, op func(int, int) int) (any, error) {

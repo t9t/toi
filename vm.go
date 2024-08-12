@@ -41,6 +41,8 @@ const (
 	OpBinaryLessThan
 
 	OpBinaryConcat
+
+	OpBinaryLogicalAnd
 )
 
 func execute(ops []byte) error {
@@ -110,6 +112,12 @@ func execute(ops []byte) error {
 
 			case OpBinaryConcat:
 				result, err = stringConcat(left, right)
+
+			case OpBinaryLogicalAnd:
+				result, err = intBinaryOp(left, right, "<", func(l int, r int) int { return boolToInt(intToBool(l) && intToBool(r)) })
+
+			default:
+				return fmt.Errorf("unsupported binary operator %v", binop)
 			}
 
 			if err != nil {

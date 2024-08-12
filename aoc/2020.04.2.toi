@@ -152,8 +152,7 @@ while i <= lineCount {
                 while ci < chl {
                     c = get(ch, ci)
                     ci = ci + 1
-                    if c <> "0" {
-                    if c <> "1" {
+                    if c <> "0" & c <> "1" {
                     if c <> "2" {
                     if c <> "3" {
                     if c <> "4" {
@@ -163,7 +162,6 @@ while i <= lineCount {
                     if c <> "8" {
                     if c <> "9" {
                         valid = false
-                    }
                     }
                     }
                     }

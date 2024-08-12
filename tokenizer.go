@@ -26,6 +26,8 @@ const (
 	TokenSlash      TokenType = "Slash"
 	TokenUnderscore TokenType = "Underscore"
 
+	TokenAmpersand TokenType = "Ampersand"
+
 	TokenEquals TokenType = "Equals"
 
 	TokenParenOpen  TokenType = "ParenOpen"
@@ -60,6 +62,8 @@ var singleCharTokens = map[rune]TokenType{
 	'_': TokenUnderscore,
 	'-': TokenMinus,
 	'*': TokenAsterisk,
+
+	'&': TokenAmpersand,
 }
 
 var keywordTokens = map[string]TokenType{

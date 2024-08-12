@@ -138,7 +138,11 @@ func parseAssignmentStatement(tokens []Token) (Statement, []Token, error) {
 }
 
 func parseExpression(tokens []Token) (Expression, []Token, error) {
-	return parseEqualEqual(tokens)
+	return parseAmpersand(tokens)
+}
+
+func parseAmpersand(tokens []Token) (Expression, []Token, error) {
+	return parseBinary(tokens, TokenAmpersand, parseEqualEqual)
 }
 
 func parseEqualEqual(tokens []Token) (Expression, []Token, error) {

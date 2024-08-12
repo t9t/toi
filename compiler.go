@@ -151,6 +151,10 @@ func (e *BinaryExpression) compile() ([]byte, error) {
 	case TokenLessEqual:
 		binaryOp = OpBinaryGreaterThan
 		appendNot = true
+	case TokenAmpersand:
+		binaryOp = OpBinaryLogicalAnd
+	default:
+		return nil, fmt.Errorf("unsupported binary operator %v ('%v')", e.Operator.Type, e.Operator.Lexeme)
 	}
 
 	ops := []byte{OpBinary, binaryOp}

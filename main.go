@@ -59,15 +59,6 @@ func runScript(scriptData []byte, stdin string) (string, error) {
 	toiStdin = stdin
 	toiStdout = bytes.Buffer{}
 
-	ops, err := scriptStatement.compile()
-	if err != nil {
-		return "", fmt.Errorf("Compilation error: %w", err)
-	}
-	execute(ops)
-
-	vmOutput := toiStdout.String()
-	toiStdout.Reset()
-
 	vars := make(map[string]any)
 
 	start := time.Now()
@@ -80,6 +71,19 @@ func runScript(scriptData []byte, stdin string) (string, error) {
 	fmt.Printf("Tree interpreter run time: %v\n", time.Since(start))
 
 	treeOutput := toiStdout.String()
+
+	toiStdout.Reset()
+
+	ops, err := scriptStatement.compile()
+	if err != nil {
+		return "", fmt.Errorf("Compilation error: %w", err)
+	}
+	err = execute(ops)
+	if err != nil {
+		return "", fmt.Errorf("VM execution error: %w", err)
+	}
+
+	vmOutput := toiStdout.String()
 
 	if vmOutput != treeOutput {
 		fmt.Fprintln(os.Stderr, "Different output from VM than tree interpreter:")

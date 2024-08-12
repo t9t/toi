@@ -39,9 +39,13 @@ func decompile(ops []byte) {
 				fmt.Print(" LessThan")
 			case OpBinaryConcat:
 				fmt.Print(" Concat")
+			case OpBinaryLogicalAnd:
+				fmt.Print(" LogicalAnd")
 			}
 		case OpNot:
 			fmt.Print("Not")
+		case OpPrintln:
+			fmt.Print("PrintLn")
 		case OpJumpIfTrue:
 			num := ops[i]
 			i++

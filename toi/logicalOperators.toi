@@ -1,0 +1,11 @@
+println(0 & 1)
+println(1 & 0)
+
+a = 1
+b = 2
+println(a & b)
+
+println(0 & a & b)
+
+arr = array()
+//println(0 & get(arr, 3)) // should not give an index out of range because of short-circuit
