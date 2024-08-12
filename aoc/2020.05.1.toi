@@ -1,0 +1,53 @@
+lines = inputLines()
+
+highestId = 0
+i = 0
+while i < len(lines) {
+    line = get(lines, i)
+    i = i + 1
+
+    chars = chars(line)
+
+    ci = 0
+    lower = 0
+    upper = 127
+    f = 128
+    while ci < 7 {
+        c = get(chars, ci)
+        ci = ci + 1
+
+        f = f / 2
+        if c == "F" {
+            upper = upper - f
+        }
+        if c == "B" {
+            lower = lower + f
+        }
+    }
+    row = lower
+
+    ci = 7
+    lower = 0
+    upper = 7
+    f = 8
+    while ci < 10 {
+        c = get(chars, ci)
+        ci = ci + 1
+
+        f = f / 2
+        if c == "L" {
+            upper = upper - f
+        }
+        if c == "R" {
+            lower = lower + f
+        }
+    }
+    col = lower
+
+    id = row * 8 + col
+    if id > highestId {
+        highestId = id
+    }
+}
+
+println(highestId)
