@@ -1,0 +1,61 @@
+lines = inputLines()
+lineCount = len(lines)
+
+nil = get(map(), "nil")
+
+answers = map()
+keys = array() // Note: will contain duplicates!
+sum = 0
+respondents = 0
+
+i = 0
+while i <= lineCount {
+    if i == lineCount {
+        line = ""
+    }
+    if i <> lineCount {
+        line = get(lines, i)
+    }
+    i = i + 1
+
+    if line == "" {
+        everyone = map()
+        keyI = 0
+        while keyI < len(keys) {
+            key = get(keys, keyI)
+            keyI = keyI + 1
+
+            count = get(answers, key)
+            if count == respondents {
+                set(everyone, key, 1)
+            }
+        }
+
+        sum = sum + len(everyone)
+
+        answers = map()
+        keys = array()
+        respondents = 0
+    }
+
+    if line <> "" {
+        respondents = respondents + 1
+        chars = chars(line)
+        ci = 0
+        while ci < len(chars) {
+            c = get(chars, ci)
+            ci = ci + 1
+
+            n = get(answers, c)
+            if n == nil {
+                set(answers, c, 1)
+            }
+            if n <> nil {
+                set(answers, c, n + 1)
+            }
+            push(keys, c)
+        }
+    }
+}
+
+println(sum)
