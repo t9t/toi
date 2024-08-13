@@ -1,0 +1,34 @@
+lines = inputLines()
+lineCount = len(lines)
+
+answers = map()
+sum = 0
+
+i = 0
+while i <= lineCount {
+    if i == lineCount {
+        line = ""
+    }
+    if i <> lineCount {
+        line = get(lines, i)
+    }
+    i = i + 1
+
+    if line == "" {
+        sum = sum + len(answers)
+        answers = map()
+    }
+
+    if line <> "" {
+        chars = chars(line)
+        ci = 0
+        while ci < len(chars) {
+            c = get(chars, ci)
+            ci = ci + 1
+
+            set(answers, c, 1)
+        }
+    }
+}
+
+println(sum)
