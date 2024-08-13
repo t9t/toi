@@ -41,6 +41,9 @@ const (
 	TokenIf        TokenType = "If"
 	TokenOtherwise TokenType = "Otherwise"
 	TokenWhile     TokenType = "While"
+
+	TokenExit TokenType = "Exit"
+	TokenLoop TokenType = "Loop"
 )
 
 type Token struct {
@@ -73,6 +76,8 @@ var keywordTokens = map[string]TokenType{
 	"if":        TokenIf,
 	"otherwise": TokenOtherwise,
 	"while":     TokenWhile,
+	"exit":      TokenExit,
+	"loop":      TokenLoop,
 }
 
 func tokenize(input string) (tokens []Token, errors []error) {

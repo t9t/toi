@@ -1,0 +1,28 @@
+i = 0
+while i < 3 {
+    println(i)
+    i = i + 1
+}
+
+i = 10
+run = 1
+while run {
+    println(i)
+    i = i + 1
+    if i == 13 {
+        run = 0
+    }
+}
+
+b = 1
+i = 20
+while b & i < 23 {
+    println(i)
+    i = i + 1
+}
+
+i = 33
+while i > 30 {
+    println(i)
+    i = i - 1
+}
