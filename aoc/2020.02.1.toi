@@ -26,10 +26,8 @@ while i < len(lines) {
         j = j + 1
     }
 
-    if letterCount >= min {
-        if letterCount <= max {
-            validCount = validCount + 1
-        }
+    if letterCount >= min & letterCount <= max {
+        validCount = validCount + 1
     }
 }
 

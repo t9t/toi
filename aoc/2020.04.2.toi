@@ -10,8 +10,7 @@ validCount = 0
 while i <= lineCount {
     if i == lineCount {
         line = ""
-    }
-    if i <> lineCount {
+    } otherwise {
         line = get(lines, i)
     }
 
@@ -23,9 +22,7 @@ while i <= lineCount {
             validCount = validCount + 1
         }
         passport = map()
-    }
-
-    if line <> "" {
+    } otherwise {
         parts = split(line, " ")
         p = 0
         while p < len(parts) {

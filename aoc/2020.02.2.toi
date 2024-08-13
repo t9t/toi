@@ -21,16 +21,12 @@ while i < len(lines) {
     char1 = get(passwordChars, pos1 - 1)
     char2 = get(passwordChars, pos2 - 1)
 
-    if char1 == policyLetter {
-        if char2 <> policyLetter {
-            validCount = validCount + 1
-        }
+    if char1 == policyLetter & char2 <> policyLetter {
+        validCount = validCount + 1
     }
 
-    if char1 <> policyLetter {
-        if char2 == policyLetter {
-            validCount = validCount + 1
-        }
+    if char1 <> policyLetter & char2 == policyLetter {
+        validCount = validCount + 1
     }
 }
 

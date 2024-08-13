@@ -8,8 +8,7 @@ i = 0
 while i <= lineCount {
     if i == lineCount {
         line = ""
-    }
-    if i <> lineCount {
+    } otherwise {
         line = get(lines, i)
     }
     i = i + 1
@@ -17,9 +16,7 @@ while i <= lineCount {
     if line == "" {
         sum = sum + len(answers)
         answers = map()
-    }
-
-    if line <> "" {
+    } otherwise {
         chars = chars(line)
         ci = 0
         while ci < len(chars) {
