@@ -5,17 +5,17 @@
 1337
 1, 1, 3, 5, 8, 13, 21
 <nil>
-lines:
+inputLines():
 10
 20
-split:
+split():
 a
 b
 c,d
 e
-int:
+int():
 42
-chars:
+chars():
 H
 e
 l
@@ -28,3 +28,5 @@ o
 r
 l
 d
+string():
+number: 42...

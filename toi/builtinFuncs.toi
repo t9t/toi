@@ -11,7 +11,7 @@ i = 3
 j = 13
 println(println(1, 1, i, 5, 8, j, j+8))
 
-println("lines:")
+println("inputLines():")
 lines = inputLines()
 i = 0
 while i < len(lines) {
@@ -19,7 +19,7 @@ while i < len(lines) {
     i = i + 1
 }
 
-println("split:")
+println("split():")
 s = "a;b;c,d;e"
 parts = split(s, ";")
 i = 0
@@ -28,11 +28,11 @@ while i < len(parts) {
     i = i + 1
 }
 
-println("int:")
+println("int():")
 s = "39"
 println(int(s) + 3)
 
-println("chars:")
+println("chars():")
 s = "Hello, world"
 c = chars(s)
 i = 0
@@ -40,3 +40,7 @@ while i < len(c) {
     println(get(c, i))
     i = i + 1
 }
+
+println("string():")
+i = 42
+println("number: " _ string(i) _ "...")
