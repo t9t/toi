@@ -1,8 +1,6 @@
 lines = inputLines()
 lineCount = len(lines)
 
-nil = get(map(), "nil")
-
 answers = map()
 sum = 0
 respondents = 0
@@ -45,11 +43,12 @@ while i <= lineCount {
             c = get(chars, ci)
             ci = ci + 1
 
-            n = get(answers, c)
-            if n == nil {
+            set = isSet(answers, c)
+            if set == 0 {
                 set(answers, c, 1)
             }
-            if n <> nil {
+            if set <> 0 {
+                n = get(answers, c)
                 set(answers, c, n + 1)
             }
         }

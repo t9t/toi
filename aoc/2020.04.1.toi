@@ -1,8 +1,6 @@
 lines = inputLines()
 lineCount = len(lines)
 
-nil = get(map(), "...")
-
 i = 0
 passport = map()
 validCount = 0
@@ -19,7 +17,7 @@ while i <= lineCount {
             validCount = validCount + 1
         }
         if len(passport) == 7 {
-            if get(passport, "cid") == nil {
+            if isSet(passport, "cid") == 0 {
                 validCount = validCount + 1
             }
         }

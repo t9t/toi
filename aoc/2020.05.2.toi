@@ -39,13 +39,12 @@ while i < len(lines) {
 }
 
 i = 1
-nil = get(map(), "nil")
 while i < 1023 {
-    min1 = get(ids, string(i - 1))
-    this = get(ids, string(i))
-    plus1 = get(ids, string(i + 1))
+    min1 = isSet(ids, string(i - 1))
+    this = isSet(ids, string(i))
+    plus1 = isSet(ids, string(i + 1))
 
-    if min1 <> nil & this == nil & plus1 <> nil {
+    if min1 <> 0 & this == 0 & plus1 <> 0 {
         println(i)
     }
 

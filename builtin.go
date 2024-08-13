@@ -38,6 +38,7 @@ var builtins = map[string]Builtin{
 	"set":   {3, builtinSet, builtinSetVm},
 	"len":   {1, builtinLen, builtinLenVm},
 	"keys":  {1, builtinKeys, builtinKeysVm},
+	"isSet": {2, builtinIsSet, builtinIsSetVm},
 }
 
 func builtinPrintln(env Env, e []Expression) (any, error) {
@@ -527,22 +528,17 @@ func builtinLenVm(arguments []any) (any, error) {
 }
 
 func builtinKeys(env Env, e []Expression) (any, error) {
-	// keys(arr)
-	v, err := e[0].evaluate(env)
+	// keys(map)
+	map_, err := getMap(env, e)
 	if err != nil {
 		return nil, err
-	}
-
-	map_, ok := v.(*map[string]any)
-	if !ok {
-		return nil, fmt.Errorf("argument to keys needs to be a map, but was '%v'", v)
 	}
 
 	return keys(map_), nil
 }
 
 func builtinKeysVm(arguments []any) (any, error) {
-	// keys(arr)
+	// keys(map)
 	map_, err := getMapVm(arguments)
 	if err != nil {
 		return nil, err
@@ -561,7 +557,45 @@ func keys(map_ *map[string]any) *[]any {
 	return toToiArray(keys)
 }
 
-func getMap(e []Expression, env Env) (*map[string]any, error) {
+func builtinIsSet(env Env, e []Expression) (any, error) {
+	// isSet(map, "key")
+	map_, err := getMap(env, e)
+	if err != nil {
+		return nil, err
+	}
+
+	key, err := getMapKey(env, e[1])
+	if err != nil {
+		return nil, err
+	}
+
+	if _, found := (*map_)[key]; found {
+		return 1, nil
+	} else {
+		return 0, nil
+	}
+}
+
+func builtinIsSetVm(arguments []any) (any, error) {
+	// isSet(map, "key")
+	map_, err := getMapVm(arguments)
+	if err != nil {
+		return nil, err
+	}
+
+	key, err := getMapKeyVm(arguments[1])
+	if err != nil {
+		return nil, err
+	}
+
+	if _, found := (*map_)[key]; found {
+		return 1, nil
+	} else {
+		return 0, nil
+	}
+}
+
+func getMap(env Env, e []Expression) (*map[string]any, error) {
 	v, err := e[0].evaluate(env)
 	if err != nil {
 		return nil, err
@@ -571,7 +605,7 @@ func getMap(e []Expression, env Env) (*map[string]any, error) {
 	if ok {
 		return map_, nil
 	}
-	return nil, fmt.Errorf("argument needs to be a map, but was '%v'", v)
+	return nil, fmt.Errorf("first argument needs to be a map, but was '%v'", v)
 }
 
 func getMapVm(arguments []any) (*map[string]any, error) {
@@ -581,7 +615,7 @@ func getMapVm(arguments []any) (*map[string]any, error) {
 	if ok {
 		return map_, nil
 	}
-	return nil, fmt.Errorf("argument needs to be a map, but was '%v'", v)
+	return nil, fmt.Errorf("first argument needs to be a map, but was '%v'", v)
 }
 
 func toToiArray[T any](l []T) *[]any {

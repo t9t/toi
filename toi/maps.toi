@@ -6,3 +6,5 @@ set(a, "number", 42)
 println(get(a, "hello"), get(a, "number"))
 
 println(keys(a))
+
+println(isSet(a, "hello"), isSet(a, "not set"))
