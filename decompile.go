@@ -12,14 +12,15 @@ func decompile(ops []byte) {
 	i := 0
 	for i < len(ops) {
 		op := ops[i]
-		i++
 
 		fmt.Printf("    %d: (%d) ", i, op)
+		i++
+
 		switch op {
 		case OpPop:
-			fmt.Print("Pop")
+			fmt.Print("[1] Pop")
 		case OpBinary:
-			fmt.Print("Binary")
+			fmt.Print("[2] Binary")
 			binop := ops[i]
 			i++
 			switch binop {
@@ -41,52 +42,57 @@ func decompile(ops []byte) {
 				fmt.Print(" Concat")
 			}
 		case OpNot:
-			fmt.Print("Not")
+			fmt.Print("[1] Not")
 		case OpPrintln:
 			argCount := int(ops[i])
 			i++
-			fmt.Printf("PrintLn %d args", argCount)
+			fmt.Printf("[2] PrintLn of %d arguments", argCount)
 		case OpJumpIfTrue:
 			num1 := int(ops[i])
 			i++
 			num2 := int(ops[i])
 			i++
-			fmt.Printf("JumpIfTrue +%d", num1*256+num2)
+			jumpAmount := num1*256 + num2
+			fmt.Printf("[3] JumpIfTrue +%d -> %d", jumpAmount, i+jumpAmount)
 		case OpJumpBack:
 			num1 := int(ops[i])
 			i++
 			num2 := int(ops[i])
 			i++
-			fmt.Printf("JumpBack -%d", num1*256+num2)
+			jumpAmount := num1*256 + num2
+			fmt.Printf("[3] JumpBack -%d -> %d", jumpAmount, i-jumpAmount)
 		case OpInlineNumber:
 			num := ops[i]
 			i++
-			fmt.Printf("InlineNumber %d", num)
+			fmt.Printf("[2] InlineNumber %d", num)
 		case OpLoadConstant:
 			index := ops[i]
 			i++
 			constantValue := constants[index]
-			fmt.Printf("LoadConstant %d '%v'", index, constantValue)
+			fmt.Printf("[2] LoadConstant %d '%v'", index, constantValue)
 		case OpReadVariable:
 			index := ops[i]
 			constantValue := constants[index]
 			i++
-			fmt.Printf("ReadVariable %d '%v'", index, constantValue)
+			fmt.Printf("[2] ReadVariable %d '%v'", index, constantValue)
 		case OpSetVariable:
 			index := ops[i]
 			constantValue := constants[index]
 			i++
-			fmt.Printf("SetVariable %d '%v'", index, constantValue)
+			fmt.Printf("[2] SetVariable %d '%v'", index, constantValue)
 		case OpCallBuiltin:
 			index := ops[i]
 			i++
 			constantValue := constants[index]
-			fmt.Printf("Builtin %d '%v'", index, constantValue)
+			fmt.Printf("[2] Builtin %d '%v'", index, constantValue)
 		case OpDuplicate:
-			fmt.Print("Duplicate")
+			fmt.Print("[1] Duplicate")
+		case OpCompileTimeOnlyExitLoop:
+			fmt.Print("[1] !! Compile-time only 'exit loop' operation !!")
 		case InvalidOp:
-			fmt.Print("!! Invalid op !!")
+			fmt.Print("[1] !! Invalid op !!")
 		}
 		fmt.Println()
 	}
+	fmt.Printf("    Exit position: %d\n", i)
 }

@@ -25,6 +25,9 @@ type WhileStatement struct {
 	Body      Statement
 }
 
+type ExitLoopStatement struct {
+}
+
 type AssignmentStatement struct {
 	Identifier Token
 	Expression Expression

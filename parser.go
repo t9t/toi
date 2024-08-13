@@ -38,6 +38,11 @@ func parseStatement(tokens []Token) (stmt Statement, next []Token, err error) {
 		if err != nil {
 			return nil, next, err
 		}
+	} else if tokens[0].Type == TokenExit {
+		stmt, next, err = parseExitLoopStatement(tokens)
+		if err != nil {
+			return nil, next, err
+		}
 	} else if len(tokens) >= 2 && tokens[0].Type == TokenIdentifier && tokens[1].Type == TokenEquals {
 		stmt, next, err = parseAssignmentStatement(tokens)
 		if err != nil {
@@ -131,6 +136,14 @@ func parseWhileStatement(tokens []Token) (Statement, []Token, error) {
 	}
 
 	return &WhileStatement{Condition: expr, Body: block}, next, nil
+}
+
+func parseExitLoopStatement(tokens []Token) (Statement, []Token, error) {
+	if len(tokens) == 1 || tokens[1].Type != TokenLoop {
+		return nil, nil, fmt.Errorf("expected 'loop' after 'exit'")
+	}
+
+	return &ExitLoopStatement{}, tokens[2:], nil
 }
 
 func parseAssignmentStatement(tokens []Token) (Statement, []Token, error) {

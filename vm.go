@@ -23,12 +23,15 @@ const (
 	OpCallBuiltin
 	OpPrintln // Special op because it's variadic
 	OpDuplicate
+
+	OpCompileTimeOnlyExitLoop
+
+	InvalidOp
 )
 
 const (
-	InvalidOp    byte = 0xFF
-	MaxBlockSize      = 60_000
-	MaxConstants      = 255
+	MaxBlockSize = 60_000
+	MaxConstants = 255
 )
 
 const (
@@ -198,6 +201,9 @@ func execute(ops []byte) error {
 			v := popStack()
 			pushStack(v)
 			pushStack(v)
+
+		case OpCompileTimeOnlyExitLoop:
+			return fmt.Errorf("instruction %v should only be used at compile time", instruction)
 		default:
 			return fmt.Errorf("unknown instruction %v", instruction)
 		}

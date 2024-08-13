@@ -26,3 +26,42 @@ while i > 30 {
     println(i)
     i = i - 1
 }
+
+true = 1
+i = 40
+while true {
+    println(i)
+    i = i + 1
+    if i == 50 {
+        // Will never be hit, but need to support multiple exit loop statements in 1 loop
+        exit loop
+    }
+    if i == 43 {
+        // This one will exit the loop
+        exit loop
+    }
+    if i == 42 {
+        if i == 100 {
+            // Will never be hit, but need to support multiple exit loop statements in 1 loop
+            exit loop
+        }
+    }
+}
+
+i = 100
+while i <= 102 {
+    println(i)
+    j = 200
+    while true {
+        println(i, j)
+        if j == 201 {
+            exit loop
+        }
+        j = j + 1
+    }
+    i = i + 1
+}
+
+while true {
+    exit loop
+}

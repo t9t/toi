@@ -1,6 +1,11 @@
 package main
 
-import "fmt"
+import (
+	"errors"
+	"fmt"
+)
+
+var ErrExitLoop = errors.New("exit loop")
 
 // Statements
 
@@ -37,10 +42,17 @@ func (s *WhileStatement) execute(env Env) error {
 		}
 
 		if err := s.Body.execute(env); err != nil {
+			if errors.Is(err, ErrExitLoop) {
+				return nil
+			}
 			return err
 		}
 	}
 	return nil
+}
+
+func (s *ExitLoopStatement) execute(env Env) error {
+	return ErrExitLoop
 }
 
 func (s *AssignmentStatement) execute(env Env) error {

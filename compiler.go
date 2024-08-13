@@ -4,6 +4,7 @@ import "fmt"
 
 // TODO: no global state
 var constants = make([]any, 0)
+var exitLoops [][]byte
 
 // TODO: use a bytebuffer instead of slices for efficiency; although slices are nice and easy to patch jumps
 
@@ -64,8 +65,8 @@ func (s *WhileStatement) compile() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	not := []byte{OpNot} // We don't have a "jump if false", so we need to NOT the result
-	jump := []byte{OpJumpIfTrue, InvalidOp, InvalidOp}
+	not := []byte{OpNot} // We don't have a "jumpOutOfLoop if false", so we need to NOT the result
+	jumpOutOfLoop := []byte{OpJumpIfTrue, InvalidOp, InvalidOp}
 
 	body, err := s.Body.compile()
 	if err != nil {
@@ -79,21 +80,48 @@ func (s *WhileStatement) compile() ([]byte, error) {
 			- 2 (op+arg) for jump if true
 			- N for body
 	*/
-	jumpAmount := len(condition) + len(not) + len(jump) + len(body) + 3 // + 3 for jumpBack + count
-	if jumpAmount > MaxBlockSize {
+	jumpBackAmount := len(condition) + len(not) + len(jumpOutOfLoop) + len(body) + 3 // + 3 for jumpBack + count
+	if jumpBackAmount > MaxBlockSize {
 		// TODO: keep tokens for error reporting
-		return nil, fmt.Errorf("backjump of %d statements exceeds %d operations (token %s; '%s')", jumpAmount, MaxBlockSize, "oops", "oops")
+		return nil, fmt.Errorf("backjump of %d statements exceeds %d operations (token %s; '%s')", jumpBackAmount, MaxBlockSize, "oops", "oops")
 	}
-	b1, b2 := encodeJumpAmount(jumpAmount)
+	b1, b2 := encodeJumpAmount(jumpBackAmount)
 	jumpBack := []byte{OpJumpBack, b1, b2}
 
-	// Patch jump now that we know the number of instructions to jump over
-	jumpAmount = len(body) + 3 // +3 to jump over the OpJumpBack instruction and its argument
-	b1, b2 = encodeJumpAmount(jumpAmount)
-	jump[1] = b1
-	jump[2] = b2
+	// Jump forward
+	jumpOutAmount := len(body) + 3 // +3 to jump over the OpJumpBack instruction and its argument
+	b1, b2 = encodeJumpAmount(jumpOutAmount)
+	jumpOutOfLoop[1] = b1
+	jumpOutOfLoop[2] = b2
 
-	return combine(condition, not, jump, body, jumpBack), nil
+	// Search for "exit loop" statements and patch their jumps
+	for i := 0; i < len(body); i += 1 {
+		if i < 2 {
+			continue
+		}
+		next := body[i-2:]
+		if len(next) < 5 {
+			continue
+		}
+
+		// TODO: this is some ugly nasty ass shit that should never be allowed
+		if body[i-2] != OpInlineNumber || body[i-1] != 1 || body[i] != OpCompileTimeOnlyExitLoop || body[i+1] != InvalidOp || body[i+2] != InvalidOp {
+			continue
+		}
+
+		body[i] = OpJumpIfTrue
+		// Distance between this statement and end of loop is jumpAmount - i
+		// I don't know why we need '- 3' and I'm too tired to figure it out, but it works
+		jumpAmount := jumpOutAmount - i - 3
+		body[i+1], body[i+2] = encodeJumpAmount(jumpAmount)
+	}
+
+	return combine(condition, not, jumpOutOfLoop, body, jumpBack), nil
+}
+
+func (s *ExitLoopStatement) compile() ([]byte, error) {
+	// OpCompileTimeOnlyExitLoop will be replaced with a jump in the compile() function of While
+	return []byte{OpInlineNumber, 1, OpCompileTimeOnlyExitLoop, InvalidOp, InvalidOp}, nil
 }
 
 func encodeJumpAmount(amount int) (byte, byte) {
