@@ -6,6 +6,9 @@ import (
 
 type Env map[string]any
 
+// TODO: global state is yuck, don't do it
+var whileBodyCount = 0
+
 func parse(tokens []Token) (Statement, error) {
 	statements := make([]Statement, 0)
 	for len(tokens) > 0 {
@@ -130,10 +133,12 @@ func parseWhileStatement(tokens []Token) (Statement, []Token, error) {
 		return nil, nil, err
 	}
 
+	whileBodyCount += 1
 	block, next, err := parseBlock(next, "while expression")
 	if err != nil {
 		return nil, nil, err
 	}
+	whileBodyCount -= 1
 
 	return &WhileStatement{Condition: expr, Body: block}, next, nil
 }
@@ -141,6 +146,10 @@ func parseWhileStatement(tokens []Token) (Statement, []Token, error) {
 func parseExitLoopStatement(tokens []Token) (Statement, []Token, error) {
 	if len(tokens) == 1 || tokens[1].Type != TokenLoop {
 		return nil, nil, fmt.Errorf("expected 'loop' after 'exit'")
+	}
+
+	if whileBodyCount == 0 {
+		return nil, nil, fmt.Errorf("can only use 'exit loop' in 'while' body")
 	}
 
 	return &ExitLoopStatement{}, tokens[2:], nil

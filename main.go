@@ -26,15 +26,18 @@ func main() {
 	stdin, err := io.ReadAll(os.Stdin)
 	ohno(err)
 
+	var scriptName string
 	if len(os.Args) == 1 {
+		scriptName = "(stdin)"
 		stdout, err = runScript(stdin, "")
 	} else if len(os.Args) == 2 {
-		stdout, err = runScriptFile(os.Args[1], string(stdin))
+		scriptName = os.Args[1]
+		stdout, err = runScriptFile(scriptName, string(stdin))
 	}
 
 	fmt.Print(stdout)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error executing script '%s': %v\n", os.Args[1], err)
+		fmt.Fprintf(os.Stderr, "Error executing script '%s': %v\n", scriptName, err)
 		os.Exit(1)
 	}
 	return
