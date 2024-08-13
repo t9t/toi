@@ -29,26 +29,25 @@ while i <= lineCount {
             elems = split(get(parts, p), ":")
             key = get(elems, 0)
             value = get(elems, 1)
-            valid = true
 
             if key == "byr" {
                 byr = int(value)
                 if byr < 1920 | byr > 2002 {
-                    valid = false
+                    exit loop
                 }
             }
 
             if key == "iyr" {
                 iyr = int(value)
                 if iyr < 2010 | iyr > 2020 {
-                    valid = false
+                    exit loop
                 }
             }
 
             if key == "eyr" {
                 eyr = int(value)
                 if eyr < 2020 | eyr > 2030 {
-                    valid = false
+                    exit loop
                 }
             }
 
@@ -59,26 +58,26 @@ while i <= lineCount {
                 if get(ch, chl-2) == "c" & get(ch, chl-1) == "m" {
                     cm = int(get(split(value, "cm"), 0))
                     if cm < 150 | cm > 193 {
-                        valid = false
+                        exit loop
                     }
                 }
                 if get(ch, chl-2) == "i" & get(ch, chl-1) == "n" {
                     cm = int(get(split(value, "in"), 0))
                     if cm < 59 | cm > 76 {
-                        valid = false
+                        exit loop
                     }
                 }
 
                 if get(ch, chl-2) <> "c" & get(ch, chl-1) <> "m" {
                     if get(ch, chl-2) <> "i" & get(ch, chl-1) <> "n" {
-                        valid = false
+                        exit loop
                     }
                 }
             }
 
             if key == "hcl" {
                 if chl <> 7 | get(ch, 0) <> "#" {
-                    valid = false
+                    exit loop
                 }
                 ci = 1
                 while ci < chl {
@@ -88,34 +87,34 @@ while i <= lineCount {
                         c <> "5" & c <> "6" & c <> "7" & c <> "8" & c <> "9" & //
                         c <> "a" & c <> "b" & c <> "c" & c <> "d" & c <> "e" & //
                         c <> "f" {
-                        valid = false
+                        exit loop
                     }
                 }
             }
 
             if key == "ecl" & value <> "amb" & value <> "blu" & value <> "brn" & //
                 value <> "gry" & value <> "grn" & value <> "hzl" & value <> "oth" {
-                valid = false
+                exit loop
             }
 
             if key == "pid" {
-                if chl <> 9 { valid = false }
+                if chl <> 9 {
+                    exit loop
+                }
                 ci = 0
                 while ci < chl {
                     c = get(ch, ci)
                     ci = ci + 1
                     if c <> "0" & c <> "1" & c <> "2" & c <> "3" & c <> "4" & //
                         c <> "5" & c <> "6" & c <> "7" & c <> "8" & c <> "9" {
-                        valid = false
+                        exit loop
                     }
                 }
             }
 
-            if key == "cid" {}
+            if key == "cid" {} // Always OK
 
-            if valid {
-                set(passport, get(elems, 0), get(elems, 1))
-            }
+            set(passport, get(elems, 0), get(elems, 1))
             p = p + 1
         }
     }
