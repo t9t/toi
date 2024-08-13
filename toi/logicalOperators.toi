@@ -16,3 +16,6 @@ println(42 | 1337) // prints left operand
 println(42 | 0) // prints left operand
 println(0 | 42) // prints right operand
 println(0 | 0) // prints right operand
+
+arr = array()
+println(1 | get(arr, 3)) // should not give an index out of range because of short-circuit

@@ -33,20 +33,23 @@ while i <= lineCount {
 
             if key == "byr" {
                 byr = int(value)
-                if byr < 1920 { valid = false }
-                if byr > 2002 { valid = false }
+                if byr < 1920 | byr > 2002 {
+                    valid = false
+                }
             }
 
             if key == "iyr" {
                 iyr = int(value)
-                if iyr < 2010 { valid = false }
-                if iyr > 2020 { valid = false }
+                if iyr < 2010 | iyr > 2020 {
+                    valid = false
+                }
             }
 
             if key == "eyr" {
                 eyr = int(value)
-                if eyr < 2020 { valid = false }
-                if eyr > 2030 { valid = false }
+                if eyr < 2020 | eyr > 2030 {
+                    valid = false
+                }
             }
 
             ch = chars(value)
@@ -55,13 +58,15 @@ while i <= lineCount {
             if key == "hgt" {
                 if get(ch, chl-2) == "c" & get(ch, chl-1) == "m" {
                     cm = int(get(split(value, "cm"), 0))
-                    if cm < 150 { valid = false }
-                    if cm > 193 { valid = false }
+                    if cm < 150 | cm > 193 {
+                        valid = false
+                    }
                 }
                 if get(ch, chl-2) == "i" & get(ch, chl-1) == "n" {
                     cm = int(get(split(value, "in"), 0))
-                    if cm < 59 { valid = false }
-                    if cm > 76 { valid = false }
+                    if cm < 59 | cm > 76 {
+                        valid = false
+                    }
                 }
 
                 if get(ch, chl-2) <> "c" & get(ch, chl-1) <> "m" {
@@ -72,8 +77,9 @@ while i <= lineCount {
             }
 
             if key == "hcl" {
-                if chl <> 7 { valid = false }
-                if get(ch, 0) <> "#" { valid = false }
+                if chl <> 7 | get(ch, 0) <> "#" {
+                    valid = false
+                }
                 ci = 1
                 while ci < chl {
                     c = get(ch, ci)
