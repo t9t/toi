@@ -60,8 +60,10 @@ func (s *ExpressionStatement) execute(env Env) error {
 // Expressions
 
 func (e *BinaryExpression) evaluate(env Env) (any, error) {
-	if e.Operator.Type == TokenAmpersand {
-		return e.evaluateAnd(env)
+	if e.Operator.Type == TokenPipe {
+		return e.evaluateOrOrAnd(env, isWeirdlyTrue)
+	} else if e.Operator.Type == TokenAmpersand {
+		return e.evaluateOrOrAnd(env, func(v any) bool { return !isWeirdlyTrue(v) })
 	}
 
 	left, err := e.Left.evaluate(env)
@@ -107,7 +109,7 @@ func (e *BinaryExpression) evaluate(env Env) (any, error) {
 	return nil, fmt.Errorf("unsupported binary operator %v ('%v')", token.Type, token.Lexeme)
 }
 
-func (e *BinaryExpression) evaluateAnd(env Env) (any, error) {
+func (e *BinaryExpression) evaluateOrOrAnd(env Env, testFunc func(v any) bool) (any, error) {
 	left, err := e.Left.evaluate(env)
 	if err != nil {
 		return nil, err
@@ -118,7 +120,7 @@ func (e *BinaryExpression) evaluateAnd(env Env) (any, error) {
 		return nil, err
 	}
 
-	if !isWeirdlyTrue(leftInt) {
+	if testFunc(leftInt) {
 		return leftInt, nil
 	}
 

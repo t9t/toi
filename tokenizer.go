@@ -27,6 +27,7 @@ const (
 	TokenUnderscore TokenType = "Underscore"
 
 	TokenAmpersand TokenType = "Ampersand"
+	TokenPipe      TokenType = "Pipe"
 
 	TokenEquals TokenType = "Equals"
 
@@ -65,6 +66,7 @@ var singleCharTokens = map[rune]TokenType{
 	'*': TokenAsterisk,
 
 	'&': TokenAmpersand,
+	'|': TokenPipe,
 }
 
 var keywordTokens = map[string]TokenType{

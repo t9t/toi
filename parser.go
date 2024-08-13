@@ -149,7 +149,11 @@ func parseAssignmentStatement(tokens []Token) (Statement, []Token, error) {
 }
 
 func parseExpression(tokens []Token) (Expression, []Token, error) {
-	return parseAmpersand(tokens)
+	return parsePipe(tokens)
+}
+
+func parsePipe(tokens []Token) (Expression, []Token, error) {
+	return parseBinary(tokens, TokenPipe, parseAmpersand)
 }
 
 func parseAmpersand(tokens []Token) (Expression, []Token, error) {

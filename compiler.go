@@ -126,8 +126,10 @@ func (s *ExpressionStatement) compile() ([]byte, error) {
 // Expressions
 
 func (e *BinaryExpression) compile() ([]byte, error) {
-	if e.Operator.Type == TokenAmpersand {
-		return e.compileAnd()
+	if e.Operator.Type == TokenPipe {
+		return e.compileOrOrAnd(false)
+	} else if e.Operator.Type == TokenAmpersand {
+		return e.compileOrOrAnd(true)
 	}
 
 	leftOps, err := e.Left.compile()
@@ -180,7 +182,7 @@ func (e *BinaryExpression) compile() ([]byte, error) {
 	return combine(leftOps, rightOps, ops), nil
 }
 
-func (e *BinaryExpression) compileAnd() ([]byte, error) {
+func (e *BinaryExpression) compileOrOrAnd(withNot bool) ([]byte, error) {
 	leftOps, err := e.Left.compile()
 	if err != nil {
 		return nil, err
@@ -194,9 +196,14 @@ func (e *BinaryExpression) compileAnd() ([]byte, error) {
 	jumpAmount := len(rightOps) + 1 // include the Pop
 	b1, b2 := encodeJumpAmount(jumpAmount)
 
-	conditional := []byte{OpDuplicate, OpNot, OpJumpIfTrue, b1, b2, OpPop}
+	dupe := []byte{OpDuplicate}
+	not := []byte{}
+	if withNot {
+		not = []byte{OpNot}
+	}
+	jump := []byte{OpJumpIfTrue, b1, b2, OpPop}
 
-	return combine(leftOps, conditional, rightOps), nil
+	return combine(leftOps, dupe, not, jump, rightOps), nil
 }
 
 func (e *FunctionCallExpression) compile() ([]byte, error) {
