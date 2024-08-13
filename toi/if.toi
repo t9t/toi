@@ -24,3 +24,11 @@ if 0 == 0 {
 if 99 == 0 {
     println(6)
 }
+
+if 10 == 15 {
+    println("in then")
+} otherwise {
+    println("in otherwise")
+}
+
+println("end")

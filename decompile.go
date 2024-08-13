@@ -43,15 +43,21 @@ func decompile(ops []byte) {
 		case OpNot:
 			fmt.Print("Not")
 		case OpPrintln:
-			fmt.Print("PrintLn")
+			argCount := int(ops[i])
+			i++
+			fmt.Printf("PrintLn %d args", argCount)
 		case OpJumpIfTrue:
-			num := ops[i]
+			num1 := int(ops[i])
 			i++
-			fmt.Printf("JumpIfTrue +%d", num)
+			num2 := int(ops[i])
+			i++
+			fmt.Printf("JumpIfTrue +%d", num1*256+num2)
 		case OpJumpBack:
-			num := ops[i]
+			num1 := int(ops[i])
 			i++
-			fmt.Printf("JumpBack -%d", num)
+			num2 := int(ops[i])
+			i++
+			fmt.Printf("JumpBack -%d", num1*256+num2)
 		case OpInlineNumber:
 			num := ops[i]
 			i++

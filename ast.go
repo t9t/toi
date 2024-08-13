@@ -17,6 +17,7 @@ type BlockStatement struct {
 type IfStatement struct {
 	Condition Expression
 	Then      Statement
+	Otherwise *Statement
 }
 
 type WhileStatement struct {

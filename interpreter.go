@@ -20,6 +20,8 @@ func (s *IfStatement) execute(env Env) error {
 	}
 	if isWeirdlyTrue(v) {
 		return s.Then.execute(env)
+	} else if s.Otherwise != nil {
+		return (*s.Otherwise).execute(env)
 	}
 	return nil
 }

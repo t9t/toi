@@ -27,26 +27,36 @@ func (s *IfStatement) compile() ([]byte, error) {
 		return nil, err
 	}
 
-	not := []byte{OpNot} // We don't have a "jump if false", so we need to NOT the result
-	jump := []byte{OpJumpIfTrue, InvalidOp, InvalidOp}
-
 	then, err := s.Then.compile()
 	if err != nil {
 		return nil, err
 	}
 
-	jumpAmount := len(then)
+	var otherwise []byte
+	if s.Otherwise != nil {
+		otherwise, err = (*s.Otherwise).compile()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	var jumpOverOtherwise []byte
+	if len(otherwise) != 0 {
+		b1, b2 := encodeJumpAmount(len(otherwise))
+		jumpOverOtherwise = []byte{OpInlineNumber, 1, OpJumpIfTrue, b1, b2}
+	}
+
+	jumpAmount := len(then) + len(jumpOverOtherwise)
 	if jumpAmount > MaxBlockSize {
 		// TODO: keep tokens for error reporting
 		return nil, fmt.Errorf("if's then block of %d statements exceeds %d operations (token %s; '%s')", jumpAmount, MaxBlockSize, "oops", "oops")
 	}
 
-	// Patch jump now that we know the number of instructions to jump over
+	not := []byte{OpNot} // We don't have a "jump if false", so we need to NOT the result
 	b1, b2 := encodeJumpAmount(jumpAmount)
-	jump[1] = b1
-	jump[2] = b2
+	jump := []byte{OpJumpIfTrue, b1, b2}
 
-	return combine(condition, not, jump, then), nil
+	return combine(condition, not, jump, then, jumpOverOtherwise, otherwise), nil
 }
 
 func (s *WhileStatement) compile() ([]byte, error) {

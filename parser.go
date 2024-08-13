@@ -70,7 +70,7 @@ func parseBlock(tokens []Token, typ string) (Statement, []Token, error) {
 		if len(next) != 0 {
 			next = next[1:]
 		}
-		return nil, nil, fmt.Errorf("expected '{' after %s expression", typ)
+		return nil, nil, fmt.Errorf("expected '{' after %s", typ)
 	}
 
 	next = next[1:]
@@ -100,12 +100,23 @@ func parseIfStatement(tokens []Token) (Statement, []Token, error) {
 		return nil, nil, err
 	}
 
-	block, next, err := parseBlock(next, "if")
+	block, next, err := parseBlock(next, "if expression")
 	if err != nil {
 		return nil, nil, err
 	}
 
-	return &IfStatement{Condition: expr, Then: block}, next, nil
+	var otherwiseBlock *Statement
+	if len(next) > 0 && next[0].Type == TokenOtherwise {
+		next = next[1:] // Consume "otherwise"
+		otherwise, otherwiseNext, err := parseBlock(next, "otherwise")
+		if err != nil {
+			return nil, nil, err
+		}
+		next = otherwiseNext
+		otherwiseBlock = &otherwise
+	}
+
+	return &IfStatement{Condition: expr, Then: block, Otherwise: otherwiseBlock}, next, nil
 }
 
 func parseWhileStatement(tokens []Token) (Statement, []Token, error) {
@@ -114,7 +125,7 @@ func parseWhileStatement(tokens []Token) (Statement, []Token, error) {
 		return nil, nil, err
 	}
 
-	block, next, err := parseBlock(next, "while")
+	block, next, err := parseBlock(next, "while expression")
 	if err != nil {
 		return nil, nil, err
 	}

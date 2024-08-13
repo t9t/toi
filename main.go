@@ -78,6 +78,7 @@ func runScript(scriptData []byte, stdin string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("Compilation error: %w", err)
 	}
+	// decompile(ops)
 	err = execute(ops)
 	if err != nil {
 		return "", fmt.Errorf("VM execution error: %w", err)
