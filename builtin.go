@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 )
@@ -36,6 +37,7 @@ var builtins = map[string]Builtin{
 	"push":  {2, builtinPush, builtinPushVm},
 	"set":   {3, builtinSet, builtinSetVm},
 	"len":   {1, builtinLen, builtinLenVm},
+	"keys":  {1, builtinKeys, builtinKeysVm},
 }
 
 func builtinPrintln(env Env, e []Expression) (any, error) {
@@ -522,6 +524,64 @@ func builtinLenVm(arguments []any) (any, error) {
 	} else {
 		return len(*map_), nil
 	}
+}
+
+func builtinKeys(env Env, e []Expression) (any, error) {
+	// keys(arr)
+	v, err := e[0].evaluate(env)
+	if err != nil {
+		return nil, err
+	}
+
+	map_, ok := v.(*map[string]any)
+	if !ok {
+		return nil, fmt.Errorf("argument to keys needs to be a map, but was '%v'", v)
+	}
+
+	return keys(map_), nil
+}
+
+func builtinKeysVm(arguments []any) (any, error) {
+	// keys(arr)
+	map_, err := getMapVm(arguments)
+	if err != nil {
+		return nil, err
+	}
+
+	return keys(map_), nil
+}
+
+func keys(map_ *map[string]any) *[]any {
+	keys := make([]string, 0)
+	for key := range *map_ {
+		keys = append(keys, key)
+	}
+	// Sorting only to get consistent test results between invocations
+	slices.Sort(keys)
+	return toToiArray(keys)
+}
+
+func getMap(e []Expression, env Env) (*map[string]any, error) {
+	v, err := e[0].evaluate(env)
+	if err != nil {
+		return nil, err
+	}
+
+	map_, ok := v.(*map[string]any)
+	if ok {
+		return map_, nil
+	}
+	return nil, fmt.Errorf("argument needs to be a map, but was '%v'", v)
+}
+
+func getMapVm(arguments []any) (*map[string]any, error) {
+	v := arguments[0]
+
+	map_, ok := v.(*map[string]any)
+	if ok {
+		return map_, nil
+	}
+	return nil, fmt.Errorf("argument needs to be a map, but was '%v'", v)
 }
 
 func toToiArray[T any](l []T) *[]any {
