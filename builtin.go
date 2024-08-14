@@ -42,41 +42,24 @@ var builtins = map[string]Builtin{
 	"unset": {2, builtinUnset, builtinUnsetVm},
 }
 
-func builtinPrintln(env Env, e []Expression) (any, error) {
+func toArguments(env Env, e []Expression) ([]any, error) {
+	arguments := make([]any, len(e))
+	var err error
 	for i, expr := range e {
-		if i != 0 {
-			toiStdout.WriteString(", ")
-		}
-		v, err := expr.evaluate(env)
+		arguments[i], err = expr.evaluate(env)
 		if err != nil {
 			return nil, err
 		}
-		if array, ok := v.(*[]any); ok {
-			toiStdout.WriteRune('[')
-			for i, element := range *array {
-				if i != 0 {
-					toiStdout.WriteString(", ")
-				}
-				toiStdout.WriteString(fmt.Sprintf("%v", element))
-			}
-			toiStdout.WriteRune(']')
-		} else if map_, ok := v.(*map[string]any); ok {
-			toiStdout.WriteRune('{')
-			for i, key := range sortedKeys(map_) {
-				if i != 0 {
-					toiStdout.WriteString(", ")
-				}
-				toiStdout.WriteString(fmt.Sprintf("%v", key))
-				toiStdout.WriteString(": ")
-				toiStdout.WriteString(fmt.Sprintf("%v", (*map_)[key]))
-			}
-			toiStdout.WriteRune('}')
-		} else {
-			toiStdout.WriteString(fmt.Sprintf("%v", v))
-		}
 	}
-	toiStdout.WriteRune('\n')
-	return nil, nil
+	return arguments, nil
+}
+
+func builtinPrintln(env Env, e []Expression) (any, error) {
+	arguments, err := toArguments(env, e)
+	if err != nil {
+		return nil, err
+	}
+	return builtinPrintlnVm(arguments)
 }
 
 func builtinPrintlnVm(arguments []any) (any, error) {
@@ -152,24 +135,11 @@ func builtinInputNumbersVm(arguments []any) (any, error) {
 }
 
 func builtinSplit(env Env, e []Expression) (any, error) {
-	var maybeStr, maybeSep any
-	var str, sep string
-	var ok bool
-	var err error
-
-	if maybeStr, err = e[0].evaluate(env); err != nil {
-		return nil, err
-	} else if maybeSep, err = e[1].evaluate(env); err != nil {
+	arguments, err := toArguments(env, e)
+	if err != nil {
 		return nil, err
 	}
-
-	if str, ok = maybeStr.(string); !ok {
-		return nil, fmt.Errorf("first argument needs to be a string, but was '%v'", maybeStr)
-	} else if sep, ok = maybeSep.(string); !ok {
-		return nil, fmt.Errorf("second argument needs to be a string, but was '%v'", maybeSep)
-	}
-
-	return toToiArray(strings.Split(str, sep)), nil
+	return builtinSplitVm(arguments)
 }
 
 func builtinSplitVm(arguments []any) (any, error) {
@@ -187,17 +157,11 @@ func builtinSplitVm(arguments []any) (any, error) {
 }
 
 func builtinChars(env Env, e []Expression) (any, error) {
-	v, err := e[0].evaluate(env)
+	arguments, err := toArguments(env, e)
 	if err != nil {
 		return nil, err
 	}
-
-	s, ok := v.(string)
-	if !ok {
-		return nil, fmt.Errorf("argument needs to be a string, but was '%v'", v)
-	}
-
-	return toToiArray(strings.Split(s, "")), nil
+	return builtinCharsVm(arguments)
 }
 
 func builtinCharsVm(arguments []any) (any, error) {
@@ -211,15 +175,11 @@ func builtinCharsVm(arguments []any) (any, error) {
 }
 
 func builtinString(env Env, e []Expression) (any, error) {
-	v, err := e[0].evaluate(env)
+	arguments, err := toArguments(env, e)
 	if err != nil {
 		return nil, err
 	}
-	if i, ok := v.(int); !ok {
-		return nil, fmt.Errorf("argument needs to be an int, but was '%v'", v)
-	} else {
-		return strconv.Itoa(i), nil
-	}
+	return builtinStringVm(arguments)
 }
 
 func builtinStringVm(arguments []any) (any, error) {
@@ -232,19 +192,11 @@ func builtinStringVm(arguments []any) (any, error) {
 }
 
 func builtinInt(env Env, e []Expression) (any, error) {
-	v, err := e[0].evaluate(env)
+	arguments, err := toArguments(env, e)
 	if err != nil {
 		return nil, err
 	}
-	if s, ok := v.(string); !ok {
-		return nil, fmt.Errorf("argument needs to be a string, but was '%v'", v)
-	} else {
-		i, err := strconv.Atoi(s)
-		if err != nil {
-			return nil, err
-		}
-		return i, nil
-	}
+	return builtinIntVm(arguments)
 }
 
 func builtinIntVm(arguments []any) (any, error) {
@@ -261,7 +213,7 @@ func builtinIntVm(arguments []any) (any, error) {
 }
 
 func builtinArray(env Env, e []Expression) (any, error) {
-	return &[]any{}, nil
+	return builtinArrayVm([]any{})
 }
 
 func builtinArrayVm(arguments []any) (any, error) {
@@ -269,30 +221,11 @@ func builtinArrayVm(arguments []any) (any, error) {
 }
 
 func builtinMap(env Env, e []Expression) (any, error) {
-	return &map[string]any{}, nil
+	return builtinMapVm([]any{})
 }
 
 func builtinMapVm(arguments []any) (any, error) {
 	return &map[string]any{}, nil
-}
-
-func getSliceOrMap(env Env, e []Expression) (*[]any, *map[string]any, error) {
-	v, err := e[0].evaluate(env)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	array, ok := v.(*[]any)
-	if ok {
-		return array, nil, nil
-	}
-
-	map_, ok := v.(*map[string]any)
-	if ok {
-		return nil, map_, nil
-	}
-
-	return nil, nil, fmt.Errorf("first argument needs to be an array or map, but was '%v'", v)
 }
 
 func getSliceOrMapVm(arguments []any) (*[]any, *map[string]any, error) {
@@ -311,19 +244,6 @@ func getSliceOrMapVm(arguments []any) (*[]any, *map[string]any, error) {
 	return nil, nil, fmt.Errorf("first argument needs to be an array or map, but was '%v'", v)
 }
 
-func getArrayIndex(env Env, e Expression) (int, error) {
-	v, err := e.evaluate(env)
-	if err != nil {
-		return 0, err
-	}
-
-	if i, ok := v.(int); ok {
-		return i, nil
-	} else {
-		return 0, fmt.Errorf("second argument needs to be a number, but was '%v'", v)
-	}
-}
-
 func getArrayIndexVm(v any) (int, error) {
 	if i, ok := v.(int); ok {
 		return i, nil
@@ -332,47 +252,11 @@ func getArrayIndexVm(v any) (int, error) {
 	}
 }
 
-func getMapKey(env Env, e Expression) (string, error) {
-	v, err := e.evaluate(env)
-	if err != nil {
-		return "", err
-	}
-
-	if s, ok := v.(string); ok {
-		return s, nil
-	} else {
-		return "", fmt.Errorf("second argument needs to be a string, but was '%v'", v)
-	}
-}
-
 func getMapKeyVm(v any) (string, error) {
 	if s, ok := v.(string); ok {
 		return s, nil
 	} else {
 		return "", fmt.Errorf("second argument needs to be a string, but was '%v'", v)
-	}
-}
-
-func arrayOrMapOp(env Env, e []Expression,
-	sliceOp func(*[]any, int, Env, []Expression) (any, error),
-	mapOp func(*map[string]any, string, Env, []Expression) (any, error)) (any, error) {
-	slice, map_, err := getSliceOrMap(env, e)
-	if err != nil {
-		return nil, err
-	} else if slice != nil {
-		idx, err := getArrayIndex(env, e[1])
-		if err != nil {
-			return nil, err
-		}
-
-		return sliceOp(slice, idx, env, e)
-	} else {
-		key, err := getMapKey(env, e[1])
-		if err != nil {
-			return nil, err
-		}
-
-		return mapOp(map_, key, env, e)
 	}
 }
 
@@ -401,15 +285,11 @@ func arrayOrMapOpVm(arguments []any,
 
 func builtinGet(env Env, e []Expression) (any, error) {
 	// get(arr, 2) or get(arr, "hello")
-	return arrayOrMapOp(env, e,
-		func(slice *[]any, idx int, env Env, e []Expression) (any, error) {
-			// get(arr, 2)
-			return (*slice)[idx], nil
-		}, func(map_ *map[string]any, key string, env Env, e []Expression) (any, error) {
-			// get(arr, "hello")
-			return (*map_)[key], nil
-		},
-	)
+	arguments, err := toArguments(env, e)
+	if err != nil {
+		return nil, err
+	}
+	return builtinGetVm(arguments)
 }
 
 func builtinGetVm(arguments []any) (any, error) {
@@ -427,22 +307,11 @@ func builtinGetVm(arguments []any) (any, error) {
 
 func builtinPush(env Env, e []Expression) (any, error) {
 	// push(arr, 42)
-	arr, err := e[0].evaluate(env)
+	arguments, err := toArguments(env, e)
 	if err != nil {
 		return nil, err
 	}
-
-	array, ok := arr.(*[]any)
-	if !ok {
-		return nil, fmt.Errorf("first argument needs to be an array, but was '%v'", arr)
-	}
-
-	if v, err := e[1].evaluate(env); err != nil {
-		return nil, err
-	} else {
-		*array = append(*array, v)
-		return v, nil
-	}
+	return builtinPushVm(arguments)
 }
 
 func builtinPushVm(arguments []any) (any, error) {
@@ -460,24 +329,15 @@ func builtinPushVm(arguments []any) (any, error) {
 
 func builtinPop(env Env, e []Expression) (any, error) {
 	// pop(arr)
-	arr, err := e[0].evaluate(env)
+	arguments, err := toArguments(env, e)
 	if err != nil {
 		return nil, err
 	}
-
-	array, ok := arr.(*[]any)
-	if !ok {
-		return nil, fmt.Errorf("first argument needs to be an array, but was '%v'", arr)
-	}
-
-	last := len(*array) - 1
-	value := (*array)[last]
-	*array = (*array)[:last]
-	return value, nil
+	return builtinPopVm(arguments)
 }
 
 func builtinPopVm(arguments []any) (any, error) {
-	// push(arr, 42)
+	// pop(arr)
 	arr := arguments[0]
 	array, ok := arr.(*[]any)
 	if !ok {
@@ -492,31 +352,11 @@ func builtinPopVm(arguments []any) (any, error) {
 
 func builtinSet(env Env, e []Expression) (any, error) {
 	// set(arr, 2, 42) or set(map, "hello", 42)
-	return arrayOrMapOp(env, e,
-		func(slice *[]any, idx int, env Env, e []Expression) (any, error) {
-			// set(arr, 2, 42)
-			v, err := e[2].evaluate(env)
-			if err != nil {
-				return nil, err
-			}
-			if idx == len(*slice) {
-				*slice = append(*slice, v)
-			} else if idx < len(*slice) {
-				(*slice)[idx] = v
-			} else {
-				return nil, fmt.Errorf("index %d out of bounds (length %d)", idx, len(*slice))
-			}
-			return v, nil
-		}, func(map_ *map[string]any, key string, env Env, e []Expression) (any, error) {
-			// set(arr, "hello", 42)
-			v, err := e[2].evaluate(env)
-			if err != nil {
-				return nil, err
-			}
-			(*map_)[key] = v
-			return v, nil
-		},
-	)
+	arguments, err := toArguments(env, e)
+	if err != nil {
+		return nil, err
+	}
+	return builtinSetVm(arguments)
 }
 
 func builtinSetVm(arguments []any) (any, error) {
@@ -544,14 +384,11 @@ func builtinSetVm(arguments []any) (any, error) {
 
 func builtinLen(env Env, e []Expression) (any, error) {
 	// len(arr)
-	slice, map_, err := getSliceOrMap(env, e)
+	arguments, err := toArguments(env, e)
 	if err != nil {
 		return nil, err
-	} else if slice != nil {
-		return len(*slice), nil
-	} else {
-		return len(*map_), nil
 	}
+	return builtinLenVm(arguments)
 }
 
 func builtinLenVm(arguments []any) (any, error) {
@@ -568,12 +405,11 @@ func builtinLenVm(arguments []any) (any, error) {
 
 func builtinKeys(env Env, e []Expression) (any, error) {
 	// keys(map)
-	map_, err := getMap(env, e)
+	arguments, err := toArguments(env, e)
 	if err != nil {
 		return nil, err
 	}
-
-	return keys(map_), nil
+	return builtinKeysVm(arguments)
 }
 
 func builtinKeysVm(arguments []any) (any, error) {
@@ -602,21 +438,11 @@ func sortedKeys(map_ *map[string]any) []string {
 
 func builtinIsSet(env Env, e []Expression) (any, error) {
 	// isSet(map, "key")
-	map_, err := getMap(env, e)
+	arguments, err := toArguments(env, e)
 	if err != nil {
 		return nil, err
 	}
-
-	key, err := getMapKey(env, e[1])
-	if err != nil {
-		return nil, err
-	}
-
-	if _, found := (*map_)[key]; found {
-		return 1, nil
-	} else {
-		return 0, nil
-	}
+	return builtinIsSetVm(arguments)
 }
 
 func builtinIsSetVm(arguments []any) (any, error) {
@@ -640,18 +466,11 @@ func builtinIsSetVm(arguments []any) (any, error) {
 
 func builtinUnset(env Env, e []Expression) (any, error) {
 	// unset(map, "key")
-	map_, err := getMap(env, e)
+	arguments, err := toArguments(env, e)
 	if err != nil {
 		return nil, err
 	}
-
-	key, err := getMapKey(env, e[1])
-	if err != nil {
-		return nil, err
-	}
-
-	delete(*map_, key)
-	return 0, nil
+	return builtinUnsetVm(arguments)
 }
 
 func builtinUnsetVm(arguments []any) (any, error) {
@@ -668,19 +487,6 @@ func builtinUnsetVm(arguments []any) (any, error) {
 
 	delete(*map_, key)
 	return 0, nil
-}
-
-func getMap(env Env, e []Expression) (*map[string]any, error) {
-	v, err := e[0].evaluate(env)
-	if err != nil {
-		return nil, err
-	}
-
-	map_, ok := v.(*map[string]any)
-	if ok {
-		return map_, nil
-	}
-	return nil, fmt.Errorf("first argument needs to be a map, but was '%v'", v)
 }
 
 func getMapVm(arguments []any) (*map[string]any, error) {

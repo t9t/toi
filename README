@@ -132,3 +132,15 @@ inputNumbers() returns the standard input as an array of numbers, one number per
 chars(s) returns an array with the characters in a string (each element is a string of length 1)
 isSet(map, key) returns 1 if the key is set in the map, and 0 if it's not
 unset(map, key) removes the key from the map
+
+
+# Implementation
+tokenizer.go lexes to tokens
+parser.go parses into an AST
+interpreter.go interprets directly from the AST
+compiler.go compiles the AST into a custom bytecode
+vm.go interprets the bytecode output by the compiler
+
+When running a script, Toi runs it both using the tree interpreter and the VM
+interpreter and tests that the outputs are the same (potential side effects that
+do not print to standard output are not validated).
