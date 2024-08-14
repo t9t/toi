@@ -1,0 +1,11 @@
+- write a README
+- unify builtin "normal" and "Vm" functions
+- "continue" like statement
+- structs/classes
+- functions
+- booleans
+- floats
+- nil?
+- logical not
+- for-each
+- standard library
