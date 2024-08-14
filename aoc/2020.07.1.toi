@@ -33,24 +33,20 @@ while i < len(lines) {
     }
 }
 
-search = map()
-set(search, "shiny gold", 1)
-
+search = array()
+push(search, "shiny gold")
 hits = map()
 
 while len(search) {
-    searchItem = get(keys(search), 0)
-    unset(search, searchItem)
+    color = pop(search)
 
-    if isSet(containedBags, searchItem) {
-        bags = get(containedBags, searchItem)
+    if isSet(containedBags, color) {
+        bags = get(containedBags, color)
         i = 0
         while i < len(bags) {
             bag = get(bags, i)
             i = i + 1
-            if isSet(search, bag) == 0 {
-                set(search, bag, 1)
-            }
+            push(search, bag)
             set(hits, bag, 1)
         }
     }
