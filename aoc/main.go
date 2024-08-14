@@ -5,6 +5,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type AocFunc func(string) any
@@ -35,7 +36,12 @@ func main() {
 	if !found {
 		fatal("no func found for day %s part %s", day, part)
 	}
-	fmt.Println(f(string(input)))
+	inputString := string(input)
+	start := time.Now()
+	out := f(inputString)
+	took := time.Since(start)
+
+	fmt.Printf("Took: %v\n%v\n", took, out)
 }
 
 func rip(err error) {

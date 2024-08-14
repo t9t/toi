@@ -34,7 +34,19 @@ func day07part2(input string) any {
 		bags[outer] = counts
 	}
 
-	return countBags(bags, 1, "shiny gold") - 1
+	search := []BagCount{{"shiny gold", 1}}
+	total := 0
+	for len(search) != 0 {
+		item := search[0]
+		search = search[1:]
+
+		bagCounts := bags[item.Color]
+		for _, bagCount := range bagCounts {
+			search = append(search, BagCount{bagCount.Color, bagCount.Count * item.Count})
+			total += bagCount.Count * item.Count
+		}
+	}
+	return total
 }
 
 func countBags(m map[string][]BagCount, count int, color string) int {

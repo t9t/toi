@@ -1,0 +1,57 @@
+lines = inputLines()
+
+bags = map()
+
+l = 0
+while l < len(lines) {
+    line = get(lines, l)
+    l = l + 1
+
+    // light red bags contain 1 bright white bag, 2 muted yellow bags.
+    // bright white bags contain 1 shiny gold bag.
+    // dotted black bags contain no other bags.
+    parts = split(line, " bags contain ")
+
+    outerColor = get(parts, 0)
+    if get(parts, 1) == "no other bags." {
+        set(bags, outerColor, map())
+    } otherwise {
+        parts = split(get(split(get(parts, 1), "."), 0), ", ")
+        p = 0
+        bagMap = map()
+        while p < len(parts) {
+            words = split(get(parts, p), " ")
+            p = p + 1
+
+            number = int(get(words, 0))
+            color = get(words, 1) _ " " _ get(words, 2)
+            set(bagMap, color, number)
+        }
+        set(bags, outerColor, bagMap)
+    }
+}
+
+search = array()
+push(search, "shiny gold:1")
+total = 0
+
+while len(search) {
+    item = pop(search)
+    parts = split(item, ":")
+    color = get(parts, 0)
+    number = int(get(parts, 1))
+    contents = get(bags, color)
+
+    keys = keys(contents)
+    k = 0
+    while k < len(keys) {
+        key = get(keys, k)
+        k = k + 1
+
+        value = get(contents, key)
+        push(search, key _ ":" _ string(value * number))
+        total = total + value * number
+    }
+}
+
+println(total)

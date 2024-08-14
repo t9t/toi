@@ -35,10 +35,12 @@ var builtins = map[string]Builtin{
 	"map":   {0, builtinMap, builtinMapVm},
 	"get":   {2, builtinGet, builtinGetVm},
 	"push":  {2, builtinPush, builtinPushVm},
+	"pop":   {1, builtinPop, builtinPopVm},
 	"set":   {3, builtinSet, builtinSetVm},
 	"len":   {1, builtinLen, builtinLenVm},
 	"keys":  {1, builtinKeys, builtinKeysVm},
 	"isSet": {2, builtinIsSet, builtinIsSetVm},
+	"unset": {2, builtinUnset, builtinUnsetVm},
 }
 
 func builtinPrintln(env Env, e []Expression) (any, error) {
@@ -451,6 +453,38 @@ func builtinPushVm(arguments []any) (any, error) {
 	return v, nil
 }
 
+func builtinPop(env Env, e []Expression) (any, error) {
+	// pop(arr)
+	arr, err := e[0].evaluate(env)
+	if err != nil {
+		return nil, err
+	}
+
+	array, ok := arr.(*[]any)
+	if !ok {
+		return nil, fmt.Errorf("first argument needs to be an array, but was '%v'", arr)
+	}
+
+	last := len(*array) - 1
+	value := (*array)[last]
+	*array = (*array)[:last]
+	return value, nil
+}
+
+func builtinPopVm(arguments []any) (any, error) {
+	// push(arr, 42)
+	arr := arguments[0]
+	array, ok := arr.(*[]any)
+	if !ok {
+		return nil, fmt.Errorf("first argument needs to be an array, but was '%v'", arr)
+	}
+
+	last := len(*array) - 1
+	value := (*array)[last]
+	*array = (*array)[:last]
+	return value, nil
+}
+
 func builtinSet(env Env, e []Expression) (any, error) {
 	// set(arr, 2, 42) or set(map, "hello", 42)
 	return arrayOrMapOp(env, e,
@@ -593,6 +627,38 @@ func builtinIsSetVm(arguments []any) (any, error) {
 	} else {
 		return 0, nil
 	}
+}
+
+func builtinUnset(env Env, e []Expression) (any, error) {
+	// unset(map, "key")
+	map_, err := getMap(env, e)
+	if err != nil {
+		return nil, err
+	}
+
+	key, err := getMapKey(env, e[1])
+	if err != nil {
+		return nil, err
+	}
+
+	delete(*map_, key)
+	return 0, nil
+}
+
+func builtinUnsetVm(arguments []any) (any, error) {
+	// isSet(map, "key")
+	map_, err := getMapVm(arguments)
+	if err != nil {
+		return nil, err
+	}
+
+	key, err := getMapKeyVm(arguments[1])
+	if err != nil {
+		return nil, err
+	}
+
+	delete(*map_, key)
+	return 0, nil
 }
 
 func getMap(env Env, e []Expression) (*map[string]any, error) {
