@@ -9,6 +9,8 @@ push(arr, 666)
 println(len(arr), arr)
 
 println(get(arr, 0))
+println([arr]0)
+println([arr]10/5-2)
 
 set(arr, 3, 999)
 println(len(arr), arr)

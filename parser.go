@@ -183,14 +183,44 @@ func parseAssignmentStatement(tokens []Token) (Statement, []Token, error) {
 }
 
 func parseExpression(tokens []Token) (Expression, []Token, error) {
-	return parsePipe(tokens)
+	return parseContainerAccess(tokens)
 }
 
-func parsePipe(tokens []Token) (Expression, []Token, error) {
-	return parseBinary(tokens, TokenPipe, parseAmpersand)
+func parseContainerAccess(tokens []Token) (Expression, []Token, error) {
+	isContainerAccess := false
+	startToken := tokens[0]
+	if tokens[0].Type == TokenBracketOpen {
+		isContainerAccess = true
+		tokens = tokens[1:]
+	}
+
+	expr, next, err := parseLogicalOr(tokens)
+	if err != nil {
+		return nil, nil, err
+	} else if !isContainerAccess {
+		return expr, next, nil
+	}
+
+	if next[0].Type != TokenBracketClose {
+		tok := next[0]
+		return nil, nil, fmt.Errorf("expected ']' after '[' and expression but got '%v' at %d:%d", tok.Type, tok.Line, tok.Col)
+	}
+	next = next[1:]
+
+	indexExpr, more, err := parseExpression(next)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	arguments := []Expression{expr, indexExpr}
+	return &FunctionCallExpression{Token: startToken, FunctionName: "get", Arguments: arguments}, more, nil
 }
 
-func parseAmpersand(tokens []Token) (Expression, []Token, error) {
+func parseLogicalOr(tokens []Token) (Expression, []Token, error) {
+	return parseBinary(tokens, TokenPipe, parseLogicalAnd)
+}
+
+func parseLogicalAnd(tokens []Token) (Expression, []Token, error) {
 	return parseBinary(tokens, TokenAmpersand, parseEqualEqual)
 }
 
@@ -322,5 +352,5 @@ func parseFunctionCall(tokens []Token) (Expression, []Token, error) {
 		return nil, nil, fmt.Errorf("expected %d arguments but got %d for function '%s' at %d:%d", builtin.Arity, len(arguments), identifier, tok.Line, tok.Col)
 	}
 
-	return &FunctionCallExpression{Token: callToken, Arguments: arguments}, tokens, nil
+	return &FunctionCallExpression{Token: callToken, FunctionName: callToken.Lexeme, Arguments: arguments}, tokens, nil
 }

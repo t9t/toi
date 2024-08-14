@@ -200,7 +200,7 @@ func stringConcat(left, right any) (any, error) {
 
 func (e *FunctionCallExpression) evaluate(env Env) (any, error) {
 	currentInterpreterLineCol = e.lineCol()
-	builtin := builtins[e.Token.Lexeme]
+	builtin := builtins[e.FunctionName]
 	return builtin.Func(env, e.Arguments)
 }
 

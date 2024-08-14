@@ -236,7 +236,7 @@ func (e *BinaryExpression) compileOrOrAnd(withNot bool) ([]byte, error) {
 
 func (e *FunctionCallExpression) compile() ([]byte, error) {
 	if len(e.Arguments) > 50 {
-		return nil, fmt.Errorf("functions don't support more than 50 arguments (was %d for '%v')", len(e.Arguments), e.Token.Lexeme)
+		return nil, fmt.Errorf("functions don't support more than 50 arguments (was %d for '%v')", len(e.Arguments), e.FunctionName)
 	}
 
 	ops := make([]byte, 0)
@@ -248,11 +248,11 @@ func (e *FunctionCallExpression) compile() ([]byte, error) {
 		ops = append(ops, exprOps...)
 	}
 
-	if e.Token.Lexeme == "println" {
+	if e.FunctionName == "println" {
 		return append(ops, []byte{OpPrintln, byte(len(e.Arguments))}...), nil
 	}
 
-	index, err := ensureConstant(e.Token.Lexeme)
+	index, err := ensureConstant(e.FunctionName)
 	if err != nil {
 		return nil, err
 	}

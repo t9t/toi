@@ -81,8 +81,9 @@ func (e *BinaryExpression) lineCol() LineCol {
 }
 
 type FunctionCallExpression struct {
-	Token     Token
-	Arguments []Expression
+	Token        Token
+	FunctionName string
+	Arguments    []Expression
 }
 
 func (e *FunctionCallExpression) lineCol() LineCol {

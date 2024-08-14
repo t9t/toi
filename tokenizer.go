@@ -31,10 +31,12 @@ const (
 
 	TokenEquals TokenType = "Equals"
 
-	TokenParenOpen  TokenType = "ParenOpen"
-	TokenParenClose TokenType = "ParenClose"
-	TokenBraceOpen  TokenType = "BraceOpen"
-	TokenBraceClose TokenType = "BraceClose"
+	TokenParenOpen    TokenType = "ParenOpen"
+	TokenParenClose   TokenType = "ParenClose"
+	TokenBraceOpen    TokenType = "BraceOpen"
+	TokenBraceClose   TokenType = "BraceClose"
+	TokenBracketOpen  TokenType = "BracketOpen"
+	TokenBracketClose TokenType = "BracketClose"
 
 	TokenComma TokenType = "Comma"
 
@@ -65,6 +67,8 @@ var singleCharTokens = map[rune]TokenType{
 	')': TokenParenClose,
 	'{': TokenBraceOpen,
 	'}': TokenBraceClose,
+	'[': TokenBracketOpen,
+	']': TokenBracketClose,
 
 	',': TokenComma,
 
