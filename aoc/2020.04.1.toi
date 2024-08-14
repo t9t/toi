@@ -26,7 +26,7 @@ while i <= lineCount {
         p = 0
         while p < len(parts) {
             elems = split([parts]p, ":")
-            set(passport, [elems]0, [elems]1)
+            [passport]([elems]0) =  [elems]1
 
             p = p + 1
         }

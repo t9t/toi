@@ -23,7 +23,7 @@ while i <= lineCount {
             c = [chars]ci
             ci = ci + 1
 
-            set(answers, c, 1)
+            [answers]c = 1
         }
     }
 }

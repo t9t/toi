@@ -24,7 +24,7 @@ while i <= lineCount {
 
             count = [answers]key
             if count == respondents {
-                set(everyone, key, 1)
+                [everyone]key = 1
             }
         }
 
@@ -42,9 +42,9 @@ while i <= lineCount {
 
             if isSet(answers, c) {
                 n = [answers]c
-                set(answers, c, n + 1)
+                [answers]c = n + 1
             } otherwise {
-                set(answers, c, 1)
+                [answers]c = 1
             }
         }
     }

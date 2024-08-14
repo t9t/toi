@@ -3,7 +3,7 @@ grid = array()
 
 i = 0
 while i < len(lines) {
-    set(grid, i, split([lines]i, ""))
+    [grid]i = split([lines]i, "")
     i = i + 1
 }
 

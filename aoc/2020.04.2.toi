@@ -114,7 +114,7 @@ while i <= lineCount {
 
             if key == "cid" {} // Always OK
 
-            set(passport, [elems]0, [elems]1)
+            [passport]([elems]0) = [elems]1
             p = p + 1
         }
     }

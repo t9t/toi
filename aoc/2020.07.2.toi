@@ -14,7 +14,7 @@ while l < len(lines) {
 
     outerColor = [parts]0
     if [parts]1 == "no other bags." {
-        set(bags, outerColor, map())
+        [bags]outerColor = map()
     } otherwise {
         parts = split([split([parts]1, ".")]0, ", ")
         p = 0
@@ -25,9 +25,9 @@ while l < len(lines) {
 
             number = int([words]0)
             color = [words]1 _ " " _ [words]2
-            set(bagMap, color, number)
+            [bagMap]color = number
         }
-        set(bags, outerColor, bagMap)
+        [bags]outerColor = bagMap
     }
 }
 
