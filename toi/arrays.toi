@@ -13,6 +13,15 @@ println([arr]0)
 println([arr]10/5-2)
 println([arr]10/5-2 == 42)
 
+arr2 = array()
+arr3 = array()
+push(arr2, 10)
+push(arr2, 20)
+push(arr3, "whatever")
+push(arr3, arr2)
+
+println([[arr3]1]0)
+
 set(arr, 3, 999)
 println(len(arr), arr)
 

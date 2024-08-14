@@ -35,7 +35,7 @@ while i < len(rights) {
     x = right
     treeCount = 0
     while y < lineCount {
-        char = get([grid]y, x)
+        char = [[grid]y]x
         if char == "#" {
             treeCount = treeCount + 1
         }

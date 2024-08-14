@@ -187,33 +187,37 @@ func parseExpression(tokens []Token) (Expression, []Token, error) {
 }
 
 func parseContainerAccess(tokens []Token) (Expression, []Token, error) {
-	isContainerAccess := false
 	startToken := tokens[0]
-	if tokens[0].Type == TokenBracketOpen {
-		isContainerAccess = true
+	nestedLevel := 0
+	for len(tokens) != 0 && tokens[0].Type == TokenBracketOpen {
+		nestedLevel += 1
 		tokens = tokens[1:]
 	}
 
-	expr, next, err := parseMinus(tokens)
+	innerExpression, next, err := parseMinus(tokens)
 	if err != nil {
 		return nil, nil, err
-	} else if !isContainerAccess {
-		return expr, next, nil
+	} else if nestedLevel == 0 {
+		return innerExpression, next, nil
 	}
 
-	if next[0].Type != TokenBracketClose {
-		tok := next[0]
-		return nil, nil, fmt.Errorf("expected ']' after '[' and expression but got '%v' at %d:%d", tok.Type, tok.Line, tok.Col)
-	}
-	next = next[1:]
+	for i := 0; i < nestedLevel; i += 1 {
+		if next[0].Type != TokenBracketClose {
+			tok := next[0]
+			return nil, nil, fmt.Errorf("expected ']' after '[' and expression but got '%v' at %d:%d", tok.Type, tok.Line, tok.Col)
+		}
+		next = next[1:]
 
-	indexExpr, more, err := parseMinus(next)
-	if err != nil {
-		return nil, nil, err
-	}
+		indexExpr, more, err := parseMinus(next)
+		if err != nil {
+			return nil, nil, err
+		}
 
-	arguments := []Expression{expr, indexExpr}
-	return &FunctionCallExpression{Token: startToken, FunctionName: "get", Arguments: arguments}, more, nil
+		arguments := []Expression{innerExpression, indexExpr}
+		innerExpression = &FunctionCallExpression{Token: startToken, FunctionName: "get", Arguments: arguments}
+		next = more
+	}
+	return innerExpression, next, nil
 }
 
 func parseLogicalOr(tokens []Token) (Expression, []Token, error) {
