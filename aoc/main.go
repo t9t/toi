@@ -12,17 +12,23 @@ type AocFunc func(string) any
 var funcs = map[string]AocFunc{
 	"1-1": day01part1,
 	"1-2": day01part2,
+	"7-2": day07part2,
 }
 
 func main() {
-	if len(os.Args) != 3 {
-		panic("invalid arguments; need day + part")
+	if len(os.Args) != 3 && len(os.Args) != 4 {
+		panic("invalid arguments; need day + part and optionall input file")
 	}
 
 	day, part := os.Args[1], os.Args[2]
 	fmt.Printf("Running day %s; part %s\n", day, part)
 
-	input, err := os.ReadFile("../aoc/input/2020/" + day + ".txt")
+	inputFile := "../aoc/input/2020/" + day + ".txt"
+	if len(os.Args) == 4 {
+		inputFile = os.Args[3]
+	}
+
+	input, err := os.ReadFile(inputFile)
 	rip(err)
 
 	f, found := funcs[day+"-"+part]
