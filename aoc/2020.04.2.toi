@@ -11,7 +11,7 @@ while i <= lineCount {
     if i == lineCount {
         line = ""
     } otherwise {
-        line = get(lines, i)
+        line = [lines]i
     }
 
     if line == "" {
@@ -26,9 +26,9 @@ while i <= lineCount {
         parts = split(line, " ")
         p = 0
         while p < len(parts) {
-            elems = split(get(parts, p), ":")
-            key = get(elems, 0)
-            value = get(elems, 1)
+            elems = split([parts]p, ":")
+            key = [elems]0
+            value = [elems]1
 
             if key == "byr" {
                 byr = int(value)
@@ -55,33 +55,33 @@ while i <= lineCount {
             chl = len(ch)
 
             if key == "hgt" {
-                if get(ch, chl-2) == "c" & get(ch, chl-1) == "m" {
-                    cm = int(get(split(value, "cm"), 0))
+                if [ch]chl-2 == "c" & [ch]chl-1 == "m" {
+                    cm = int([split(value, "cm")]0)
                     if cm < 150 | cm > 193 {
                         exit loop
                     }
                 }
-                if get(ch, chl-2) == "i" & get(ch, chl-1) == "n" {
-                    cm = int(get(split(value, "in"), 0))
+                if [ch]chl-2 == "i" & [ch]chl-1 == "n" {
+                    cm = int([split(value, "in")]0)
                     if cm < 59 | cm > 76 {
                         exit loop
                     }
                 }
 
-                if get(ch, chl-2) <> "c" & get(ch, chl-1) <> "m" {
-                    if get(ch, chl-2) <> "i" & get(ch, chl-1) <> "n" {
+                if [ch]chl-2 <> "c" & [ch]chl-1 <> "m" {
+                    if [ch]chl-2 <> "i" & [ch]chl-1 <> "n" {
                         exit loop
                     }
                 }
             }
 
             if key == "hcl" {
-                if chl <> 7 | get(ch, 0) <> "#" {
+                if chl <> 7 | [ch]0 <> "#" {
                     exit loop
                 }
                 ci = 1
                 while ci < chl {
-                    c = get(ch, ci)
+                    c = [ch]ci
                     ci = ci + 1
                     if c <> "0" & c <> "1" & c <> "2" & c <> "3" & c <> "4" & //
                         c <> "5" & c <> "6" & c <> "7" & c <> "8" & c <> "9" & //
@@ -103,7 +103,7 @@ while i <= lineCount {
                 }
                 ci = 0
                 while ci < chl {
-                    c = get(ch, ci)
+                    c = [ch]ci
                     ci = ci + 1
                     if c <> "0" & c <> "1" & c <> "2" & c <> "3" & c <> "4" & //
                         c <> "5" & c <> "6" & c <> "7" & c <> "8" & c <> "9" {
@@ -114,7 +114,7 @@ while i <= lineCount {
 
             if key == "cid" {} // Always OK
 
-            set(passport, get(elems, 0), get(elems, 1))
+            set(passport, [elems]0, [elems]1)
             p = p + 1
         }
     }

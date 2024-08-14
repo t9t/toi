@@ -9,7 +9,7 @@ while i <= lineCount {
     if i == lineCount {
         line = ""
     } otherwise {
-        line = get(lines, i)
+        line = [lines]i
     }
     i = i + 1
 
@@ -20,7 +20,7 @@ while i <= lineCount {
         chars = chars(line)
         ci = 0
         while ci < len(chars) {
-            c = get(chars, ci)
+            c = [chars]ci
             ci = ci + 1
 
             set(answers, c, 1)

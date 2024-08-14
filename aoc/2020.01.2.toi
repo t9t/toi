@@ -3,17 +3,17 @@ i = len(numbers)
 
 while i <> 0 {
     i = i - 1
-    left = get(numbers, i)
+    left = [numbers]i
 
     j = i
     while j <> 0 {
         j = j - 1
-        middle = get(numbers, j)
+        middle = [numbers]j
 
         k = j
         while k <> 0 {
             k = k - 1
-            right = get(numbers, k)
+            right = [numbers]k
 
             if 2020 - left + middle + right == 0 {
                 println(left * middle * right)

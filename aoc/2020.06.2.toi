@@ -10,7 +10,7 @@ while i <= lineCount {
     if i == lineCount {
         line = ""
     } otherwise {
-        line = get(lines, i)
+        line = [lines]i
     }
     i = i + 1
 
@@ -19,10 +19,10 @@ while i <= lineCount {
         keys = keys(answers)
         ki = 0
         while ki < len(keys) {
-            key = get(keys, ki)
+            key = [keys]ki
             ki = ki + 1
 
-            count = get(answers, key)
+            count = [answers]key
             if count == respondents {
                 set(everyone, key, 1)
             }
@@ -37,11 +37,11 @@ while i <= lineCount {
         chars = chars(line)
         ci = 0
         while ci < len(chars) {
-            c = get(chars, ci)
+            c = [chars]ci
             ci = ci + 1
 
             if isSet(answers, c) {
-                n = get(answers, c)
+                n = [answers]c
                 set(answers, c, n + 1)
             } otherwise {
                 set(answers, c, 1)

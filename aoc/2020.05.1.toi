@@ -3,7 +3,7 @@ lines = inputLines()
 highestId = 0
 i = 0
 while i < len(lines) {
-    line = get(lines, i)
+    line = [lines]i
     i = i + 1
 
     chars = chars(line)
@@ -12,7 +12,7 @@ while i < len(lines) {
     row = 0
     f = 128
     while ci < 7 {
-        c = get(chars, ci)
+        c = [chars]ci
         ci = ci + 1
 
         f = f / 2
@@ -25,7 +25,7 @@ while i < len(lines) {
     col = 0
     f = 8
     while ci < 10 {
-        c = get(chars, ci)
+        c = [chars]ci
         ci = ci + 1
 
         f = f / 2

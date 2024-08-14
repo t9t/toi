@@ -4,26 +4,26 @@ containedBags = map()
 
 i = 0
 while i < len(lines) {
-    line = get(lines, i)
+    line = [lines]i
     i = i + 1
 
     parts = split(line, " bags contain ")
-    outerColor = get(parts, 0)
-    otherBags = get(parts, 1)
+    outerColor = [parts]0
+    otherBags = [parts]1
 
     if otherBags <> "no other bags." {
         // e.g. "5 faded blue bags, 6 dotted black bags, N <color>."
-        bags = split(get(split(otherBags, "."), 0), ", ")
+        bags = split([split(otherBags, ".")]0, ", ")
         b = 0
         while b < len(bags) {
-            words = split(get(bags, b), " ")
+            words = split([bags]b, " ")
             b = b + 1
 
             // [5, faded, blue, bags]; [1, bright, white, bag]
             color = get(words, 1) _ " " _ get(words, 2)
 
             if isSet(containedBags, color) {
-                entry = get(containedBags, color)
+                entry = [containedBags]color
             } otherwise {
                 entry = array()
                 set(containedBags, color, entry)
@@ -41,10 +41,10 @@ while len(search) {
     color = pop(search)
 
     if isSet(containedBags, color) {
-        bags = get(containedBags, color)
+        bags = [containedBags]color
         i = 0
         while i < len(bags) {
-            bag = get(bags, i)
+            bag = [bags]i
             i = i + 1
             push(search, bag)
             set(hits, bag, 1)

@@ -8,7 +8,7 @@ while i <= lineCount {
     if i == lineCount {
         line = ""
     } otherwise {
-        line = get(lines, i)
+        line = [lines]i
     }
 
     if line == "" {
@@ -25,8 +25,8 @@ while i <= lineCount {
         parts = split(line, " ")
         p = 0
         while p < len(parts) {
-            elems = split(get(parts, p), ":")
-            set(passport, get(elems, 0), get(elems, 1))
+            elems = split([parts]p, ":")
+            set(passport, [elems]0, [elems]1)
 
             p = p + 1
         }
