@@ -1,0 +1,79 @@
+lines = inputLines()
+lineCount = len(lines)
+
+containedBags = map()
+
+i = 0
+while i < len(lines) {
+    line = get(lines, i)
+    i = i + 1
+
+    parts = split(line, " bags contain ")
+    outerColor = get(parts, 0)
+    otherBags = get(parts, 1)
+
+    //println(outerColor)
+    if otherBags <> "no other bags." {
+        // e.g. "5 faded blue bags, 6 dotted black bags, N <color>."
+        bags = split(get(split(otherBags, "."), 0), ", ")
+        b = 0
+        while b < len(bags) {
+            words = split(get(bags, b), " ")
+            b = b + 1
+
+            if len(words) <> 4 {
+                println("not 4 words:", words)
+            } otherwise {
+                // [5, faded, blue, bags]; [1, bright, white, bag]
+                color = get(words, 1) _ " " _ get(words, 2)
+
+                if isSet(containedBags, color) {
+                    entry = get(containedBags, color)
+                } otherwise {
+                    entry = array()
+                    set(containedBags, color, entry)
+                }
+                push(entry, outerColor)
+            }
+        }
+    }
+}
+
+search = map()
+set(search, "shiny gold", 1)
+
+hits = map()
+
+while 1 {
+    searchKeys = keys(search)
+    i = 0
+    searchItem = ""
+    while i < len(searchKeys) {
+        key = get(searchKeys, i)
+        i = i + 1
+        if get(search, key) {
+            searchItem = key
+            exit loop
+        }
+    }
+
+    if searchItem == "" {
+        exit loop
+    }
+
+    set(search, searchItem, 0)
+    if isSet(containedBags, searchItem) {
+        bags = get(containedBags, searchItem)
+        i = 0
+        while i < len(bags) {
+            bag = get(bags, i)
+            i = i + 1
+            if isSet(search, bag) == 0 {
+                set(search, bag, 1)
+            }
+            set(hits, bag, 1)
+        }
+    }
+}
+
+println(len(hits))
