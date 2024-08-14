@@ -8,3 +8,8 @@ println(get(a, "hello"), get(a, "number"))
 println(keys(a))
 
 println(isSet(a, "hello"), isSet(a, "not set"))
+
+println(len(a))
+unset(a, "hello")
+println(len(a))
+println(get(a, "number"))

@@ -18,3 +18,7 @@ while i < len(arr) {
     println(i, get(arr, i))
     i = i + 1
 }
+
+a = pop(arr)
+b = pop(arr)
+println(a, b, len(arr), arr)
