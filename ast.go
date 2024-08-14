@@ -3,29 +3,53 @@ package main
 type Statement interface {
 	execute(env Env) error
 	compile() ([]byte, error)
+
+	lineCol() LineCol
 }
 
 type Expression interface {
 	evaluate(env Env) (any, error)
 	compile() ([]byte, error)
+
+	lineCol() LineCol
 }
 
 type BlockStatement struct {
+	Token      Token
 	Statements []Statement
 }
 
+func (s *BlockStatement) lineCol() LineCol {
+	return s.Token.LineCol()
+}
+
 type IfStatement struct {
+	Token     Token
 	Condition Expression
 	Then      Statement
 	Otherwise *Statement
 }
 
+func (s *IfStatement) lineCol() LineCol {
+	return s.Token.LineCol()
+}
+
 type WhileStatement struct {
+	Token     Token
 	Condition Expression
 	Body      Statement
 }
 
+func (s *WhileStatement) lineCol() LineCol {
+	return s.Token.LineCol()
+}
+
 type ExitLoopStatement struct {
+	Token Token
+}
+
+func (s *ExitLoopStatement) lineCol() LineCol {
+	return s.Token.LineCol()
 }
 
 type AssignmentStatement struct {
@@ -33,8 +57,17 @@ type AssignmentStatement struct {
 	Expression Expression
 }
 
+func (s *AssignmentStatement) lineCol() LineCol {
+	return s.Identifier.LineCol()
+}
+
 type ExpressionStatement struct {
+	Token      Token
 	Expression Expression
+}
+
+func (s *ExpressionStatement) lineCol() LineCol {
+	return s.Token.LineCol()
 }
 
 type BinaryExpression struct {
@@ -43,15 +76,31 @@ type BinaryExpression struct {
 	Right    Expression
 }
 
+func (e *BinaryExpression) lineCol() LineCol {
+	return e.Operator.LineCol()
+}
+
 type FunctionCallExpression struct {
 	Token     Token
 	Arguments []Expression
+}
+
+func (e *FunctionCallExpression) lineCol() LineCol {
+	return e.Token.LineCol()
 }
 
 type LiteralExpression struct {
 	Token Token
 }
 
+func (e *LiteralExpression) lineCol() LineCol {
+	return e.Token.LineCol()
+}
+
 type VariableExpression struct {
 	Token Token
+}
+
+func (e *VariableExpression) lineCol() LineCol {
+	return e.Token.LineCol()
 }

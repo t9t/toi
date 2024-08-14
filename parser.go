@@ -80,6 +80,8 @@ func parseBlock(tokens []Token, typ string) (Statement, []Token, error) {
 		return nil, nil, fmt.Errorf("expected '{' after %s at %d:%d", typ, tok.Line, tok.Col)
 	}
 
+	token := next[0]
+
 	next = next[1:]
 	statements := make([]Statement, 0)
 	for len(next) != 0 && next[0].Type != TokenBraceClose {
@@ -99,10 +101,12 @@ func parseBlock(tokens []Token, typ string) (Statement, []Token, error) {
 		return nil, nil, fmt.Errorf("expected '}' after %s statements at %d:%d", typ, tok.Line, tok.Col)
 	}
 
-	return &BlockStatement{Statements: statements}, next[1:], nil
+	return &BlockStatement{Token: token, Statements: statements}, next[1:], nil
 }
 
 func parseIfStatement(tokens []Token) (Statement, []Token, error) {
+	token := tokens[0]
+
 	expr, next, err := parseExpression(tokens[1:])
 	if err != nil {
 		return nil, nil, err
@@ -124,10 +128,12 @@ func parseIfStatement(tokens []Token) (Statement, []Token, error) {
 		otherwiseBlock = &otherwise
 	}
 
-	return &IfStatement{Condition: expr, Then: block, Otherwise: otherwiseBlock}, next, nil
+	return &IfStatement{Token: token, Condition: expr, Then: block, Otherwise: otherwiseBlock}, next, nil
 }
 
 func parseWhileStatement(tokens []Token) (Statement, []Token, error) {
+	token := tokens[0]
+
 	expr, next, err := parseExpression(tokens[1:])
 	if err != nil {
 		return nil, nil, err
@@ -140,10 +146,12 @@ func parseWhileStatement(tokens []Token) (Statement, []Token, error) {
 	}
 	whileBodyCount -= 1
 
-	return &WhileStatement{Condition: expr, Body: block}, next, nil
+	return &WhileStatement{Token: token, Condition: expr, Body: block}, next, nil
 }
 
 func parseExitLoopStatement(tokens []Token) (Statement, []Token, error) {
+	token := tokens[0]
+
 	if len(tokens) == 1 || tokens[1].Type != TokenLoop {
 		tok := tokens[1]
 		return nil, nil, fmt.Errorf("expected 'loop' after 'exit' at %d:%d", tok.Line, tok.Col)
@@ -154,7 +162,7 @@ func parseExitLoopStatement(tokens []Token) (Statement, []Token, error) {
 		return nil, nil, fmt.Errorf("can only use 'exit loop' in 'while' body at %d:%d", tok.Line, tok.Col)
 	}
 
-	return &ExitLoopStatement{}, tokens[2:], nil
+	return &ExitLoopStatement{Token: token}, tokens[2:], nil
 }
 
 func parseAssignmentStatement(tokens []Token) (Statement, []Token, error) {

@@ -67,7 +67,7 @@ func runScript(scriptData []byte, stdin string) (string, error) {
 	start := time.Now()
 	if err := scriptStatement.execute(vars); err != nil {
 		toiStdout.WriteTo(os.Stdout)
-		fmt.Fprintf(os.Stderr, "Execution error:\n\t%v\n", err)
+		fmt.Fprintf(os.Stderr, "Execution error at %d:%d:\n\t%v\n", currentInterpreterLineCol.line, currentInterpreterLineCol.col, err)
 		return "", fmt.Errorf("execution error")
 	}
 

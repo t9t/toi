@@ -7,9 +7,15 @@ import (
 
 var ErrExitLoop = errors.New("exit loop")
 
+// TODO: global state is bad; also this seems rather inefficient
+type LineCol struct{ line, col int }
+
+var currentInterpreterLineCol LineCol
+
 // Statements
 
 func (s *BlockStatement) execute(env Env) error {
+	currentInterpreterLineCol = s.lineCol()
 	for _, stmt := range s.Statements {
 		if err := stmt.execute(env); err != nil {
 			return err
@@ -19,6 +25,7 @@ func (s *BlockStatement) execute(env Env) error {
 }
 
 func (s *IfStatement) execute(env Env) error {
+	currentInterpreterLineCol = s.lineCol()
 	v, err := s.Condition.evaluate(env)
 	if err != nil {
 		return err
@@ -32,6 +39,7 @@ func (s *IfStatement) execute(env Env) error {
 }
 
 func (s *WhileStatement) execute(env Env) error {
+	currentInterpreterLineCol = s.lineCol()
 	for {
 		v, err := s.Condition.evaluate(env)
 		if err != nil {
@@ -52,10 +60,12 @@ func (s *WhileStatement) execute(env Env) error {
 }
 
 func (s *ExitLoopStatement) execute(env Env) error {
+	currentInterpreterLineCol = s.lineCol()
 	return ErrExitLoop
 }
 
 func (s *AssignmentStatement) execute(env Env) error {
+	currentInterpreterLineCol = s.lineCol()
 	v, err := s.Expression.evaluate(env)
 	if err != nil {
 		return err
@@ -65,6 +75,7 @@ func (s *AssignmentStatement) execute(env Env) error {
 }
 
 func (s *ExpressionStatement) execute(env Env) error {
+	currentInterpreterLineCol = s.lineCol()
 	_, err := s.Expression.evaluate(env) /* Discard return value */
 	return err
 }
@@ -72,6 +83,7 @@ func (s *ExpressionStatement) execute(env Env) error {
 // Expressions
 
 func (e *BinaryExpression) evaluate(env Env) (any, error) {
+	currentInterpreterLineCol = e.lineCol()
 	if e.Operator.Type == TokenPipe {
 		return e.evaluateOrOrAnd(env, isWeirdlyTrue)
 	} else if e.Operator.Type == TokenAmpersand {
@@ -122,6 +134,7 @@ func (e *BinaryExpression) evaluate(env Env) (any, error) {
 }
 
 func (e *BinaryExpression) evaluateOrOrAnd(env Env, testFunc func(v any) bool) (any, error) {
+	currentInterpreterLineCol = e.lineCol()
 	left, err := e.Left.evaluate(env)
 	if err != nil {
 		return nil, err
@@ -186,15 +199,18 @@ func stringConcat(left, right any) (any, error) {
 }
 
 func (e *FunctionCallExpression) evaluate(env Env) (any, error) {
+	currentInterpreterLineCol = e.lineCol()
 	builtin := builtins[e.Token.Lexeme]
 	return builtin.Func(env, e.Arguments)
 }
 
 func (e *LiteralExpression) evaluate(env Env) (any, error) {
+	currentInterpreterLineCol = e.lineCol()
 	return e.Token.Literal, nil
 }
 
 func (e *VariableExpression) evaluate(env Env) (any, error) {
+	currentInterpreterLineCol = e.lineCol()
 	identifier := e.Token.Lexeme
 	val, found := env[identifier]
 	if found {

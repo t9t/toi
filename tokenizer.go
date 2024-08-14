@@ -53,6 +53,10 @@ type Token struct {
 	Pos, Line, Col int
 }
 
+func (t *Token) LineCol() LineCol {
+	return LineCol{t.Line, t.Col}
+}
+
 var singleCharTokens = map[rune]TokenType{
 	'\n': TokenNewline,
 	'\r': TokenNewline,
