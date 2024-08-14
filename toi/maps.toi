@@ -14,3 +14,12 @@ unset(a, "hello")
 println(len(a))
 println(get(a, "number"))
 println([a]"number")
+
+m = map()
+set(m, "a", "hello")
+set(m, "b", "world")
+set(m, "ab", "nesting!")
+set(m, "d", "b")
+
+println([m]"a" _ ", " _ [m]"b")
+println([m]("a" _ ([m]"d")))

@@ -18,8 +18,8 @@ while i < len(lines) {
 
     passwordChars = chars(password) // "abcde" -> ["a", "b", "c", "d", "e"]
 
-    char1 = [passwordChars]pos1 - 1
-    char2 = [passwordChars]pos2 - 1
+    char1 = [passwordChars](pos1 - 1)
+    char2 = [passwordChars](pos2 - 1)
 
     if char1 == policyLetter & char2 <> policyLetter {
         validCount = validCount + 1

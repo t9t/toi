@@ -24,7 +24,7 @@ while l < len(lines) {
             p = p + 1
 
             number = int([words]0)
-            color = get(words, 1) _ " " _ get(words, 2)
+            color = [words]1 _ " " _ [words]2
             set(bagMap, color, number)
         }
         set(bags, outerColor, bagMap)

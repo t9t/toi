@@ -10,8 +10,9 @@ println(len(arr), arr)
 
 println(get(arr, 0))
 println([arr]0)
-println([arr]10/5-2)
-println([arr]10/5-2 == 42)
+println([arr](10/5-2))
+println([arr](10/5-2) == 42)
+println([arr]1/5-2)
 
 arr2 = array()
 arr3 = array()

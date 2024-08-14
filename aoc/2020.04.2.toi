@@ -55,21 +55,21 @@ while i <= lineCount {
             chl = len(ch)
 
             if key == "hgt" {
-                if [ch]chl-2 == "c" & [ch]chl-1 == "m" {
+                if [ch](chl-2) == "c" & [ch](chl-1) == "m" {
                     cm = int([split(value, "cm")]0)
                     if cm < 150 | cm > 193 {
                         exit loop
                     }
                 }
-                if [ch]chl-2 == "i" & [ch]chl-1 == "n" {
+                if [ch](chl-2) == "i" & [ch](chl-1) == "n" {
                     cm = int([split(value, "in")]0)
                     if cm < 59 | cm > 76 {
                         exit loop
                     }
                 }
 
-                if [ch]chl-2 <> "c" & [ch]chl-1 <> "m" {
-                    if [ch]chl-2 <> "i" & [ch]chl-1 <> "n" {
+                if [ch](chl-2) <> "c" & [ch](chl-1) <> "m" {
+                    if [ch](chl-2) <> "i" & [ch](chl-1) <> "n" {
                         exit loop
                     }
                 }

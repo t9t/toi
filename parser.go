@@ -194,7 +194,7 @@ func parseContainerAccess(tokens []Token) (Expression, []Token, error) {
 		tokens = tokens[1:]
 	}
 
-	innerExpression, next, err := parseMinus(tokens)
+	innerExpression, next, err := parsePrimary(tokens)
 	if err != nil {
 		return nil, nil, err
 	} else if nestedLevel == 0 {
@@ -208,7 +208,7 @@ func parseContainerAccess(tokens []Token) (Expression, []Token, error) {
 		}
 		next = next[1:]
 
-		indexExpr, more, err := parseMinus(next)
+		indexExpr, more, err := parsePrimary(next)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -249,7 +249,7 @@ func parseLessThan(tokens []Token) (Expression, []Token, error) {
 }
 
 func parseLessEqual(tokens []Token) (Expression, []Token, error) {
-	return parseBinary(tokens, TokenLessEqual, parseContainerAccess)
+	return parseBinary(tokens, TokenLessEqual, parseMinus)
 }
 
 func parseMinus(tokens []Token) (Expression, []Token, error) {
@@ -265,11 +265,11 @@ func parseDivide(tokens []Token) (Expression, []Token, error) {
 }
 
 func parseMultiply(tokens []Token) (Expression, []Token, error) {
-	return parseBinary(tokens, TokenAsterisk, parseUnderscore)
+	return parseBinary(tokens, TokenAsterisk, parseStringConcat)
 }
 
-func parseUnderscore(tokens []Token) (Expression, []Token, error) {
-	return parseBinary(tokens, TokenUnderscore, parsePrimary)
+func parseStringConcat(tokens []Token) (Expression, []Token, error) {
+	return parseBinary(tokens, TokenUnderscore, parseContainerAccess)
 }
 
 func parseBinary(tokens []Token, tokenType TokenType, down func([]Token) (Expression, []Token, error)) (Expression, []Token, error) {
@@ -307,6 +307,18 @@ func parsePrimary(tokens []Token) (Expression, []Token, error) {
 
 		// Variable access
 		return &VariableExpression{Token: token}, tokens[1:], nil
+	} else if token.Type == TokenParenOpen {
+		expr, next, err := parseExpression(tokens[1:])
+		if err != nil {
+			return nil, nil, err
+		}
+
+		if len(next) == 0 || next[0].Type != TokenParenClose {
+			tok := next[0]
+			return nil, nil, fmt.Errorf("expect ')' after '(' and expression but got '%v' at %d:%d", tok.Type, tok.Line, tok.Col)
+		}
+
+		return expr, next[1:], nil
 	}
 
 	return nil, nil, fmt.Errorf("expected primary expression but got %s ('%s') at %d:%d", token.Type, token.Lexeme, token.Line, token.Col)

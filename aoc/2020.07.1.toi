@@ -20,7 +20,7 @@ while i < len(lines) {
             b = b + 1
 
             // [5, faded, blue, bags]; [1, bright, white, bag]
-            color = get(words, 1) _ " " _ get(words, 2)
+            color = [words]1 _ " " _ [words]2
 
             if isSet(containedBags, color) {
                 entry = [containedBags]color
