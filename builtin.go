@@ -20,7 +20,6 @@ const ArityVariadic = -1
 
 var builtins = map[string]Builtin{
 	"println":      {ArityVariadic, builtinPrintln, builtinPrintlnVm},
-	"inputLength":  {0, builtinInputLength, builtinInputLengthVm},
 	"inputNumbers": {0, builtinInputNumbers, builtinInputNumbersVm},
 	"inputLines":   {0, builtinInputLines, builtinInputLinesVm},
 
@@ -111,22 +110,6 @@ func builtinPrintlnVm(arguments []any) (any, error) {
 	}
 	toiStdout.WriteRune('\n')
 	return nil, nil
-}
-
-func builtinInputLength(env Env, e []Expression) (any, error) {
-	inputNumbers, err := getInputNumbers()
-	if err != nil {
-		return nil, err
-	}
-	return len(inputNumbers), nil
-}
-
-func builtinInputLengthVm(arguments []any) (any, error) {
-	inputNumbers, err := getInputNumbers()
-	if err != nil {
-		return nil, err
-	}
-	return len(inputNumbers), nil
 }
 
 func getInputNumbers() ([]int, error) {
