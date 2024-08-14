@@ -47,9 +47,10 @@ const (
 )
 
 type Token struct {
-	Type    TokenType
-	Lexeme  string
-	Literal any
+	Type           TokenType
+	Lexeme         string
+	Literal        any
+	Pos, Line, Col int
 }
 
 var singleCharTokens = map[rune]TokenType{
@@ -92,13 +93,21 @@ func tokenize(input string) (tokens []Token, errors []error) {
 	isAlpha := func(c rune) bool { return c == '_' || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') }
 	isAlphaNum := func(c rune) bool { return isDigit(c) || isAlpha(c) }
 
+	// col is set to 0 because we increment them right after reading
+	line, col := 1, 0
+
 	runes := []rune(input)
 	for i := 0; i < len(runes); i++ {
 		c := runes[i]
+		col += 1
 
 		tokenType, found := singleCharTokens[c]
 		if found {
-			addToken(Token{tokenType, string(c), nil})
+			addToken(Token{tokenType, string(c), nil, i, line, col})
+			if c == '\n' || c == '\r' {
+				line += 1
+				col = 0
+			}
 			continue
 		}
 
@@ -109,9 +118,12 @@ func tokenize(input string) (tokens []Token, errors []error) {
 			if i != len(runes)-1 && runes[i+1] == '/' {
 				// Comment
 				j := i + 1
+				// we don't increment col, because we don't expect any tokens (and thus errors) after //
 				if runes[j+1] == '\r' || runes[j+1] == '\n' {
 					// Commenting out the newline
 					i = j + 1
+					col = 0
+					line += 1
 				} else {
 					// Discard until end of line; but keep the newline
 					for ; j < len(runes) && (runes[j] != '\r' && runes[j] != '\n'); j++ {
@@ -119,38 +131,43 @@ func tokenize(input string) (tokens []Token, errors []error) {
 					i = j - 1
 				}
 			} else {
-				addToken(Token{TokenSlash, "/", nil})
+				addToken(Token{TokenSlash, "/", nil, i, line, col})
 			}
 		case c == '=':
 			if i != len(runes)-1 && runes[i+1] == '=' {
 				i += 1
-				addToken(Token{TokenEqualEqual, "==", nil})
+				col += 1
+				addToken(Token{TokenEqualEqual, "==", nil, i, line, col})
 			} else {
-				addToken(Token{TokenEquals, "=", nil})
+				addToken(Token{TokenEquals, "=", nil, i, line, col})
 			}
 		case c == '>':
 			if i != len(runes)-1 && runes[i+1] == '=' {
 				i += 1
-				addToken(Token{TokenGreaterEqual, ">=", nil})
+				col += 1
+				addToken(Token{TokenGreaterEqual, ">=", nil, i, line, col})
 			} else {
-				addToken(Token{TokenGreaterThan, ">", nil})
+				addToken(Token{TokenGreaterThan, ">", nil, i, line, col})
 			}
 		case c == '<':
 			if i != len(runes)-1 && runes[i+1] == '=' {
 				i += 1
-				addToken(Token{TokenLessEqual, "<=", nil})
+				col += 1
+				addToken(Token{TokenLessEqual, "<=", nil, i, line, col})
 			} else if i != len(runes)-1 && runes[i+1] == '>' {
 				i += 1
-				addToken(Token{TokenNotEqual, "<>", nil})
+				col += 1
+				addToken(Token{TokenNotEqual, "<>", nil, i, line, col})
 			} else {
-				addToken(Token{TokenLessThan, "<", nil})
+				addToken(Token{TokenLessThan, "<", nil, i, line, col})
 			}
 		case c == '"':
-			token := tokenizeString(runes[i+1:])
+			token := tokenizeString(runes[i+1:], i, line, col)
 			addToken(token)
 			i += len(token.Lexeme) + 1
+			col += len(token.Lexeme) + 1
 		case isDigit(c):
-			token, err := tokenizeNumber(runes[i:])
+			token, err := tokenizeNumber(runes[i:], i, line, col)
 			if err != nil {
 				addError(err)
 				break
@@ -158,6 +175,7 @@ func tokenize(input string) (tokens []Token, errors []error) {
 
 			addToken(token)
 			i += len(token.Lexeme) - 1
+			col += len(token.Lexeme) - 1
 		case isAlpha(c):
 			j := i + 1
 			for ; j < len(runes) && isAlphaNum(runes[j]); j++ {
@@ -165,20 +183,22 @@ func tokenize(input string) (tokens []Token, errors []error) {
 			identifier := string(runes[i:j])
 			tokenType, found := keywordTokens[identifier]
 			if found {
-				addToken(Token{tokenType, identifier, nil})
+				addToken(Token{tokenType, identifier, nil, i, line, col})
 			} else {
-				addToken(Token{TokenIdentifier, identifier, nil})
+				addToken(Token{TokenIdentifier, identifier, nil, i, line, col})
 			}
-			i = j - 1
+			newI := j - 1
+			col += (newI - i)
+			i = newI
 		default:
-			addError(fmt.Errorf("unexpected character: %c", c))
+			addError(fmt.Errorf("unexpected character: %c (line %d, col %d)", c, line, col))
 		}
 	}
 
 	return
 }
 
-func tokenizeString(runes []rune) Token {
+func tokenizeString(runes []rune, pos, line, col int) Token {
 	i := 0
 	for ; i < len(runes) && runes[i] != '"'; i++ {
 	}
@@ -186,10 +206,10 @@ func tokenizeString(runes []rune) Token {
 	lexeme := string(runes[0:i])
 	literal := lexeme
 
-	return Token{TokenString, lexeme, literal}
+	return Token{TokenString, lexeme, literal, pos, line, col}
 }
 
-func tokenizeNumber(runes []rune) (Token, error) {
+func tokenizeNumber(runes []rune, pos, line, col int) (Token, error) {
 	i := 0
 	for ; i < len(runes) && isDigit(runes[i]); i++ {
 	}
@@ -213,7 +233,7 @@ func tokenizeNumber(runes []rune) (Token, error) {
 		return Token{}, fmt.Errorf("numbers may not start with 0")
 	}
 
-	return Token{TokenNumber, lexeme, literal}, nil
+	return Token{TokenNumber, lexeme, literal, pos, line, col}, nil
 }
 
 func isDigit(c rune) bool {

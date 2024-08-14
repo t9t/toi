@@ -61,7 +61,8 @@ func parseStatement(tokens []Token) (stmt Statement, next []Token, err error) {
 	}
 
 	if len(next) != 0 && next[0].Type != TokenNewline && next[0].Type != TokenBraceClose {
-		return nil, nil, fmt.Errorf("expected newline after statement but got %s ('%s')", next[0].Type, next[0].Lexeme)
+		tok := next[0]
+		return nil, nil, fmt.Errorf("expected newline after statement but got %s ('%s') at %d:%d", tok.Type, tok.Lexeme, tok.Line, tok.Col)
 	}
 
 	if len(next) != 0 && next[0].Type == TokenNewline {
@@ -75,10 +76,8 @@ func parseBlock(tokens []Token, typ string) (Statement, []Token, error) {
 	next := tokens
 
 	if len(next) == 0 || next[0].Type != TokenBraceOpen {
-		if len(next) != 0 {
-			next = next[1:]
-		}
-		return nil, nil, fmt.Errorf("expected '{' after %s", typ)
+		tok := next[0]
+		return nil, nil, fmt.Errorf("expected '{' after %s at %d:%d", typ, tok.Line, tok.Col)
 	}
 
 	next = next[1:]
@@ -96,7 +95,8 @@ func parseBlock(tokens []Token, typ string) (Statement, []Token, error) {
 	}
 
 	if len(next) == 0 || next[0].Type != TokenBraceClose {
-		return nil, nil, fmt.Errorf("expected '}' after %s statements", typ)
+		tok := next[0]
+		return nil, nil, fmt.Errorf("expected '}' after %s statements at %d:%d", typ, tok.Line, tok.Col)
 	}
 
 	return &BlockStatement{Statements: statements}, next[1:], nil
@@ -145,11 +145,13 @@ func parseWhileStatement(tokens []Token) (Statement, []Token, error) {
 
 func parseExitLoopStatement(tokens []Token) (Statement, []Token, error) {
 	if len(tokens) == 1 || tokens[1].Type != TokenLoop {
-		return nil, nil, fmt.Errorf("expected 'loop' after 'exit'")
+		tok := tokens[1]
+		return nil, nil, fmt.Errorf("expected 'loop' after 'exit' at %d:%d", tok.Line, tok.Col)
 	}
 
 	if whileBodyCount == 0 {
-		return nil, nil, fmt.Errorf("can only use 'exit loop' in 'while' body")
+		tok := tokens[0]
+		return nil, nil, fmt.Errorf("can only use 'exit loop' in 'while' body at %d:%d", tok.Line, tok.Col)
 	}
 
 	return &ExitLoopStatement{}, tokens[2:], nil
@@ -157,9 +159,11 @@ func parseExitLoopStatement(tokens []Token) (Statement, []Token, error) {
 
 func parseAssignmentStatement(tokens []Token) (Statement, []Token, error) {
 	if len(tokens) < 3 {
-		return nil, nil, fmt.Errorf("expected '=' and expression after identifier")
+		tok := tokens[0]
+		return nil, nil, fmt.Errorf("expected '=' and expression after identifier at %d:%d", tok.Line, tok.Col)
 	} else if tokens[1].Type != TokenEquals {
-		return nil, nil, fmt.Errorf("expected '=' after identifier")
+		tok := tokens[1]
+		return nil, nil, fmt.Errorf("expected '=' after identifier at %d:%d", tok.Line, tok.Col)
 	}
 
 	expr, next, err := parseExpression(tokens[2:])
@@ -263,7 +267,7 @@ func parsePrimary(tokens []Token) (Expression, []Token, error) {
 		return &VariableExpression{Token: token}, tokens[1:], nil
 	}
 
-	return nil, nil, fmt.Errorf("expected primary expression but got %s ('%s')", token.Type, token.Lexeme)
+	return nil, nil, fmt.Errorf("expected primary expression but got %s ('%s') at %d:%d", token.Type, token.Lexeme, token.Line, token.Col)
 }
 
 func parseFunctionCall(tokens []Token) (Expression, []Token, error) {
@@ -272,7 +276,8 @@ func parseFunctionCall(tokens []Token) (Expression, []Token, error) {
 
 	builtin, found := builtins[identifier]
 	if !found {
-		return nil, nil, fmt.Errorf("no such builtin function '%s'", identifier)
+		tok := callToken
+		return nil, nil, fmt.Errorf("no such builtin function '%s' at %d:%d", identifier, tok.Line, tok.Col)
 	}
 
 	tokens = tokens[2:] // Consume identifier and '('
@@ -296,7 +301,8 @@ func parseFunctionCall(tokens []Token) (Expression, []Token, error) {
 			if tokens[0].Type == TokenComma {
 				tokens = tokens[1:]
 			} else if tokens[0].Type != TokenParenClose {
-				return nil, nil, fmt.Errorf("expected ')' or ',' but got %s ('%s')", tokens[0].Type, tokens[0].Lexeme)
+				tok := tokens[0]
+				return nil, nil, fmt.Errorf("expected ')' or ',' but got %s ('%s') at %d:%d", tok.Type, tok.Lexeme, tok.Line, tok.Col)
 			}
 		} else {
 			return nil, nil, fmt.Errorf("expected ')' or ',' but got end of input")
@@ -304,7 +310,8 @@ func parseFunctionCall(tokens []Token) (Expression, []Token, error) {
 	}
 
 	if len(arguments) != builtin.Arity && builtin.Arity != ArityVariadic {
-		return nil, nil, fmt.Errorf("expected %d arguments but got %d for function '%s'", builtin.Arity, len(arguments), identifier)
+		tok := tokens[0]
+		return nil, nil, fmt.Errorf("expected %d arguments but got %d for function '%s' at %d:%d", builtin.Arity, len(arguments), identifier, tok.Line, tok.Col)
 	}
 
 	return &FunctionCallExpression{Token: callToken, Arguments: arguments}, tokens, nil
