@@ -183,7 +183,7 @@ func parseAssignmentStatement(tokens []Token) (Statement, []Token, error) {
 }
 
 func parseExpression(tokens []Token) (Expression, []Token, error) {
-	return parseContainerAccess(tokens)
+	return parseLogicalOr(tokens)
 }
 
 func parseContainerAccess(tokens []Token) (Expression, []Token, error) {
@@ -194,7 +194,7 @@ func parseContainerAccess(tokens []Token) (Expression, []Token, error) {
 		tokens = tokens[1:]
 	}
 
-	expr, next, err := parseLogicalOr(tokens)
+	expr, next, err := parseMinus(tokens)
 	if err != nil {
 		return nil, nil, err
 	} else if !isContainerAccess {
@@ -207,7 +207,7 @@ func parseContainerAccess(tokens []Token) (Expression, []Token, error) {
 	}
 	next = next[1:]
 
-	indexExpr, more, err := parseExpression(next)
+	indexExpr, more, err := parseMinus(next)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -245,7 +245,7 @@ func parseLessThan(tokens []Token) (Expression, []Token, error) {
 }
 
 func parseLessEqual(tokens []Token) (Expression, []Token, error) {
-	return parseBinary(tokens, TokenLessEqual, parseMinus)
+	return parseBinary(tokens, TokenLessEqual, parseContainerAccess)
 }
 
 func parseMinus(tokens []Token) (Expression, []Token, error) {
