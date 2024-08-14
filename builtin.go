@@ -61,6 +61,17 @@ func builtinPrintln(env Env, e []Expression) (any, error) {
 				toiStdout.WriteString(fmt.Sprintf("%v", element))
 			}
 			toiStdout.WriteRune(']')
+		} else if map_, ok := v.(*map[string]any); ok {
+			toiStdout.WriteRune('{')
+			for i, key := range sortedKeys(map_) {
+				if i != 0 {
+					toiStdout.WriteString(", ")
+				}
+				toiStdout.WriteString(fmt.Sprintf("%v", key))
+				toiStdout.WriteString(": ")
+				toiStdout.WriteString(fmt.Sprintf("%v", (*map_)[key]))
+			}
+			toiStdout.WriteRune('}')
 		} else {
 			toiStdout.WriteString(fmt.Sprintf("%v", v))
 		}
@@ -83,6 +94,17 @@ func builtinPrintlnVm(arguments []any) (any, error) {
 				toiStdout.WriteString(fmt.Sprintf("%v", element))
 			}
 			toiStdout.WriteRune(']')
+		} else if map_, ok := v.(*map[string]any); ok {
+			toiStdout.WriteRune('{')
+			for i, key := range sortedKeys(map_) {
+				if i != 0 {
+					toiStdout.WriteString(", ")
+				}
+				toiStdout.WriteString(fmt.Sprintf("%v", key))
+				toiStdout.WriteString(": ")
+				toiStdout.WriteString(fmt.Sprintf("%v", (*map_)[key]))
+			}
+			toiStdout.WriteRune('}')
 		} else {
 			toiStdout.WriteString(fmt.Sprintf("%v", v))
 		}
@@ -582,13 +604,17 @@ func builtinKeysVm(arguments []any) (any, error) {
 }
 
 func keys(map_ *map[string]any) *[]any {
+	return toToiArray(sortedKeys(map_))
+}
+
+func sortedKeys(map_ *map[string]any) []string {
 	keys := make([]string, 0)
 	for key := range *map_ {
 		keys = append(keys, key)
 	}
 	// Sorting only to get consistent test results between invocations
 	slices.Sort(keys)
-	return toToiArray(keys)
+	return keys
 }
 
 func builtinIsSet(env Env, e []Expression) (any, error) {

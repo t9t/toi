@@ -35,3 +35,6 @@ while i < len(arr) {
 a = pop(arr)
 b = pop(arr)
 println(a, b, len(arr), arr)
+
+[arr]1 = 5521
+println(arr)

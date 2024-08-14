@@ -80,6 +80,16 @@ func (e *BinaryExpression) lineCol() LineCol {
 	return e.Operator.LineCol()
 }
 
+type ContainerAccessExpression struct {
+	Token     Token
+	Container Expression
+	Access    Expression
+}
+
+func (e *ContainerAccessExpression) lineCol() LineCol {
+	return e.Token.LineCol()
+}
+
 type FunctionCallExpression struct {
 	Token        Token
 	FunctionName string

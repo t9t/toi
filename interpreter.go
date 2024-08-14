@@ -198,6 +198,12 @@ func stringConcat(left, right any) (any, error) {
 	return leftString + rightString, nil
 }
 
+func (e *ContainerAccessExpression) evaluate(env Env) (any, error) {
+	currentInterpreterLineCol = e.lineCol()
+	get := builtins["get"]
+	return get.Func(env, []Expression{e.Container, e.Access})
+}
+
 func (e *FunctionCallExpression) evaluate(env Env) (any, error) {
 	currentInterpreterLineCol = e.lineCol()
 	builtin := builtins[e.FunctionName]

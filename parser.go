@@ -46,18 +46,11 @@ func parseStatement(tokens []Token) (stmt Statement, next []Token, err error) {
 		if err != nil {
 			return nil, next, err
 		}
-	} else if len(tokens) >= 2 && tokens[0].Type == TokenIdentifier && tokens[1].Type == TokenEquals {
+	} else {
 		stmt, next, err = parseAssignmentStatement(tokens)
 		if err != nil {
 			return nil, next, err
 		}
-	} else {
-		expr, nextTokens, err := parseExpression(tokens)
-		if err != nil {
-			return nil, nil, err
-		}
-		stmt = &ExpressionStatement{Expression: expr}
-		next = nextTokens
 	}
 
 	if len(next) != 0 && next[0].Type != TokenNewline && next[0].Type != TokenBraceClose {
@@ -166,20 +159,34 @@ func parseExitLoopStatement(tokens []Token) (Statement, []Token, error) {
 }
 
 func parseAssignmentStatement(tokens []Token) (Statement, []Token, error) {
-	if len(tokens) < 3 {
-		tok := tokens[0]
-		return nil, nil, fmt.Errorf("expected '=' and expression after identifier at %d:%d", tok.Line, tok.Col)
-	} else if tokens[1].Type != TokenEquals {
-		tok := tokens[1]
-		return nil, nil, fmt.Errorf("expected '=' after identifier at %d:%d", tok.Line, tok.Col)
-	}
-
-	expr, next, err := parseExpression(tokens[2:])
+	startToken := tokens[0]
+	left, next, err := parseExpression(tokens)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	return &AssignmentStatement{Identifier: tokens[0], Expression: expr}, next, nil
+	if len(next) == 0 || next[0].Type != TokenEquals {
+		return &ExpressionStatement{startToken, left}, next, nil
+	}
+	next = next[1:]
+
+	right, next, err := parseExpression(next)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if access, ok := left.(*ContainerAccessExpression); ok {
+		return &ExpressionStatement{
+			Token: startToken,
+			Expression: &FunctionCallExpression{
+				Token:        access.Token,
+				FunctionName: "set",
+				Arguments:    []Expression{access.Container, access.Access, right},
+			},
+		}, next, nil
+	}
+
+	return &AssignmentStatement{Identifier: tokens[0], Expression: right}, next, nil
 }
 
 func parseExpression(tokens []Token) (Expression, []Token, error) {
@@ -213,8 +220,7 @@ func parseContainerAccess(tokens []Token) (Expression, []Token, error) {
 			return nil, nil, err
 		}
 
-		arguments := []Expression{innerExpression, indexExpr}
-		innerExpression = &FunctionCallExpression{Token: startToken, FunctionName: "get", Arguments: arguments}
+		innerExpression = &ContainerAccessExpression{Token: startToken, Container: innerExpression, Access: indexExpr}
 		next = more
 	}
 	return innerExpression, next, nil

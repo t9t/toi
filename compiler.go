@@ -234,6 +234,15 @@ func (e *BinaryExpression) compileOrOrAnd(withNot bool) ([]byte, error) {
 	return combine(leftOps, dupe, not, jump, rightOps), nil
 }
 
+func (e *ContainerAccessExpression) compile() ([]byte, error) {
+	f := &FunctionCallExpression{
+		Token:        e.Token,
+		FunctionName: "get",
+		Arguments:    []Expression{e.Container, e.Access},
+	}
+	return f.compile()
+}
+
 func (e *FunctionCallExpression) compile() ([]byte, error) {
 	if len(e.Arguments) > 50 {
 		return nil, fmt.Errorf("functions don't support more than 50 arguments (was %d for '%v')", len(e.Arguments), e.FunctionName)

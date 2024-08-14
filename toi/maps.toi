@@ -23,3 +23,6 @@ set(m, "d", "b")
 
 println([m]"a" _ ", " _ [m]"b")
 println([m]("a" _ ([m]"d")))
+
+[m]"assigned" = 5521
+println(m)
