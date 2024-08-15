@@ -1,0 +1,46 @@
+ints = array()
+push(ints, 1)
+push(ints, 1)
+push(ints, 2)
+push(ints, 3)
+push(ints, 5)
+push(ints, 8)
+push(ints, 13)
+push(ints, 21)
+
+println(ints)
+
+for ints into index and number {
+    println(index, number)
+    if number == 8 {
+        exit loop
+    }
+}
+
+map = map()
+[map]"a" = 42
+[map]"b" = "hello"
+[map]"c" = "world"
+
+println(map)
+
+for map into key and value {
+    println(key, value)
+}
+
+[map]"matching" = 2
+for ints into arrayIndex and arrayValue {
+    exitOuter = 0
+    println("comparing array: " _ string(arrayIndex), arrayValue)
+    for map into mapKey and mapValue {
+        println("  to map: " _ mapKey, mapValue)
+        if mapValue == arrayValue {
+            println("found match", mapKey, mapValue, arrayIndex, arrayValue)
+            exitOuter = 1
+            exit loop
+        }
+    }
+    if exitOuter {
+        exit loop
+    }
+}

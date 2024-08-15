@@ -2,12 +2,14 @@ package main
 
 import (
 	"fmt"
+	"strconv"
 )
 
 type Env map[string]any
 
 // TODO: global state is yuck, don't do it
-var whileBodyCount = 0
+var loopBodyCount = 0
+var forCounter = 0
 
 func parse(tokens []Token) (Statement, error) {
 	statements := make([]Statement, 0)
@@ -38,6 +40,11 @@ func parseStatement(tokens []Token) (stmt Statement, next []Token, err error) {
 		}
 	} else if tokens[0].Type == TokenWhile {
 		stmt, next, err = parseWhileStatement(tokens)
+		if err != nil {
+			return nil, next, err
+		}
+	} else if tokens[0].Type == TokenFor {
+		stmt, next, err = parseForStatement(tokens)
 		if err != nil {
 			return nil, next, err
 		}
@@ -132,14 +139,113 @@ func parseWhileStatement(tokens []Token) (Statement, []Token, error) {
 		return nil, nil, err
 	}
 
-	whileBodyCount += 1
+	loopBodyCount += 1
 	block, next, err := parseBlock(next, "while expression")
 	if err != nil {
 		return nil, nil, err
 	}
-	whileBodyCount -= 1
+	loopBodyCount -= 1
 
 	return &WhileStatement{Token: token, Condition: expr, Body: block}, next, nil
+}
+
+func parseForStatement(tokens []Token) (Statement, []Token, error) {
+	// for (array or map) into (index or key) and (value)
+	token := tokens[0]
+
+	containerExpression, next, err := parseExpression(tokens[1:])
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if len(next) < 4 || next[0].Type != TokenInto || next[1].Type != TokenIdentifier || next[2].Type != TokenAnd || next[3].Type != TokenIdentifier {
+		return nil, nil, fmt.Errorf("expected 'into <identifier> and <identifier>' after 'for' container at %d:%d", token.Line, token.Col)
+	}
+
+	keyIdentifier := next[1]
+	valueIdentifier := next[3]
+	next = next[4:]
+
+	loopBodyCount += 1
+	block, next, err := parseBlock(next, "for expression")
+	if err != nil {
+		return nil, nil, err
+	}
+	loopBodyCount -= 1
+
+	ident := func(s string) Token { return Token{Type: TokenIdentifier, Lexeme: s} }
+
+	forCounter += 1
+	f := strconv.Itoa(forCounter)
+	containerIdent := ident("_for_container_" + f)
+	containerExpr := &VariableExpression{containerIdent}
+	keysIdent := ident("_for_keys_" + f)
+	keysExpr := &VariableExpression{keysIdent}
+	indexIdent := ident("_for_index_" + f)
+	indexExpr := &VariableExpression{indexIdent}
+
+	return &BlockStatement{
+		Token: token,
+		Statements: []Statement{
+			&AssignmentStatement{ // _for_container = (container expression)
+				Identifier: containerIdent,
+				Expression: containerExpression,
+			},
+			&AssignmentStatement{ // _for_keys = keys(_for_container)
+				Identifier: keysIdent,
+				Expression: &FunctionCallExpression{
+					Token:        keysIdent,
+					FunctionName: "keys",
+					Arguments:    []Expression{containerExpr},
+				},
+			},
+			&AssignmentStatement{ // _for_index = 0
+				Identifier: indexIdent,
+				Expression: &LiteralExpression{Token{Type: TokenNumber, Lexeme: "0", Literal: 0}},
+			}, // _i
+			&WhileStatement{
+				Token: token,
+				Condition: &BinaryExpression{ // _for_index < len(_for_keys)
+					Left:     indexExpr,
+					Operator: Token{Type: TokenLessThan, Lexeme: "<"},
+					Right: &FunctionCallExpression{
+						Token:        Token{Type: TokenIdentifier, Lexeme: "len"},
+						FunctionName: "len",
+						Arguments:    []Expression{keysExpr},
+					},
+				},
+				Body: &BlockStatement{
+					Token: token,
+					Statements: []Statement{
+						&AssignmentStatement{ // (used defined) key = [_for_keys]_for_index
+							Identifier: keyIdentifier,
+							Expression: &FunctionCallExpression{ // get(_for_keys, _for_index)
+								Token:        Token{Type: TokenIdentifier, Lexeme: "get"},
+								FunctionName: "get",
+								Arguments:    []Expression{keysExpr, indexExpr},
+							},
+						},
+						&AssignmentStatement{ // (user defined) value = [container]key
+							Identifier: valueIdentifier,
+							Expression: &FunctionCallExpression{ // get(container, key)
+								Token:        Token{Type: TokenIdentifier, Lexeme: "get"},
+								FunctionName: "get",
+								Arguments:    []Expression{containerExpr, &VariableExpression{keyIdentifier}},
+							},
+						},
+						block,
+						&AssignmentStatement{ // _for_index = _for_index + 1
+							Identifier: indexIdent,
+							Expression: &BinaryExpression{
+								Left:     indexExpr,
+								Operator: Token{Type: TokenPlus, Lexeme: "+"},
+								Right:    &LiteralExpression{Token{Type: TokenNumber, Lexeme: "1", Literal: 1}},
+							},
+						},
+					},
+				}},
+		},
+	}, next, nil
 }
 
 func parseExitLoopStatement(tokens []Token) (Statement, []Token, error) {
@@ -150,7 +256,7 @@ func parseExitLoopStatement(tokens []Token) (Statement, []Token, error) {
 		return nil, nil, fmt.Errorf("expected 'loop' after 'exit' at %d:%d", tok.Line, tok.Col)
 	}
 
-	if whileBodyCount == 0 {
+	if loopBodyCount == 0 {
 		tok := tokens[0]
 		return nil, nil, fmt.Errorf("can only use 'exit loop' in 'while' body at %d:%d", tok.Line, tok.Col)
 	}

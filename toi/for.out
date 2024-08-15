@@ -1,0 +1,27 @@
+[1, 1, 2, 3, 5, 8, 13, 21]
+0, 1
+1, 1
+2, 2
+3, 3
+4, 5
+5, 8
+{a: 42, b: hello, c: world}
+a, 42
+b, hello
+c, world
+comparing array: 0, 1
+  to map: a, 42
+  to map: b, hello
+  to map: c, world
+  to map: matching, 2
+comparing array: 1, 1
+  to map: a, 42
+  to map: b, hello
+  to map: c, world
+  to map: matching, 2
+comparing array: 2, 2
+  to map: a, 42
+  to map: b, hello
+  to map: c, world
+  to map: matching, 2
+found match, matching, 2, 2, 2

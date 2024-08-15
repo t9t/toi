@@ -15,6 +15,7 @@ func TestToi(t *testing.T) {
 		{"builtinFuncs", "10\n20"},
 		{"comment", ""},
 		{"conditionals", ""},
+		{"for", ""},
 		{"if", ""},
 		{"inputLines", "asdf\nkek"},
 		{"inputNumbers", "10\n20"},

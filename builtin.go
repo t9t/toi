@@ -78,7 +78,7 @@ func builtinPrintlnVm(arguments []any) (any, error) {
 			toiStdout.WriteRune(']')
 		} else if map_, ok := v.(*map[string]any); ok {
 			toiStdout.WriteRune('{')
-			for i, key := range sortedKeys(map_) {
+			for i, key := range sortedMapKeys(map_) {
 				if i != 0 {
 					toiStdout.WriteString(", ")
 				}
@@ -414,19 +414,29 @@ func builtinKeys(env Env, e []Expression) (any, error) {
 
 func builtinKeysVm(arguments []any) (any, error) {
 	// keys(map)
-	map_, err := getMapVm(arguments)
+	slice, map_, err := getSliceOrMapVm(arguments)
 	if err != nil {
 		return nil, err
+	} else if slice != nil {
+		return indexes(slice), nil
+	} else {
+		return keys(map_), nil
 	}
+}
 
-	return keys(map_), nil
+func indexes(array *[]any) *[]any {
+	indexes := make([]int, len(*array))
+	for i := range *array {
+		indexes[i] = i
+	}
+	return toToiArray(indexes)
 }
 
 func keys(map_ *map[string]any) *[]any {
-	return toToiArray(sortedKeys(map_))
+	return toToiArray(sortedMapKeys(map_))
 }
 
-func sortedKeys(map_ *map[string]any) []string {
+func sortedMapKeys(map_ *map[string]any) []string {
 	keys := make([]string, 0)
 	for key := range *map_ {
 		keys = append(keys, key)
