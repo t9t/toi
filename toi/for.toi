@@ -10,7 +10,7 @@ push(ints, 21)
 
 println(ints)
 
-for ints into index and number {
+for number = [ints]index {
     println(index, number)
     if number == 8 {
         exit loop
@@ -24,15 +24,15 @@ map = map()
 
 println(map)
 
-for map into key and value {
+for value = [map]key {
     println(key, value)
 }
 
 [map]"matching" = 2
-for ints into arrayIndex and arrayValue {
+for arrayValue = [ints]arrayIndex {
     exitOuter = 0
     println("comparing array: " _ string(arrayIndex), arrayValue)
-    for map into mapKey and mapValue {
+    for mapValue = [map]mapKey {
         println("  to map: " _ mapKey, mapValue)
         if mapValue == arrayValue {
             println("found match", mapKey, mapValue, arrayIndex, arrayValue)
@@ -43,4 +43,20 @@ for ints into arrayIndex and arrayValue {
     if exitOuter {
         exit loop
     }
+}
+
+
+nestedOuterArray = array()
+nestedMap = map()
+nestedInnerArray = array()
+
+push(nestedInnerArray, 42)
+push(nestedInnerArray, 1337)
+
+[nestedMap]"nested" = nestedInnerArray
+
+push(nestedOuterArray, nestedMap)
+
+for number = [[[nestedOuterArray]0]"nested"]innerIndex {
+    println("index", innerIndex, "number", number)
 }

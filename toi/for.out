@@ -25,3 +25,5 @@ comparing array: 2, 2
   to map: c, world
   to map: matching, 2
 found match, matching, 2, 2, 2
+index, 0, number, 42
+index, 1, number, 1337

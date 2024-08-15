@@ -44,8 +44,6 @@ const (
 	TokenOtherwise TokenType = "Otherwise"
 	TokenWhile     TokenType = "While"
 	TokenFor       TokenType = "For"
-	TokenInto      TokenType = "Into"
-	TokenAnd       TokenType = "And"
 
 	TokenExit TokenType = "Exit"
 	TokenLoop TokenType = "Loop"
@@ -89,8 +87,6 @@ var keywordTokens = map[string]TokenType{
 	"otherwise": TokenOtherwise,
 	"while":     TokenWhile,
 	"for":       TokenFor,
-	"into":      TokenInto,
-	"and":       TokenAnd,
 	"exit":      TokenExit,
 	"loop":      TokenLoop,
 }

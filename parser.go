@@ -151,20 +151,39 @@ func parseWhileStatement(tokens []Token) (Statement, []Token, error) {
 
 func parseForStatement(tokens []Token) (Statement, []Token, error) {
 	// for (array or map) into (index or key) and (value)
+	// for value = [arrayOrMap]indexOrKey { ... }
 	token := tokens[0]
 
-	containerExpression, next, err := parseExpression(tokens[1:])
+	if len(tokens) < 4 {
+		return nil, nil, fmt.Errorf("incomplete 'for' statement at %d:%d", token.Line, token.Col)
+	}
+
+	if tokens[1].Type != TokenIdentifier {
+		tok := tokens[1]
+		return nil, nil, fmt.Errorf("expected identifier after 'for' but got '%v' at %d:%d", tok.Type, tok.Line, tok.Col)
+	} else if tokens[2].Type != TokenEquals {
+		tok := tokens[2]
+		return nil, nil, fmt.Errorf("expected '=' after 'for' identifier but got '%v' at %d:%d", tok.Type, tok.Line, tok.Col)
+	} else if tokens[3].Type != TokenBracketOpen {
+		tok := tokens[3]
+		return nil, nil, fmt.Errorf("expected '[' after '=' in 'for' but got '%v' at %d:%d", tok.Type, tok.Line, tok.Col)
+	}
+
+	valueIdentifier := tokens[1]
+
+	containerExpression, next, err := parseExpression(tokens[4:])
 	if err != nil {
 		return nil, nil, err
 	}
 
-	if len(next) < 4 || next[0].Type != TokenInto || next[1].Type != TokenIdentifier || next[2].Type != TokenAnd || next[3].Type != TokenIdentifier {
-		return nil, nil, fmt.Errorf("expected 'into <identifier> and <identifier>' after 'for' container at %d:%d", token.Line, token.Col)
+	if len(next) < 2 || next[0].Type != TokenBracketClose || next[1].Type != TokenIdentifier {
+		tok := next[0]
+		return nil, nil, fmt.Errorf("expected ']' and index identifier 'for' container expression but got '%v' at %d:%d", tok.Type, tok.Line, tok.Col)
 	}
 
 	keyIdentifier := next[1]
-	valueIdentifier := next[3]
-	next = next[4:]
+
+	next = next[2:]
 
 	loopBodyCount += 1
 	block, next, err := parseBlock(next, "for expression")
