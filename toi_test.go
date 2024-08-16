@@ -20,6 +20,7 @@ func TestToi(t *testing.T) {
 		{"inputLines", "asdf\nkek"},
 		{"inputNumbers", "10\n20"},
 		{"logicalOperators", ""},
+		{"loops", ""},
 		{"maps", ""},
 		{"math", ""},
 		{"printNumbers", ""},
