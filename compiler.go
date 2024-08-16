@@ -43,7 +43,7 @@ func (s *IfStatement) compile() ([]byte, error) {
 	var jumpOverOtherwise []byte
 	if len(otherwise) != 0 {
 		b1, b2 := encodeJumpAmount(len(otherwise))
-		jumpOverOtherwise = []byte{OpInlineNumber, 1, OpJumpIfTrue, b1, b2}
+		jumpOverOtherwise = []byte{OpJumpForward, b1, b2}
 	}
 
 	jumpAmount := len(then) + len(jumpOverOtherwise)
@@ -52,11 +52,10 @@ func (s *IfStatement) compile() ([]byte, error) {
 		return nil, fmt.Errorf("if's then block of %d statements exceeds %d operations (token %s; '%s')", jumpAmount, MaxBlockSize, "oops", "oops")
 	}
 
-	not := []byte{OpNot} // We don't have a "jump if false", so we need to NOT the result
 	b1, b2 := encodeJumpAmount(jumpAmount)
-	jump := []byte{OpJumpIfTrue, b1, b2}
+	jump := []byte{OpJumpIfFalse, b1, b2}
 
-	return combine(condition, not, jump, then, jumpOverOtherwise, otherwise), nil
+	return combine(condition, jump, then, jumpOverOtherwise, otherwise), nil
 }
 
 func (s *WhileStatement) compile() ([]byte, error) {
@@ -65,8 +64,7 @@ func (s *WhileStatement) compile() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	not := []byte{OpNot} // We don't have a "jumpOutOfLoop if false", so we need to NOT the result
-	jumpOutOfLoop := []byte{OpJumpIfTrue, InvalidOp, InvalidOp}
+	jumpOutOfLoop := []byte{OpJumpIfFalse, InvalidOp, InvalidOp}
 
 	body, err := s.Body.compile()
 	if err != nil {
@@ -87,7 +85,7 @@ func (s *WhileStatement) compile() ([]byte, error) {
 			- 2 (op+arg) for jump if true
 			- N for body
 	*/
-	jumpBackAmount := len(condition) + len(not) + len(jumpOutOfLoop) + len(body) + 3 // + 3 for jumpBack + count
+	jumpBackAmount := len(condition) + len(jumpOutOfLoop) + len(body) + 3 // + 3 for jumpBack + count
 	if jumpBackAmount > MaxBlockSize {
 		// TODO: keep tokens for error reporting
 		return nil, fmt.Errorf("backjump of %d statements exceeds %d operations (token %s; '%s')", jumpBackAmount, MaxBlockSize, "oops", "oops")
@@ -102,21 +100,13 @@ func (s *WhileStatement) compile() ([]byte, error) {
 	jumpOutOfLoop[2] = b2
 
 	// Search for "next iteration" statements and patch their jumps
-	for i := 0; i < len(body); i += 1 {
-		if i < 2 {
-			continue
-		}
-		next := body[i-2:]
-		if len(next) < 5 {
-			continue
-		}
-
+	for i := 0; i < len(body)-2; i += 1 {
 		// TODO: this is some ugly nasty ass shit that should never be allowed
-		if body[i-2] != OpInlineNumber || body[i-1] != 1 || body[i] != OpCompileTimeOnlyNextIteration || body[i+1] != InvalidOp || body[i+2] != InvalidOp {
+		if body[i] != OpCompileTimeOnlyNextIteration || body[i+1] != InvalidOp || body[i+2] != InvalidOp {
 			continue
 		}
 
-		body[i] = OpJumpIfTrue
+		body[i] = OpJumpForward
 		// Distance between this statement and end of loop is jumpAmount - i
 		// I don't know why we need '- 3' and I'm too tired to figure it out, but it works
 		// In a "for" loop we have to jump to the index increment code; in a while loop, we can jumpt right out
@@ -128,38 +118,30 @@ func (s *WhileStatement) compile() ([]byte, error) {
 	}
 
 	// Search for "exit loop" statements and patch their jumps
-	for i := 0; i < len(body); i += 1 {
-		if i < 2 {
-			continue
-		}
-		next := body[i-2:]
-		if len(next) < 5 {
-			continue
-		}
-
+	for i := 0; i < len(body)-2; i += 1 {
 		// TODO: this is some ugly nasty ass shit that should never be allowed
-		if body[i-2] != OpInlineNumber || body[i-1] != 1 || body[i] != OpCompileTimeOnlyExitLoop || body[i+1] != InvalidOp || body[i+2] != InvalidOp {
+		if body[i] != OpCompileTimeOnlyExitLoop || body[i+1] != InvalidOp || body[i+2] != InvalidOp {
 			continue
 		}
 
-		body[i] = OpJumpIfTrue
+		body[i] = OpJumpForward
 		// Distance between this statement and end of loop is jumpAmount - i
 		// I don't know why we need '- 3' and I'm too tired to figure it out, but it works
 		jumpAmount := jumpOutAmount - i - 3
 		body[i+1], body[i+2] = encodeJumpAmount(jumpAmount)
 	}
 
-	return combine(condition, not, jumpOutOfLoop, body, jumpBack), nil
+	return combine(condition, jumpOutOfLoop, body, jumpBack), nil
 }
 
 func (s *ExitLoopStatement) compile() ([]byte, error) {
 	// OpCompileTimeOnlyExitLoop will be replaced with a jump in the compile() function of While
-	return []byte{OpInlineNumber, 1, OpCompileTimeOnlyExitLoop, InvalidOp, InvalidOp}, nil
+	return []byte{OpCompileTimeOnlyExitLoop, InvalidOp, InvalidOp}, nil
 }
 
 func (s *NextIterationStatement) compile() ([]byte, error) {
 	// OpCompileTimeOnlyNextIteration will be replaced with a jump in the compile() function of While
-	return []byte{OpInlineNumber, 1, OpCompileTimeOnlyNextIteration, InvalidOp, InvalidOp}, nil
+	return []byte{OpCompileTimeOnlyNextIteration, InvalidOp, InvalidOp}, nil
 }
 
 func encodeJumpAmount(amount int) (byte, byte) {

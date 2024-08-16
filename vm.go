@@ -15,6 +15,8 @@ const (
 	OpBinary
 	OpNot
 	OpJumpIfTrue
+	OpJumpIfFalse
+	OpJumpForward
 	OpJumpBack
 	OpInlineNumber
 	OpLoadConstant
@@ -140,6 +142,19 @@ func execute(ops []byte) error {
 			if isWeirdlyTrue(v) {
 				ip += jumpAmount
 			}
+		case OpJumpIfFalse:
+			b1 := int(readOpByte())
+			b2 := int(readOpByte())
+			jumpAmount := b1*256 + b2
+			v := popStack()
+			if !isWeirdlyTrue(v) {
+				ip += jumpAmount
+			}
+		case OpJumpForward:
+			b1 := int(readOpByte())
+			b2 := int(readOpByte())
+			jumpAmount := b1*256 + b2
+			ip += jumpAmount
 		case OpJumpBack:
 			b1 := int(readOpByte())
 			b2 := int(readOpByte())
