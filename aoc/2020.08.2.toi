@@ -5,55 +5,58 @@ exitPosition = len(lines)
 replace = 0
 while replace < len(lines) {
     parts = split([lines]replace, " ")
-    if [parts]0 == "jmp" | [parts]0 == "nop" {
-        copy = array()
-        for line = [lines]i {
-            if i == replace {
-                parts = split(line, " ")
-                if [parts]0 == "jmp" {
-                    [copy]i = "nop " _ [parts]1
-                } otherwise {
-                    [copy]i = "jmp " _ [parts]1
-                }
+    if [parts]0 <> "jmp" & [parts]0 <> "nop" {
+        replace = replace + 1
+        next iteration
+    }
+
+    copy = array()
+    for line = [lines]i {
+        if i == replace {
+            parts = split(line, " ")
+            if [parts]0 == "jmp" {
+                [copy]i = "nop " _ [parts]1
             } otherwise {
-                [copy]i = line
+                [copy]i = "jmp " _ [parts]1
             }
+        } otherwise {
+            [copy]i = line
         }
+    }
 
-        done = 0
-        accumulator = 0
-        visited = map()
-        i = 0
-        while 1 {
-            if i == exitPosition {
-                println(accumulator)
-                done = 1
-                exit loop
-            }
-            if isSet(visited, string(i)) {
-                exit loop
-            }
-            [visited]string(i) = 1
-
-            parts = split([copy]i, " ")
-            operation = [parts]0
-            argumentNumber = int([parts]1)
-
-            if operation == "acc" {
-                accumulator = accumulator + argumentNumber
-                i = i + 1
-            } otherwise {
-                if operation == "jmp" {
-                    i = i + argumentNumber
-                } otherwise {
-                    // otherwise it's "nop", so we just advance
-                    i = i + 1
-                }
-            }
-        }
-        if done {
+    done = 0
+    accumulator = 0
+    visited = map()
+    i = 0
+    while 1 {
+        if i == exitPosition {
+            println(accumulator)
+            done = 1
             exit loop
         }
+        if isSet(visited, string(i)) {
+            exit loop
+        }
+        [visited]string(i) = 1
+
+        parts = split([copy]i, " ")
+        operation = [parts]0
+        argumentNumber = int([parts]1)
+
+        if operation == "acc" {
+            accumulator = accumulator + argumentNumber
+            i = i + 1
+        } otherwise {
+            if operation == "jmp" {
+                i = i + argumentNumber
+            } otherwise {
+                // otherwise it's "nop", so we just advance
+                i = i + 1
+            }
+        }
+    }
+    if done {
+        exit loop
     }
 
     replace = replace + 1
