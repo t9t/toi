@@ -6,6 +6,7 @@ import (
 )
 
 var ErrExitLoop = errors.New("exit loop")
+var ErrNextIteration = errors.New("next iteration")
 
 // TODO: global state is bad; also this seems rather inefficient
 type LineCol struct{ line, col int }
@@ -52,8 +53,15 @@ func (s *WhileStatement) execute(env Env) error {
 		if err := s.Body.execute(env); err != nil {
 			if errors.Is(err, ErrExitLoop) {
 				return nil
+			} else if !errors.Is(err, ErrNextIteration) {
+				return err
 			}
-			return err
+		}
+
+		if s.AfterBody != nil {
+			if err := s.AfterBody.execute(env); err != nil {
+				return err
+			}
 		}
 	}
 	return nil
@@ -62,6 +70,11 @@ func (s *WhileStatement) execute(env Env) error {
 func (s *ExitLoopStatement) execute(env Env) error {
 	currentInterpreterLineCol = s.lineCol()
 	return ErrExitLoop
+}
+
+func (s *NextIterationStatement) execute(env Env) error {
+	currentInterpreterLineCol = s.lineCol()
+	return ErrNextIteration
 }
 
 func (s *AssignmentStatement) execute(env Env) error {

@@ -53,6 +53,11 @@ func parseStatement(tokens []Token) (stmt Statement, next []Token, err error) {
 		if err != nil {
 			return nil, next, err
 		}
+	} else if tokens[0].Type == TokenNext {
+		stmt, next, err = parseNextIterationStatement(tokens)
+		if err != nil {
+			return nil, next, err
+		}
 	} else {
 		stmt, next, err = parseAssignmentStatement(tokens)
 		if err != nil {
@@ -253,16 +258,17 @@ func parseForStatement(tokens []Token) (Statement, []Token, error) {
 							},
 						},
 						block,
-						&AssignmentStatement{ // _for_index = _for_index + 1
-							Identifier: indexIdent,
-							Expression: &BinaryExpression{
-								Left:     indexExpr,
-								Operator: Token{Type: TokenPlus, Lexeme: "+"},
-								Right:    &LiteralExpression{Token{Type: TokenNumber, Lexeme: "1", Literal: 1}},
-							},
-						},
 					},
-				}},
+				},
+				AfterBody: &AssignmentStatement{ // _for_index = _for_index + 1
+					Identifier: indexIdent,
+					Expression: &BinaryExpression{
+						Left:     indexExpr,
+						Operator: Token{Type: TokenPlus, Lexeme: "+"},
+						Right:    &LiteralExpression{Token{Type: TokenNumber, Lexeme: "1", Literal: 1}},
+					},
+				},
+			},
 		},
 	}, next, nil
 }
@@ -277,10 +283,26 @@ func parseExitLoopStatement(tokens []Token) (Statement, []Token, error) {
 
 	if loopBodyCount == 0 {
 		tok := tokens[0]
-		return nil, nil, fmt.Errorf("can only use 'exit loop' in 'while' body at %d:%d", tok.Line, tok.Col)
+		return nil, nil, fmt.Errorf("can only use 'exit loop' in 'while' or 'for' body at %d:%d", tok.Line, tok.Col)
 	}
 
 	return &ExitLoopStatement{Token: token}, tokens[2:], nil
+}
+
+func parseNextIterationStatement(tokens []Token) (Statement, []Token, error) {
+	token := tokens[0]
+
+	if len(tokens) == 1 || tokens[1].Type != TokenIteration {
+		tok := tokens[1]
+		return nil, nil, fmt.Errorf("expected 'iteration' after 'next' at %d:%d", tok.Line, tok.Col)
+	}
+
+	if loopBodyCount == 0 {
+		tok := tokens[0]
+		return nil, nil, fmt.Errorf("can only use 'next iteration' in 'while' or 'for' body at %d:%d", tok.Line, tok.Col)
+	}
+
+	return &NextIterationStatement{Token: token}, tokens[2:], nil
 }
 
 func parseAssignmentStatement(tokens []Token) (Statement, []Token, error) {

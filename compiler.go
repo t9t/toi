@@ -61,6 +61,7 @@ func (s *IfStatement) compile() ([]byte, error) {
 }
 
 func (s *WhileStatement) compile() ([]byte, error) {
+	isForLoop := s.Token.Type == TokenFor
 	condition, err := s.Condition.compile()
 	if err != nil {
 		return nil, err
@@ -71,6 +72,13 @@ func (s *WhileStatement) compile() ([]byte, error) {
 	body, err := s.Body.compile()
 	if err != nil {
 		return nil, err
+	}
+	if s.AfterBody != nil {
+		afterBody, err := s.AfterBody.compile()
+		if err != nil {
+			return nil, err
+		}
+		body = append(body, afterBody...)
 	}
 
 	/*
@@ -93,6 +101,32 @@ func (s *WhileStatement) compile() ([]byte, error) {
 	b1, b2 = encodeJumpAmount(jumpOutAmount)
 	jumpOutOfLoop[1] = b1
 	jumpOutOfLoop[2] = b2
+
+	// Search for "next iteration" statements and patch their jumps
+	for i := 0; i < len(body); i += 1 {
+		if i < 2 {
+			continue
+		}
+		next := body[i-2:]
+		if len(next) < 5 {
+			continue
+		}
+
+		// TODO: this is some ugly nasty ass shit that should never be allowed
+		if body[i-2] != OpInlineNumber || body[i-1] != 1 || body[i] != OpCompileTimeOnlyNextIteration || body[i+1] != InvalidOp || body[i+2] != InvalidOp {
+			continue
+		}
+
+		body[i] = OpJumpIfTrue
+		// Distance between this statement and end of loop is jumpAmount - i
+		// I don't know why we need '- 3' and I'm too tired to figure it out, but it works
+		// In a "for" loop we have to jump to the index increment code; in a while loop, we can jumpt right out
+		jumpAmount := jumpOutAmount - i - 3 - 3
+		if isForLoop {
+			jumpAmount -= 8
+		}
+		body[i+1], body[i+2] = encodeJumpAmount(jumpAmount)
+	}
 
 	// Search for "exit loop" statements and patch their jumps
 	for i := 0; i < len(body); i += 1 {
@@ -122,6 +156,11 @@ func (s *WhileStatement) compile() ([]byte, error) {
 func (s *ExitLoopStatement) compile() ([]byte, error) {
 	// OpCompileTimeOnlyExitLoop will be replaced with a jump in the compile() function of While
 	return []byte{OpInlineNumber, 1, OpCompileTimeOnlyExitLoop, InvalidOp, InvalidOp}, nil
+}
+
+func (s *NextIterationStatement) compile() ([]byte, error) {
+	// OpCompileTimeOnlyNextIteration will be replaced with a jump in the compile() function of While
+	return []byte{OpInlineNumber, 1, OpCompileTimeOnlyNextIteration, InvalidOp, InvalidOp}, nil
 }
 
 func encodeJumpAmount(amount int) (byte, byte) {

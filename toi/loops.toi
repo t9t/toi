@@ -27,9 +27,8 @@ while i > 30 {
     i = i - 1
 }
 
-true = 1
 i = 40
-while true {
+while 1 {
     println(i)
     i = i + 1
     if i == 50 {
@@ -52,7 +51,7 @@ i = 100
 while i <= 102 {
     println(i)
     j = 200
-    while true {
+    while 1 {
         println(i, j)
         if j == 201 {
             exit loop
@@ -62,6 +61,15 @@ while i <= 102 {
     i = i + 1
 }
 
-while true {
+while 1 {
     exit loop
+}
+
+i = 0
+while i < 5 {
+    i = i + 1
+    if i == 2 | i == 4 {
+        next iteration
+    }
+    println(i)
 }

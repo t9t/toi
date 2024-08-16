@@ -17,6 +17,13 @@ for number = [ints]index {
     }
 }
 
+for number = [ints]index {
+    if number == 1 | number == 13 | index == 3 {
+        next iteration
+    }
+    println(index, number)
+}
+
 map = map()
 [map]"a" = 42
 [map]"b" = "hello"

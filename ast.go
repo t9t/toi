@@ -38,6 +38,7 @@ type WhileStatement struct {
 	Token     Token
 	Condition Expression
 	Body      Statement
+	AfterBody Statement // For 'for' loops
 }
 
 func (s *WhileStatement) lineCol() LineCol {
@@ -49,6 +50,14 @@ type ExitLoopStatement struct {
 }
 
 func (s *ExitLoopStatement) lineCol() LineCol {
+	return s.Token.LineCol()
+}
+
+type NextIterationStatement struct {
+	Token Token
+}
+
+func (s *NextIterationStatement) lineCol() LineCol {
 	return s.Token.LineCol()
 }
 

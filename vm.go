@@ -25,6 +25,7 @@ const (
 	OpDuplicate
 
 	OpCompileTimeOnlyExitLoop
+	OpCompileTimeOnlyNextIteration
 
 	InvalidOp
 )
