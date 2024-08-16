@@ -78,9 +78,14 @@ if i < 42 & greeting == "world" | j <> 13 {
 
 
 ## Loops
-Toi currently only supports while loops, which run when the expression evaluates
-to true (not zero (`0`)) and stops running when the expression evaluates to
-false (zero (`0`)). A loop can be exited prematurely by using `exit loop`.
+Toi currently only supports while and for loops.
+
+While loops run when their expression evaluates to true (not zero (`0`)) and
+stops running when the expression evaluates to false (zero (`0`)).
+
+For loops iterate over each element of an array or map.
+
+A loop can be exited prematurely by using `exit loop`.
 
 ```
 i = 0
@@ -90,6 +95,17 @@ while 1 {
         exit loop
     }
     i = i + 1
+}
+```
+
+```
+array = array()
+push(array, 42)
+push(array, 1337)
+push(array, 5521)
+
+for value = [array]index {
+    println("index", index, "value", value)
 }
 ```
 
