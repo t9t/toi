@@ -85,16 +85,20 @@ stops running when the expression evaluates to false (zero (`0`)).
 
 For loops iterate over each element of an array or map.
 
-A loop can be exited prematurely by using `exit loop`.
+A loop can be exited prematurely by using `exit loop`. You can commence to the
+next iteration using `next iteration`.
 
 ```
 i = 0
 while 1 {
+    i = i + 1
+    if i == 30 {
+        next iteration // skips printing 30
+    }
     println("i is:", i)
     if i == 42 {
         exit loop
     }
-    i = i + 1
 }
 ```
 
