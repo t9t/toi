@@ -1,0 +1,19 @@
+array = array()
+push(array, 42)
+push(array, 1337)
+push(array, 5521)
+
+a = 0
+while a < 3 {
+    if a == 1 {
+        a = a + 1
+        next iteration
+    }
+    for v = [array]i {
+        if a == 2 & v == 1337 {
+            exit loop
+        }
+        println(a, i, v)
+    }
+    a = a + 1
+}

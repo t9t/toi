@@ -94,8 +94,6 @@ func decompile(constants []any, ops []byte) {
 			fmt.Printf("[2] Builtin %d '%v'", index, constantValue)
 		case OpDuplicate:
 			fmt.Print("[1] Duplicate")
-		case OpCompileTimeOnlyExitLoop:
-			fmt.Print("[1] !! Compile-time only 'exit loop' operation !!")
 		case InvalidOp:
 			fmt.Print("[1] !! Invalid op !!")
 		}

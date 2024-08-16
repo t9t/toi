@@ -1,193 +1,248 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+)
 
 // TODO: use a bytebuffer instead of slices for efficiency; although slices are nice and easy to patch jumps
 
+type LoopState struct {
+	exitLoops      []int
+	nextIterations []int
+}
+
 type Compiler struct {
 	constants []any
+	bytes     []byte
+
+	loopStates []*LoopState
+}
+
+func (c *Compiler) writeByte(b byte) {
+	c.bytes = append(c.bytes, b)
+}
+
+func (c *Compiler) setByte(index int, b byte) {
+	c.bytes[index] = b
+}
+
+func (c *Compiler) writeBytes(bytes ...byte) {
+	c.bytes = append(c.bytes, bytes...)
+}
+
+func (c *Compiler) currentLoopState() *LoopState {
+	return c.loopStates[len(c.loopStates)-1]
+}
+
+func (c *Compiler) pushLoopState() {
+	c.loopStates = append(c.loopStates, &LoopState{})
+}
+
+func (c *Compiler) popLoopState() {
+	// leaves some memory filled, but we're OK with that
+	c.loopStates = c.loopStates[0 : len(c.loopStates)-1]
+}
+
+func (c *Compiler) addExitLoop(index int) {
+	loopState := c.currentLoopState()
+	loopState.exitLoops = append(loopState.exitLoops, index)
+}
+
+func (c *Compiler) addNextIteration(index int) {
+	loopState := c.currentLoopState()
+	loopState.nextIterations = append(loopState.nextIterations, index)
+}
+
+func (c *Compiler) len() int {
+	return len(c.bytes)
 }
 
 // Statements
 
-func (s *BlockStatement) compile(compiler *Compiler) ([]byte, error) {
-	ops := make([]byte, 0)
+func (s *BlockStatement) compile(compiler *Compiler) error {
 	for _, stmt := range s.Statements {
-		stmtOps, err := stmt.compile(compiler)
-		if err != nil {
-			return nil, err
+		if err := stmt.compile(compiler); err != nil {
+			return err
 		}
-		ops = append(ops, stmtOps...)
 	}
-	return ops, nil
+	return nil
 }
 
-func (s *IfStatement) compile(compiler *Compiler) ([]byte, error) {
-	condition, err := s.Condition.compile(compiler)
-	if err != nil {
-		return nil, err
+func (s *IfStatement) compile(compiler *Compiler) error {
+	if err := s.Condition.compile(compiler); err != nil {
+		return err
 	}
 
-	then, err := s.Then.compile(compiler)
-	if err != nil {
-		return nil, err
+	thenJumpIndex := compiler.len()
+	compiler.writeBytes(OpJumpIfFalse, InvalidOp, InvalidOp)
+
+	if err := s.Then.compile(compiler); err != nil {
+		return err
 	}
 
-	var otherwise []byte
+	thenJumpTo := compiler.len()
+	jumpOverOtherwiseIndex := compiler.len()
 	if s.Otherwise != nil {
-		otherwise, err = (*s.Otherwise).compile(compiler)
-		if err != nil {
-			return nil, err
+		compiler.writeBytes(OpJumpForward, InvalidOp, InvalidOp)
+		thenJumpTo = compiler.len()
+
+		if err := (*s.Otherwise).compile(compiler); err != nil {
+			return err
 		}
 	}
 
-	var jumpOverOtherwise []byte
-	if len(otherwise) != 0 {
-		b1, b2 := encodeJumpAmount(len(otherwise))
-		jumpOverOtherwise = []byte{OpJumpForward, b1, b2}
+	thenJumpAmount := thenJumpTo - thenJumpIndex - 3 // I don't know why it must be 3
+	b1, b2, err := encodeJumpAmount(thenJumpAmount)
+	if err != nil {
+		// TODO: add token/line/col to error
+		return err
+	}
+	compiler.setByte(thenJumpIndex+1, b1)
+	compiler.setByte(thenJumpIndex+2, b2)
+
+	if s.Otherwise != nil {
+		otherwiseJumpAmount := compiler.len() - jumpOverOtherwiseIndex - 3 // why 3 though?
+		b1, b2, err := encodeJumpAmount(otherwiseJumpAmount)
+		if err != nil {
+			// TODO: add token/line/col to error
+			return err
+		}
+		compiler.setByte(jumpOverOtherwiseIndex+1, b1)
+		compiler.setByte(jumpOverOtherwiseIndex+2, b2)
 	}
 
-	jumpAmount := len(then) + len(jumpOverOtherwise)
-	if jumpAmount > MaxBlockSize {
-		// TODO: keep tokens for error reporting
-		return nil, fmt.Errorf("if's then block of %d statements exceeds %d operations (token %s; '%s')", jumpAmount, MaxBlockSize, "oops", "oops")
-	}
-
-	b1, b2 := encodeJumpAmount(jumpAmount)
-	jump := []byte{OpJumpIfFalse, b1, b2}
-
-	return combine(condition, jump, then, jumpOverOtherwise, otherwise), nil
+	return nil
 }
 
-func (s *WhileStatement) compile(compiler *Compiler) ([]byte, error) {
-	isForLoop := s.Token.Type == TokenFor
-	condition, err := s.Condition.compile(compiler)
-	if err != nil {
-		return nil, err
-	}
-	jumpOutOfLoop := []byte{OpJumpIfFalse, InvalidOp, InvalidOp}
+func (s *WhileStatement) compile(compiler *Compiler) error {
+	compiler.pushLoopState()
 
-	body, err := s.Body.compile(compiler)
-	if err != nil {
-		return nil, err
+	conditionIndex := compiler.len()
+	if err := s.Condition.compile(compiler); err != nil {
+		return err
 	}
+	conditionFalseJumpIndex := compiler.len()
+	compiler.writeBytes(OpJumpIfFalse, InvalidOp, InvalidOp)
+
+	if err := s.Body.compile(compiler); err != nil {
+		return err
+	}
+
+	afterBodyIndex := compiler.len()
+	if s.AfterBody != nil { // for loop incrementor
+		if err := s.AfterBody.compile(compiler); err != nil {
+			return err
+		}
+	}
+
+	jumpBackIndex := compiler.len()
+	jumpBackAmount := compiler.len() - conditionIndex + 3 // I don't get why it's 3
+	b1, b2, err := encodeJumpAmount(jumpBackAmount)
+	if err != nil {
+		// TODO: error reporting with token/line/col
+		return err
+	}
+	compiler.writeBytes(OpJumpBack, b1, b2)
+
+	// Patch jump over loop
+	jumpForwardAmount := compiler.len() - conditionFalseJumpIndex - 3 // 3!?
+	b1, b2, err = encodeJumpAmount(jumpForwardAmount)
+	if err != nil {
+		// TODO: error reporting with token/line/col
+		return err
+	}
+	compiler.setByte(conditionFalseJumpIndex+1, b1)
+	compiler.setByte(conditionFalseJumpIndex+2, b2)
+
+	nextIterationJumpIndex := jumpBackIndex
 	if s.AfterBody != nil {
-		afterBody, err := s.AfterBody.compile(compiler)
+		nextIterationJumpIndex = afterBodyIndex
+	}
+
+	loopState := compiler.currentLoopState()
+	for _, index := range loopState.nextIterations {
+		jumpAmount := nextIterationJumpIndex - index - 3 // I don't understand why it must be 3
+		b1, b2, err := encodeJumpAmount(jumpAmount)
 		if err != nil {
-			return nil, err
+			// TODO: error reporting with token/line/col
+			return err
 		}
-		body = append(body, afterBody...)
+		compiler.setByte(index+1, b1)
+		compiler.setByte(index+2, b2)
 	}
 
-	/*
-		Layout is:
-			- N ops for condition expression
-			- 1 op for NOT of condition expression
-			- 2 (op+arg) for jump if true
-			- N for body
-	*/
-	jumpBackAmount := len(condition) + len(jumpOutOfLoop) + len(body) + 3 // + 3 for jumpBack + count
-	if jumpBackAmount > MaxBlockSize {
+	endOfLoopIndex := compiler.len()
+	for _, index := range loopState.exitLoops {
+		jumpAmount := endOfLoopIndex - index - 3 // I don't understand why it must be 3
+		b1, b2, err := encodeJumpAmount(jumpAmount)
+		if err != nil {
+			// TODO: error reporting with token/line/col
+			return err
+		}
+		compiler.setByte(index+1, b1)
+		compiler.setByte(index+2, b2)
+	}
+
+	compiler.popLoopState()
+	return nil
+}
+
+func (s *ExitLoopStatement) compile(compiler *Compiler) error {
+	compiler.addExitLoop(compiler.len())
+	compiler.writeBytes(OpJumpForward, InvalidOp, InvalidOp)
+	return nil
+}
+
+func (s *NextIterationStatement) compile(compiler *Compiler) error {
+	compiler.addNextIteration(compiler.len())
+	compiler.writeBytes(OpJumpForward, InvalidOp, InvalidOp)
+	return nil
+}
+
+func encodeJumpAmount(amount int) (byte, byte, error) {
+	if amount > MaxBlockSize {
 		// TODO: keep tokens for error reporting
-		return nil, fmt.Errorf("backjump of %d statements exceeds %d operations (token %s; '%s')", jumpBackAmount, MaxBlockSize, "oops", "oops")
+		return 0, 0, fmt.Errorf("jump of %d exceeds maximum of %d operations", amount, MaxBlockSize)
 	}
-	b1, b2 := encodeJumpAmount(jumpBackAmount)
-	jumpBack := []byte{OpJumpBack, b1, b2}
-
-	// Jump forward
-	jumpOutAmount := len(body) + 3 // +3 to jump over the OpJumpBack instruction and its argument
-	b1, b2 = encodeJumpAmount(jumpOutAmount)
-	jumpOutOfLoop[1] = b1
-	jumpOutOfLoop[2] = b2
-
-	// Search for "next iteration" statements and patch their jumps
-	for i := 0; i < len(body)-2; i += 1 {
-		// TODO: this is some ugly nasty ass shit that should never be allowed
-		if body[i] != OpCompileTimeOnlyNextIteration || body[i+1] != InvalidOp || body[i+2] != InvalidOp {
-			continue
-		}
-
-		body[i] = OpJumpForward
-		// Distance between this statement and end of loop is jumpAmount - i
-		// I don't know why we need '- 3' and I'm too tired to figure it out, but it works
-		// In a "for" loop we have to jump to the index increment code; in a while loop, we can jumpt right out
-		jumpAmount := jumpOutAmount - i - 3 - 3
-		if isForLoop {
-			jumpAmount -= 8
-		}
-		body[i+1], body[i+2] = encodeJumpAmount(jumpAmount)
-	}
-
-	// Search for "exit loop" statements and patch their jumps
-	for i := 0; i < len(body)-2; i += 1 {
-		// TODO: this is some ugly nasty ass shit that should never be allowed
-		if body[i] != OpCompileTimeOnlyExitLoop || body[i+1] != InvalidOp || body[i+2] != InvalidOp {
-			continue
-		}
-
-		body[i] = OpJumpForward
-		// Distance between this statement and end of loop is jumpAmount - i
-		// I don't know why we need '- 3' and I'm too tired to figure it out, but it works
-		jumpAmount := jumpOutAmount - i - 3
-		body[i+1], body[i+2] = encodeJumpAmount(jumpAmount)
-	}
-
-	return combine(condition, jumpOutOfLoop, body, jumpBack), nil
+	return byte(amount / 256), byte(amount % 256), nil
 }
 
-func (s *ExitLoopStatement) compile(compiler *Compiler) ([]byte, error) {
-	// OpCompileTimeOnlyExitLoop will be replaced with a jump in the compile() function of While
-	return []byte{OpCompileTimeOnlyExitLoop, InvalidOp, InvalidOp}, nil
-}
-
-func (s *NextIterationStatement) compile(compiler *Compiler) ([]byte, error) {
-	// OpCompileTimeOnlyNextIteration will be replaced with a jump in the compile() function of While
-	return []byte{OpCompileTimeOnlyNextIteration, InvalidOp, InvalidOp}, nil
-}
-
-func encodeJumpAmount(amount int) (byte, byte) {
-	return byte(amount / 256), byte(amount % 256)
-}
-
-func (s *AssignmentStatement) compile(compiler *Compiler) ([]byte, error) {
+func (s *AssignmentStatement) compile(compiler *Compiler) error {
 	index, err := compiler.ensureConstant(s.Identifier.Lexeme)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	expression, err := s.Expression.compile(compiler)
-	if err != nil {
-		return nil, err
+	if err := s.Expression.compile(compiler); err != nil {
+		return err
 	}
 
-	return combine(expression, []byte{OpSetVariable, index}), nil
+	compiler.writeBytes(OpSetVariable, index)
+	return nil
 }
 
-func (s *ExpressionStatement) compile(compiler *Compiler) ([]byte, error) {
+func (s *ExpressionStatement) compile(compiler *Compiler) error {
 	/* Discard return value afterwards using pop */
-	ops, err := s.Expression.compile(compiler)
-	if err != nil {
-		return nil, err
+	if err := s.Expression.compile(compiler); err != nil {
+		return err
 	}
-	return combine(ops, []byte{OpPop}), nil
+	compiler.writeByte(OpPop)
+	return nil
 }
 
 // Expressions
 
-func (e *BinaryExpression) compile(compiler *Compiler) ([]byte, error) {
+func (e *BinaryExpression) compile(compiler *Compiler) error {
 	if e.Operator.Type == TokenPipe {
 		return e.compileOrOrAnd(compiler, true)
 	} else if e.Operator.Type == TokenAmpersand {
 		return e.compileOrOrAnd(compiler, false)
 	}
 
-	leftOps, err := e.Left.compile(compiler)
-	if err != nil {
-		return nil, err
-	}
-	rightOps, err := e.Right.compile(compiler)
-	if err != nil {
-		return nil, err
+	if err := e.Left.compile(compiler); err != nil {
+		return err
+	} else if err := e.Right.compile(compiler); err != nil {
+		return err
 	}
 
 	var binaryOp byte
@@ -221,41 +276,46 @@ func (e *BinaryExpression) compile(compiler *Compiler) ([]byte, error) {
 		binaryOp = OpBinaryGreaterThan
 		appendNot = true
 	default:
-		return nil, fmt.Errorf("unsupported binary operator %v ('%v')", e.Operator.Type, e.Operator.Lexeme)
+		return fmt.Errorf("unsupported binary operator %v ('%v')", e.Operator.Type, e.Operator.Lexeme)
 	}
 
-	ops := []byte{OpBinary, binaryOp}
+	compiler.writeBytes(OpBinary, binaryOp)
 	if appendNot {
-		ops = append(ops, OpNot)
+		compiler.writeByte(OpNot)
 	}
-	return combine(leftOps, rightOps, ops), nil
+	return nil
 }
 
-func (e *BinaryExpression) compileOrOrAnd(compiler *Compiler, withNot bool) ([]byte, error) {
-	leftOps, err := e.Left.compile(compiler)
-	if err != nil {
-		return nil, err
+func (e *BinaryExpression) compileOrOrAnd(compiler *Compiler, withNot bool) error {
+	if err := e.Left.compile(compiler); err != nil {
+		return err
 	}
 
-	rightOps, err := e.Right.compile(compiler)
-	if err != nil {
-		return nil, err
-	}
-
-	jumpAmount := len(rightOps) + 1 // include the Pop
-	b1, b2 := encodeJumpAmount(jumpAmount)
-
-	dupe := []byte{OpDuplicate}
-	not := []byte{}
+	compiler.writeByte(OpDuplicate)
 	if withNot {
-		not = []byte{OpNot}
+		compiler.writeByte(OpNot)
 	}
-	jump := []byte{OpJumpIfFalse, b1, b2, OpPop}
 
-	return combine(leftOps, dupe, not, jump, rightOps), nil
+	jumpIndex := compiler.len()
+	compiler.writeBytes(OpJumpIfFalse, InvalidOp, InvalidOp, OpPop)
+
+	if err := e.Right.compile(compiler); err != nil {
+		return err
+	}
+
+	jumpAmount := compiler.len() - jumpIndex - 3 // 2x jump offset + 1x pop
+	b1, b2, err := encodeJumpAmount(jumpAmount)
+	if err != nil {
+		// TODO: add token/line/col to error
+		return err
+	}
+
+	compiler.setByte(jumpIndex+1, b1)
+	compiler.setByte(jumpIndex+2, b2)
+	return nil
 }
 
-func (e *ContainerAccessExpression) compile(compiler *Compiler) ([]byte, error) {
+func (e *ContainerAccessExpression) compile(compiler *Compiler) error {
 	f := &FunctionCallExpression{
 		Token:        e.Token,
 		FunctionName: "get",
@@ -264,51 +324,54 @@ func (e *ContainerAccessExpression) compile(compiler *Compiler) ([]byte, error) 
 	return f.compile(compiler)
 }
 
-func (e *FunctionCallExpression) compile(compiler *Compiler) ([]byte, error) {
+func (e *FunctionCallExpression) compile(compiler *Compiler) error {
 	if len(e.Arguments) > 50 {
-		return nil, fmt.Errorf("functions don't support more than 50 arguments (was %d for '%v')", len(e.Arguments), e.FunctionName)
+		return fmt.Errorf("functions don't support more than 50 arguments (was %d for '%v')", len(e.Arguments), e.FunctionName)
 	}
 
-	ops := make([]byte, 0)
 	for _, arg := range e.Arguments {
-		exprOps, err := arg.compile(compiler)
-		if err != nil {
-			return nil, err
+		if err := arg.compile(compiler); err != nil {
+			return err
 		}
-		ops = append(ops, exprOps...)
 	}
 
 	if e.FunctionName == "println" {
-		return append(ops, []byte{OpPrintln, byte(len(e.Arguments))}...), nil
+		compiler.writeBytes(OpPrintln, byte(len(e.Arguments)))
+		return nil
 	}
 
 	index, err := compiler.ensureConstant(e.FunctionName)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return append(ops, []byte{OpCallBuiltin, index}...), nil
+	compiler.writeBytes(OpCallBuiltin, index)
+	return nil
 }
 
-func (e *LiteralExpression) compile(compiler *Compiler) ([]byte, error) {
+func (e *LiteralExpression) compile(compiler *Compiler) error {
 	if i, ok := e.Token.Literal.(int); ok && i <= 0xFF {
-		return []byte{OpInlineNumber, byte(i)}, nil
+		compiler.writeBytes(OpInlineNumber, byte(i))
+		return nil
 	}
 
 	index, err := compiler.ensureConstant(e.Token.Literal)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return []byte{OpLoadConstant, index}, nil
+	compiler.writeBytes(OpLoadConstant, index)
+	return nil
 }
 
-func (e *VariableExpression) compile(compiler *Compiler) ([]byte, error) {
+func (e *VariableExpression) compile(compiler *Compiler) error {
 	identifier := e.Token.Lexeme
 	index, err := compiler.ensureConstant(identifier)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return []byte{OpReadVariable, index}, nil
+	compiler.writeBytes(OpReadVariable, index)
+
+	return nil
 }
 
 func combine(slices ...[]byte) []byte {

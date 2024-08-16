@@ -25,9 +25,6 @@ const (
 	OpPrintln // Special op because it's variadic
 	OpDuplicate
 
-	OpCompileTimeOnlyExitLoop
-	OpCompileTimeOnlyNextIteration
-
 	InvalidOp
 )
 
@@ -61,7 +58,7 @@ func execute(constants []any, ops []byte) error {
 		constant := constants[index]
 		constantString, ok := constant.(string)
 		if !ok {
-			return "", fmt.Errorf("expected constant %d to be a string, but was '%v'", index, constant)
+			return "", fmt.Errorf("expected constant %d to be a string, but was '%v' at %d", index, constant, ip)
 		}
 		return constantString, nil
 	}
@@ -118,7 +115,7 @@ func execute(constants []any, ops []byte) error {
 				result, err = stringConcat(left, right)
 
 			default:
-				return fmt.Errorf("unsupported binary operator %v", binop)
+				return fmt.Errorf("unsupported binary operator %v at %d", binop, ip)
 			}
 
 			if err != nil {
@@ -130,7 +127,7 @@ func execute(constants []any, ops []byte) error {
 			v := popStack()
 			i, ok := v.(int)
 			if !ok {
-				return fmt.Errorf("operand of NOT operation must be int, but was '%v'", v)
+				return fmt.Errorf("operand of NOT operation must be int, but was '%v' at %d", v, ip)
 			}
 			pushStack(boolToInt(!intToBool(i)))
 		case OpJumpIfFalse:
@@ -164,7 +161,7 @@ func execute(constants []any, ops []byte) error {
 			}
 			value, found := variables[variableName]
 			if !found {
-				return fmt.Errorf("variable '%v' not defined", variableName)
+				return fmt.Errorf("variable '%v' not defined at %d", variableName, ip)
 			}
 			pushStack(value)
 		case OpSetVariable:
@@ -180,7 +177,7 @@ func execute(constants []any, ops []byte) error {
 			}
 			builtin, found := builtins[functionName]
 			if !found {
-				return fmt.Errorf("builtin function '%v' not found", functionName)
+				return fmt.Errorf("builtin function '%v' not found at %d", functionName, ip)
 			}
 			arguments := make([]any, builtin.Arity)
 			for i := 0; i < builtin.Arity; i++ {
@@ -209,10 +206,8 @@ func execute(constants []any, ops []byte) error {
 			pushStack(v)
 			pushStack(v)
 
-		case OpCompileTimeOnlyExitLoop:
-			return fmt.Errorf("instruction %v should only be used at compile time", instruction)
 		default:
-			return fmt.Errorf("unknown instruction %v", instruction)
+			return fmt.Errorf("unknown instruction %v at %d", instruction, ip)
 		}
 	}
 

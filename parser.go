@@ -155,7 +155,6 @@ func parseWhileStatement(tokens []Token) (Statement, []Token, error) {
 }
 
 func parseForStatement(tokens []Token) (Statement, []Token, error) {
-	// for (array or map) into (index or key) and (value)
 	// for value = [arrayOrMap]indexOrKey { ... }
 	token := tokens[0]
 

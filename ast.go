@@ -2,14 +2,14 @@ package main
 
 type Statement interface {
 	execute(env Env) error
-	compile(compiler *Compiler) ([]byte, error)
+	compile(compiler *Compiler) error
 
 	lineCol() LineCol
 }
 
 type Expression interface {
 	evaluate(env Env) (any, error)
-	compile(compiler *Compiler) ([]byte, error)
+	compile(compiler *Compiler) error
 
 	lineCol() LineCol
 }
