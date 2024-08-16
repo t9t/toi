@@ -1,10 +1,8 @@
 lines = inputLines()
 grid = array()
 
-i = 0
-while i < len(lines) {
+for line = [lines]i {
     [grid]i = split([lines]i, "")
-    i = i + 1
 }
 
 lineCount = len(lines)

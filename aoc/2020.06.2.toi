@@ -16,12 +16,7 @@ while i <= lineCount {
 
     if line == "" {
         everyone = map()
-        keys = keys(answers)
-        ki = 0
-        while ki < len(keys) {
-            key = [keys]ki
-            ki = ki + 1
-
+        for key = [keys(answers)]ki {
             count = [answers]key
             if count == respondents {
                 [everyone]key = 1
@@ -34,12 +29,7 @@ while i <= lineCount {
         respondents = 0
     } otherwise {
         respondents = respondents + 1
-        chars = chars(line)
-        ci = 0
-        while ci < len(chars) {
-            c = [chars]ci
-            ci = ci + 1
-
+        for c = [chars(line)]ci {
             if isSet(answers, c) {
                 n = [answers]c
                 [answers]c = n + 1

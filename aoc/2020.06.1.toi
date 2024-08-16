@@ -17,12 +17,7 @@ while i <= lineCount {
         sum = sum + len(answers)
         answers = map()
     } otherwise {
-        chars = chars(line)
-        ci = 0
-        while ci < len(chars) {
-            c = [chars]ci
-            ci = ci + 1
-
+        for c = [chars(line)]ci {
             [answers]c = 1
         }
     }

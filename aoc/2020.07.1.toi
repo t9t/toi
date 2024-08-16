@@ -2,11 +2,7 @@ lines = inputLines()
 
 containedBags = map()
 
-i = 0
-while i < len(lines) {
-    line = [lines]i
-    i = i + 1
-
+for line = [lines]l {
     parts = split(line, " bags contain ")
     outerColor = [parts]0
     otherBags = [parts]1

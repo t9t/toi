@@ -2,11 +2,7 @@ lines = inputLines()
 
 bags = map()
 
-l = 0
-while l < len(lines) {
-    line = [lines]l
-    l = l + 1
-
+for line = [lines]l {
     // light red bags contain 1 bright white bag, 2 muted yellow bags.
     // bright white bags contain 1 shiny gold bag.
     // dotted black bags contain no other bags.

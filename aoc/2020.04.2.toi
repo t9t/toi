@@ -24,9 +24,8 @@ while i <= lineCount {
         passport = map()
     } otherwise {
         parts = split(line, " ")
-        p = 0
-        while p < len(parts) {
-            elems = split([parts]p, ":")
+        for part = [parts]p {
+            elems = split(part, ":")
             key = [elems]0
             value = [elems]1
 
@@ -115,7 +114,6 @@ while i <= lineCount {
             if key == "cid" {} // Always OK
 
             [passport]([elems]0) = [elems]1
-            p = p + 1
         }
     }
 
