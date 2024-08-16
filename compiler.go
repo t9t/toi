@@ -175,9 +175,9 @@ func (s *ExpressionStatement) compile() ([]byte, error) {
 
 func (e *BinaryExpression) compile() ([]byte, error) {
 	if e.Operator.Type == TokenPipe {
-		return e.compileOrOrAnd(false)
-	} else if e.Operator.Type == TokenAmpersand {
 		return e.compileOrOrAnd(true)
+	} else if e.Operator.Type == TokenAmpersand {
+		return e.compileOrOrAnd(false)
 	}
 
 	leftOps, err := e.Left.compile()
@@ -249,7 +249,7 @@ func (e *BinaryExpression) compileOrOrAnd(withNot bool) ([]byte, error) {
 	if withNot {
 		not = []byte{OpNot}
 	}
-	jump := []byte{OpJumpIfTrue, b1, b2, OpPop}
+	jump := []byte{OpJumpIfFalse, b1, b2, OpPop}
 
 	return combine(leftOps, dupe, not, jump, rightOps), nil
 }

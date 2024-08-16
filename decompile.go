@@ -47,13 +47,20 @@ func decompile(ops []byte) {
 			argCount := int(ops[i])
 			i++
 			fmt.Printf("[2] PrintLn of %d arguments", argCount)
-		case OpJumpIfTrue:
+		case OpJumpIfFalse:
 			num1 := int(ops[i])
 			i++
 			num2 := int(ops[i])
 			i++
 			jumpAmount := num1*256 + num2
-			fmt.Printf("[3] JumpIfTrue +%d -> %d", jumpAmount, i+jumpAmount)
+			fmt.Printf("[3] JumpIfFalse +%d -> %d", jumpAmount, i+jumpAmount)
+		case OpJumpForward:
+			num1 := int(ops[i])
+			i++
+			num2 := int(ops[i])
+			i++
+			jumpAmount := num1*256 + num2
+			fmt.Printf("[3] JumpForward +%d -> %d", jumpAmount, i+jumpAmount)
 		case OpJumpBack:
 			num1 := int(ops[i])
 			i++

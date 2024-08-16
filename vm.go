@@ -14,7 +14,6 @@ const (
 	OpPop byte = iota
 	OpBinary
 	OpNot
-	OpJumpIfTrue
 	OpJumpIfFalse
 	OpJumpForward
 	OpJumpBack
@@ -134,14 +133,6 @@ func execute(ops []byte) error {
 				return fmt.Errorf("operand of NOT operation must be int, but was '%v'", v)
 			}
 			pushStack(boolToInt(!intToBool(i)))
-		case OpJumpIfTrue:
-			b1 := int(readOpByte())
-			b2 := int(readOpByte())
-			jumpAmount := b1*256 + b2
-			v := popStack()
-			if isWeirdlyTrue(v) {
-				ip += jumpAmount
-			}
 		case OpJumpIfFalse:
 			b1 := int(readOpByte())
 			b2 := int(readOpByte())
