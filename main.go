@@ -53,7 +53,7 @@ func runScript(scriptData []byte, stdin string) (string, error) {
 		return "", fmt.Errorf("tokenization error")
 	}
 
-	parser := &Parser{tokens, 0}
+	parser := &Parser{tokens: tokens}
 	scriptStatement, err := parser.parse(tokens)
 	if err != nil {
 		return "", fmt.Errorf("parse error: %w", err)

@@ -5,13 +5,12 @@ import (
 	"strconv"
 )
 
-// TODO: global state is yuck, don't do it
-var loopBodyCount = 0
-var forCounter = 0
-
 type Parser struct {
 	tokens []Token
 	index  int
+
+	loopBodyCount int
+	forCounter    int
 }
 
 func (p *Parser) previous() Token {
@@ -167,12 +166,12 @@ func (p *Parser) parseWhileStatement(tokens []Token) (Statement, []Token, error)
 		return nil, nil, err
 	}
 
-	loopBodyCount += 1
+	p.loopBodyCount += 1
 	block, next, err := p.parseBlock(next, "while expression")
 	if err != nil {
 		return nil, nil, err
 	}
-	loopBodyCount -= 1
+	p.loopBodyCount -= 1
 
 	return &WhileStatement{Token: token, Condition: expr, Body: block}, next, nil
 }
@@ -212,17 +211,17 @@ func (p *Parser) parseForStatement(tokens []Token) (Statement, []Token, error) {
 
 	next = next[2:]
 
-	loopBodyCount += 1
+	p.loopBodyCount += 1
 	block, next, err := p.parseBlock(next, "for expression")
 	if err != nil {
 		return nil, nil, err
 	}
-	loopBodyCount -= 1
+	p.loopBodyCount -= 1
 
 	ident := func(s string) Token { return Token{Type: TokenIdentifier, Lexeme: s} }
 
-	forCounter += 1
-	f := strconv.Itoa(forCounter)
+	p.forCounter += 1
+	f := strconv.Itoa(p.forCounter)
 	containerIdent := ident("_for_container_" + f)
 	containerExpr := &VariableExpression{containerIdent}
 	keysIdent := ident("_for_keys_" + f)
@@ -303,7 +302,7 @@ func (p *Parser) parseExitLoopStatement(tokens []Token) (Statement, []Token, err
 		return nil, nil, fmt.Errorf("expected 'loop' after 'exit' at %d:%d", tok.Line, tok.Col)
 	}
 
-	if loopBodyCount == 0 {
+	if p.loopBodyCount == 0 {
 		tok := tokens[0]
 		return nil, nil, fmt.Errorf("can only use 'exit loop' in 'while' or 'for' body at %d:%d", tok.Line, tok.Col)
 	}
@@ -319,7 +318,7 @@ func (p *Parser) parseNextIterationStatement(tokens []Token) (Statement, []Token
 		return nil, nil, fmt.Errorf("expected 'iteration' after 'next' at %d:%d", tok.Line, tok.Col)
 	}
 
-	if loopBodyCount == 0 {
+	if p.loopBodyCount == 0 {
 		tok := tokens[0]
 		return nil, nil, fmt.Errorf("can only use 'next iteration' in 'while' or 'for' body at %d:%d", tok.Line, tok.Col)
 	}
