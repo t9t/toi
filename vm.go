@@ -49,7 +49,7 @@ const (
 	OpBinaryConcat
 )
 
-func execute(ops []byte) error {
+func execute(constants []any, ops []byte) error {
 	ip := 0
 	readOpByte := func() byte {
 		op := ops[ip]

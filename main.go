@@ -84,7 +84,7 @@ func runScript(scriptData []byte, stdin string) (string, error) {
 	}
 	fmt.Printf("generated %d constants\n", len(constants))
 	//decompile(ops)
-	err = execute(ops)
+	err = execute(constants, ops)
 	if err != nil {
 		return "", fmt.Errorf("VM execution error: %w", err)
 	}
