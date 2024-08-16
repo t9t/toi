@@ -54,7 +54,7 @@ func runScript(scriptData []byte, stdin string) (string, error) {
 	}
 
 	parser := &Parser{tokens: tokens}
-	scriptStatement, err := parser.parse(tokens)
+	scriptStatement, err := parser.parse()
 	if err != nil {
 		return "", fmt.Errorf("parse error: %w", err)
 	}

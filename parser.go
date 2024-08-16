@@ -7,214 +7,225 @@ import (
 
 type Parser struct {
 	tokens []Token
-	index  int
 
 	loopBodyCount int
 	forCounter    int
 }
 
-func (p *Parser) previous() Token {
-	return p.tokens[p.index-1]
+func (p *Parser) consume(i int) {
+	p.tokens = p.tokens[i:]
+}
+
+func (p *Parser) hasCurrent() bool {
+	return len(p.tokens) != 0
 }
 
 func (p *Parser) current() Token {
-	return p.tokens[p.index]
+	return p.tokens[0]
+}
+
+func (p *Parser) left() int {
+	return len(p.tokens)
 }
 
 func (p *Parser) hasNext() bool {
-	return p.index < len(p.tokens)-1
+	return len(p.tokens) >= 2
 }
 
 func (p *Parser) next() Token {
-	return p.tokens[p.index+1]
+	return p.nextN(1)
+}
+
+func (p *Parser) nextN(n int) Token {
+	return p.tokens[n]
 }
 
 func (p *Parser) eof() bool {
-	return p.index == len(p.tokens)
+	return len(p.tokens) == 0
 }
 
-func (p *Parser) parse(tokens []Token) (Statement, error) {
+func (p *Parser) parse() (Statement, error) {
 	statements := make([]Statement, 0)
-	for len(tokens) > 0 {
-		stmt, next, err := p.parseStatement(tokens)
+	for !p.eof() {
+		stmt, err := p.parseStatement()
 		if err != nil {
 			return nil, err
 		}
 		if stmt != nil {
 			statements = append(statements, stmt)
 		}
-		tokens = next
 	}
 
 	return &BlockStatement{Statements: statements}, nil
 }
 
-func (p *Parser) parseStatement(tokens []Token) (stmt Statement, next []Token, err error) {
-	if tokens[0].Type == TokenNewline {
+func (p *Parser) parseStatement() (stmt Statement, err error) {
+	if p.current().Type == TokenNewline {
 		// Skip over empty lines
-		return nil, tokens[1:], nil
+		p.consume(1)
+		return nil, nil
 	}
 
-	if tokens[0].Type == TokenIf {
-		stmt, next, err = p.parseIfStatement(tokens)
+	if p.current().Type == TokenIf {
+		stmt, err = p.parseIfStatement()
 		if err != nil {
-			return nil, next, err
+			return nil, err
 		}
-	} else if tokens[0].Type == TokenWhile {
-		stmt, next, err = p.parseWhileStatement(tokens)
+	} else if p.current().Type == TokenWhile {
+		stmt, err = p.parseWhileStatement()
 		if err != nil {
-			return nil, next, err
+			return nil, err
 		}
-	} else if tokens[0].Type == TokenFor {
-		stmt, next, err = p.parseForStatement(tokens)
+	} else if p.current().Type == TokenFor {
+		stmt, err = p.parseForStatement()
 		if err != nil {
-			return nil, next, err
+			return nil, err
 		}
-	} else if tokens[0].Type == TokenExit {
-		stmt, next, err = p.parseExitLoopStatement(tokens)
+	} else if p.current().Type == TokenExit {
+		stmt, err = p.parseExitLoopStatement()
 		if err != nil {
-			return nil, next, err
+			return nil, err
 		}
-	} else if tokens[0].Type == TokenNext {
-		stmt, next, err = p.parseNextIterationStatement(tokens)
+	} else if p.current().Type == TokenNext {
+		stmt, err = p.parseNextIterationStatement()
 		if err != nil {
-			return nil, next, err
+			return nil, err
 		}
 	} else {
-		stmt, next, err = p.parseAssignmentStatement(tokens)
+		stmt, err = p.parseAssignmentStatement()
 		if err != nil {
-			return nil, next, err
+			return nil, err
 		}
 	}
 
-	if len(next) != 0 && next[0].Type != TokenNewline && next[0].Type != TokenBraceClose {
-		tok := next[0]
-		return nil, nil, fmt.Errorf("expected newline after statement but got %s ('%s') at %d:%d", tok.Type, tok.Lexeme, tok.Line, tok.Col)
+	if p.hasCurrent() && p.current().Type != TokenNewline && p.current().Type != TokenBraceClose {
+		tok := p.current()
+		return nil, fmt.Errorf("expected newline after statement but got %s ('%s') at %d:%d", tok.Type, tok.Lexeme, tok.Line, tok.Col)
 	}
 
-	if len(next) != 0 && next[0].Type == TokenNewline {
+	if p.hasCurrent() && p.current().Type == TokenNewline {
 		// Consume newline
-		next = next[1:]
+		p.consume(1)
 	}
-	return stmt, next, nil
+	return stmt, nil
 }
 
-func (p *Parser) parseBlock(tokens []Token, typ string) (Statement, []Token, error) {
-	next := tokens
-
-	if len(next) == 0 || next[0].Type != TokenBraceOpen {
-		tok := next[0]
-		return nil, nil, fmt.Errorf("expected '{' after %s at %d:%d", typ, tok.Line, tok.Col)
+func (p *Parser) parseBlock(typ string) (Statement, error) {
+	if !p.hasCurrent() || p.current().Type != TokenBraceOpen {
+		tok := p.current()
+		return nil, fmt.Errorf("expected '{' after %s at %d:%d", typ, tok.Line, tok.Col)
 	}
 
-	token := next[0]
+	token := p.current()
 
-	next = next[1:]
+	p.consume(1)
 	statements := make([]Statement, 0)
-	for len(next) != 0 && next[0].Type != TokenBraceClose {
-		stmt, next2, err := p.parseStatement(next)
+	for p.hasCurrent() && p.current().Type != TokenBraceClose {
+		stmt, err := p.parseStatement()
 		if err != nil {
-			return nil, next2, err
+			return nil, err
 		} else if stmt == nil {
-			next = next2
 			continue
 		}
 		statements = append(statements, stmt)
-		next = next2
 	}
 
-	if len(next) == 0 || next[0].Type != TokenBraceClose {
-		tok := next[0]
-		return nil, nil, fmt.Errorf("expected '}' after %s statements at %d:%d", typ, tok.Line, tok.Col)
+	if !p.hasCurrent() || p.current().Type != TokenBraceClose {
+		tok := p.current()
+		return nil, fmt.Errorf("expected '}' after %s statements at %d:%d", typ, tok.Line, tok.Col)
 	}
 
-	return &BlockStatement{Token: token, Statements: statements}, next[1:], nil
+	p.consume(1)
+	return &BlockStatement{Token: token, Statements: statements}, nil
 }
 
-func (p *Parser) parseIfStatement(tokens []Token) (Statement, []Token, error) {
-	token := tokens[0]
+func (p *Parser) parseIfStatement() (Statement, error) {
+	token := p.current()
 
-	expr, next, err := p.parseExpression(tokens[1:])
+	p.consume(1)
+	expr, err := p.parseExpression()
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	block, next, err := p.parseBlock(next, "if expression")
+	block, err := p.parseBlock("if expression")
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	var otherwiseBlock *Statement
-	if len(next) > 0 && next[0].Type == TokenOtherwise {
-		next = next[1:] // Consume "otherwise"
-		otherwise, otherwiseNext, err := p.parseBlock(next, "otherwise")
+	if p.hasCurrent() && p.current().Type == TokenOtherwise {
+		p.consume(1)
+		otherwise, err := p.parseBlock("otherwise")
 		if err != nil {
-			return nil, nil, err
+			return nil, err
 		}
-		next = otherwiseNext
 		otherwiseBlock = &otherwise
 	}
 
-	return &IfStatement{Token: token, Condition: expr, Then: block, Otherwise: otherwiseBlock}, next, nil
+	return &IfStatement{Token: token, Condition: expr, Then: block, Otherwise: otherwiseBlock}, nil
 }
 
-func (p *Parser) parseWhileStatement(tokens []Token) (Statement, []Token, error) {
-	token := tokens[0]
+func (p *Parser) parseWhileStatement() (Statement, error) {
+	token := p.current()
+	p.consume(1)
 
-	expr, next, err := p.parseExpression(tokens[1:])
+	expr, err := p.parseExpression()
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	p.loopBodyCount += 1
-	block, next, err := p.parseBlock(next, "while expression")
+	block, err := p.parseBlock("while expression")
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	p.loopBodyCount -= 1
 
-	return &WhileStatement{Token: token, Condition: expr, Body: block}, next, nil
+	return &WhileStatement{Token: token, Condition: expr, Body: block}, nil
 }
 
-func (p *Parser) parseForStatement(tokens []Token) (Statement, []Token, error) {
+func (p *Parser) parseForStatement() (Statement, error) {
 	// for value = [arrayOrMap]indexOrKey { ... }
-	token := tokens[0]
+	token := p.current()
 
-	if len(tokens) < 4 {
-		return nil, nil, fmt.Errorf("incomplete 'for' statement at %d:%d", token.Line, token.Col)
+	if p.left() < 4 {
+		return nil, fmt.Errorf("incomplete 'for' statement at %d:%d", token.Line, token.Col)
 	}
 
-	if tokens[1].Type != TokenIdentifier {
-		tok := tokens[1]
-		return nil, nil, fmt.Errorf("expected identifier after 'for' but got '%v' at %d:%d", tok.Type, tok.Line, tok.Col)
-	} else if tokens[2].Type != TokenEquals {
-		tok := tokens[2]
-		return nil, nil, fmt.Errorf("expected '=' after 'for' identifier but got '%v' at %d:%d", tok.Type, tok.Line, tok.Col)
-	} else if tokens[3].Type != TokenBracketOpen {
-		tok := tokens[3]
-		return nil, nil, fmt.Errorf("expected '[' after '=' in 'for' but got '%v' at %d:%d", tok.Type, tok.Line, tok.Col)
+	p.consume(1)
+	if p.current().Type != TokenIdentifier {
+		tok := p.current()
+		return nil, fmt.Errorf("expected identifier after 'for' but got '%v' at %d:%d", tok.Type, tok.Line, tok.Col)
+	} else if p.next().Type != TokenEquals {
+		tok := p.next()
+		return nil, fmt.Errorf("expected '=' after 'for' identifier but got '%v' at %d:%d", tok.Type, tok.Line, tok.Col)
+	} else if p.nextN(2).Type != TokenBracketOpen {
+		tok := p.nextN(2)
+		return nil, fmt.Errorf("expected '[' after '=' in 'for' but got '%v' at %d:%d", tok.Type, tok.Line, tok.Col)
 	}
 
-	valueIdentifier := tokens[1]
+	valueIdentifier := p.current()
+	p.consume(3) // identifier, equals, and bracket open
 
-	containerExpression, next, err := p.parseExpression(tokens[4:])
+	containerExpression, err := p.parseExpression()
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	if len(next) < 2 || next[0].Type != TokenBracketClose || next[1].Type != TokenIdentifier {
-		tok := next[0]
-		return nil, nil, fmt.Errorf("expected ']' and index identifier 'for' container expression but got '%v' at %d:%d", tok.Type, tok.Line, tok.Col)
+	if p.left() < 2 || p.current().Type != TokenBracketClose || p.next().Type != TokenIdentifier {
+		tok := p.current()
+		return nil, fmt.Errorf("expected ']' and index identifier 'for' container expression but got '%v' at %d:%d", tok.Type, tok.Line, tok.Col)
 	}
 
-	keyIdentifier := next[1]
+	keyIdentifier := p.next()
 
-	next = next[2:]
+	p.consume(2)
 
 	p.loopBodyCount += 1
-	block, next, err := p.parseBlock(next, "for expression")
+	block, err := p.parseBlock("for expression")
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	p.loopBodyCount -= 1
 
@@ -291,56 +302,58 @@ func (p *Parser) parseForStatement(tokens []Token) (Statement, []Token, error) {
 				},
 			},
 		},
-	}, next, nil
+	}, nil
 }
 
-func (p *Parser) parseExitLoopStatement(tokens []Token) (Statement, []Token, error) {
-	token := tokens[0]
+func (p *Parser) parseExitLoopStatement() (Statement, error) {
+	token := p.current()
 
-	if len(tokens) == 1 || tokens[1].Type != TokenLoop {
-		tok := tokens[1]
-		return nil, nil, fmt.Errorf("expected 'loop' after 'exit' at %d:%d", tok.Line, tok.Col)
+	if !p.hasNext() || p.next().Type != TokenLoop {
+		tok := p.next()
+		return nil, fmt.Errorf("expected 'loop' after 'exit' at %d:%d", tok.Line, tok.Col)
 	}
 
 	if p.loopBodyCount == 0 {
-		tok := tokens[0]
-		return nil, nil, fmt.Errorf("can only use 'exit loop' in 'while' or 'for' body at %d:%d", tok.Line, tok.Col)
+		tok := token
+		return nil, fmt.Errorf("can only use 'exit loop' in 'while' or 'for' body at %d:%d", tok.Line, tok.Col)
 	}
 
-	return &ExitLoopStatement{Token: token}, tokens[2:], nil
+	p.consume(2)
+	return &ExitLoopStatement{Token: token}, nil
 }
 
-func (p *Parser) parseNextIterationStatement(tokens []Token) (Statement, []Token, error) {
-	token := tokens[0]
+func (p *Parser) parseNextIterationStatement() (Statement, error) {
+	token := p.current()
 
-	if len(tokens) == 1 || tokens[1].Type != TokenIteration {
-		tok := tokens[1]
-		return nil, nil, fmt.Errorf("expected 'iteration' after 'next' at %d:%d", tok.Line, tok.Col)
+	if !p.hasNext() || p.next().Type != TokenIteration {
+		tok := p.next()
+		return nil, fmt.Errorf("expected 'iteration' after 'next' at %d:%d", tok.Line, tok.Col)
 	}
 
 	if p.loopBodyCount == 0 {
-		tok := tokens[0]
-		return nil, nil, fmt.Errorf("can only use 'next iteration' in 'while' or 'for' body at %d:%d", tok.Line, tok.Col)
+		tok := token
+		return nil, fmt.Errorf("can only use 'next iteration' in 'while' or 'for' body at %d:%d", tok.Line, tok.Col)
 	}
 
-	return &NextIterationStatement{Token: token}, tokens[2:], nil
+	p.consume(2)
+	return &NextIterationStatement{Token: token}, nil
 }
 
-func (p *Parser) parseAssignmentStatement(tokens []Token) (Statement, []Token, error) {
-	startToken := tokens[0]
-	left, next, err := p.parseExpression(tokens)
+func (p *Parser) parseAssignmentStatement() (Statement, error) {
+	startToken := p.current()
+	left, err := p.parseExpression()
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	if len(next) == 0 || next[0].Type != TokenEquals {
-		return &ExpressionStatement{startToken, left}, next, nil
+	if !p.hasCurrent() || p.current().Type != TokenEquals {
+		return &ExpressionStatement{startToken, left}, nil
 	}
-	next = next[1:]
+	p.consume(1)
 
-	right, next, err := p.parseExpression(next)
+	right, err := p.parseExpression()
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	if access, ok := left.(*ContainerAccessExpression); ok {
@@ -351,196 +364,198 @@ func (p *Parser) parseAssignmentStatement(tokens []Token) (Statement, []Token, e
 				FunctionName: "set",
 				Arguments:    []Expression{access.Container, access.Access, right},
 			},
-		}, next, nil
+		}, nil
 	}
 
-	return &AssignmentStatement{Identifier: tokens[0], Expression: right}, next, nil
+	return &AssignmentStatement{Identifier: startToken, Expression: right}, nil
 }
 
-func (p *Parser) parseExpression(tokens []Token) (Expression, []Token, error) {
-	return p.parseLogicalOr(tokens)
+func (p *Parser) parseExpression() (Expression, error) {
+	return p.parseLogicalOr()
 }
 
-func (p *Parser) parseContainerAccess(tokens []Token) (Expression, []Token, error) {
-	startToken := tokens[0]
+func (p *Parser) parseContainerAccess() (Expression, error) {
+	startToken := p.current()
 	nestedLevel := 0
-	for len(tokens) != 0 && tokens[0].Type == TokenBracketOpen {
+	for p.hasCurrent() && p.current().Type == TokenBracketOpen {
 		nestedLevel += 1
-		tokens = tokens[1:]
+		p.consume(1)
 	}
 
-	innerExpression, next, err := p.parsePrimary(tokens)
+	innerExpression, err := p.parsePrimary()
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	} else if nestedLevel == 0 {
-		return innerExpression, next, nil
+		return innerExpression, nil
 	}
 
 	for i := 0; i < nestedLevel; i += 1 {
-		if next[0].Type != TokenBracketClose {
-			tok := next[0]
-			return nil, nil, fmt.Errorf("expected ']' after '[' and expression but got '%v' at %d:%d", tok.Type, tok.Line, tok.Col)
+		if p.current().Type != TokenBracketClose {
+			tok := p.current()
+			return nil, fmt.Errorf("expected ']' after '[' and expression but got '%v' at %d:%d", tok.Type, tok.Line, tok.Col)
 		}
-		next = next[1:]
+		p.consume(1)
 
-		indexExpr, more, err := p.parsePrimary(next)
+		indexExpr, err := p.parsePrimary()
 		if err != nil {
-			return nil, nil, err
+			return nil, err
 		}
 
 		innerExpression = &ContainerAccessExpression{Token: startToken, Container: innerExpression, Access: indexExpr}
-		next = more
 	}
-	return innerExpression, next, nil
+	return innerExpression, nil
 }
 
-func (p *Parser) parseLogicalOr(tokens []Token) (Expression, []Token, error) {
-	return p.parseBinary(tokens, TokenPipe, p.parseLogicalAnd)
+func (p *Parser) parseLogicalOr() (Expression, error) {
+	return p.parseBinary(TokenPipe, p.parseLogicalAnd)
 }
 
-func (p *Parser) parseLogicalAnd(tokens []Token) (Expression, []Token, error) {
-	return p.parseBinary(tokens, TokenAmpersand, p.parseEqualEqual)
+func (p *Parser) parseLogicalAnd() (Expression, error) {
+	return p.parseBinary(TokenAmpersand, p.parseEqualEqual)
 }
 
-func (p *Parser) parseEqualEqual(tokens []Token) (Expression, []Token, error) {
-	return p.parseBinary(tokens, TokenEqualEqual, p.parseNotEqual)
+func (p *Parser) parseEqualEqual() (Expression, error) {
+	return p.parseBinary(TokenEqualEqual, p.parseNotEqual)
 }
 
-func (p *Parser) parseNotEqual(tokens []Token) (Expression, []Token, error) {
-	return p.parseBinary(tokens, TokenNotEqual, p.parseGreaterThan)
+func (p *Parser) parseNotEqual() (Expression, error) {
+	return p.parseBinary(TokenNotEqual, p.parseGreaterThan)
 }
 
-func (p *Parser) parseGreaterThan(tokens []Token) (Expression, []Token, error) {
-	return p.parseBinary(tokens, TokenGreaterThan, p.parseGreaterEqual)
+func (p *Parser) parseGreaterThan() (Expression, error) {
+	return p.parseBinary(TokenGreaterThan, p.parseGreaterEqual)
 }
 
-func (p *Parser) parseGreaterEqual(tokens []Token) (Expression, []Token, error) {
-	return p.parseBinary(tokens, TokenGreaterEqual, p.parseLessThan)
+func (p *Parser) parseGreaterEqual() (Expression, error) {
+	return p.parseBinary(TokenGreaterEqual, p.parseLessThan)
 }
 
-func (p *Parser) parseLessThan(tokens []Token) (Expression, []Token, error) {
-	return p.parseBinary(tokens, TokenLessThan, p.parseLessEqual)
+func (p *Parser) parseLessThan() (Expression, error) {
+	return p.parseBinary(TokenLessThan, p.parseLessEqual)
 }
 
-func (p *Parser) parseLessEqual(tokens []Token) (Expression, []Token, error) {
-	return p.parseBinary(tokens, TokenLessEqual, p.parseMinus)
+func (p *Parser) parseLessEqual() (Expression, error) {
+	return p.parseBinary(TokenLessEqual, p.parseMinus)
 }
 
-func (p *Parser) parseMinus(tokens []Token) (Expression, []Token, error) {
-	return p.parseBinary(tokens, TokenMinus, p.parsePlus)
+func (p *Parser) parseMinus() (Expression, error) {
+	return p.parseBinary(TokenMinus, p.parsePlus)
 }
 
-func (p *Parser) parsePlus(tokens []Token) (Expression, []Token, error) {
-	return p.parseBinary(tokens, TokenPlus, p.parseDivide)
+func (p *Parser) parsePlus() (Expression, error) {
+	return p.parseBinary(TokenPlus, p.parseDivide)
 }
 
-func (p *Parser) parseDivide(tokens []Token) (Expression, []Token, error) {
-	return p.parseBinary(tokens, TokenSlash, p.parseMultiply)
+func (p *Parser) parseDivide() (Expression, error) {
+	return p.parseBinary(TokenSlash, p.parseMultiply)
 }
 
-func (p *Parser) parseMultiply(tokens []Token) (Expression, []Token, error) {
-	return p.parseBinary(tokens, TokenAsterisk, p.parseStringConcat)
+func (p *Parser) parseMultiply() (Expression, error) {
+	return p.parseBinary(TokenAsterisk, p.parseStringConcat)
 }
 
-func (p *Parser) parseStringConcat(tokens []Token) (Expression, []Token, error) {
-	return p.parseBinary(tokens, TokenUnderscore, p.parseContainerAccess)
+func (p *Parser) parseStringConcat() (Expression, error) {
+	return p.parseBinary(TokenUnderscore, p.parseContainerAccess)
 }
 
-func (p *Parser) parseBinary(tokens []Token, tokenType TokenType, down func([]Token) (Expression, []Token, error)) (Expression, []Token, error) {
-	left, next, err := down(tokens)
+func (p *Parser) parseBinary(tokenType TokenType, down func() (Expression, error)) (Expression, error) {
+	left, err := down()
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	tokens = next
 
-	for len(tokens) != 0 && tokens[0].Type == tokenType {
-		right, next, err := down(tokens[1:])
+	for p.hasCurrent() && p.current().Type == tokenType {
+		operator := p.current()
+		p.consume(1)
+		right, err := down()
 		if err != nil {
-			return nil, nil, err
+			return nil, err
 		}
 
-		left = &BinaryExpression{Left: left, Operator: tokens[0], Right: right}
-		tokens = next
+		left = &BinaryExpression{Left: left, Operator: operator, Right: right}
 	}
 
-	return left, tokens, nil
+	return left, nil
 }
 
-func (p *Parser) parsePrimary(tokens []Token) (Expression, []Token, error) {
-	if len(tokens) == 0 {
-		return nil, nil, fmt.Errorf("expected primary expression but reached end of data")
+func (p *Parser) parsePrimary() (Expression, error) {
+	if !p.hasCurrent() {
+		return nil, fmt.Errorf("expected primary expression but reached end of data")
 	}
 
-	token := tokens[0]
+	token := p.current()
 	if token.Type == TokenString || token.Type == TokenNumber {
-		return &LiteralExpression{Token: token}, tokens[1:], nil
+		p.consume(1)
+		return &LiteralExpression{Token: token}, nil
 	} else if token.Type == TokenIdentifier {
-		if len(tokens) >= 2 && tokens[1].Type == TokenParenOpen {
-			return p.parseFunctionCall(tokens)
+		if p.left() >= 2 && p.next().Type == TokenParenOpen {
+			return p.parseFunctionCall()
 		}
 
 		// Variable access
-		return &VariableExpression{Token: token}, tokens[1:], nil
+		p.consume(1)
+		return &VariableExpression{Token: token}, nil
 	} else if token.Type == TokenParenOpen {
-		expr, next, err := p.parseExpression(tokens[1:])
+		p.consume(1)
+		expr, err := p.parseExpression()
 		if err != nil {
-			return nil, nil, err
+			return nil, err
 		}
 
-		if len(next) == 0 || next[0].Type != TokenParenClose {
-			tok := next[0]
-			return nil, nil, fmt.Errorf("expect ')' after '(' and expression but got '%v' at %d:%d", tok.Type, tok.Line, tok.Col)
+		if !p.hasCurrent() || p.current().Type != TokenParenClose {
+			tok := p.current()
+			return nil, fmt.Errorf("expect ')' after '(' and expression but got '%v' at %d:%d", tok.Type, tok.Line, tok.Col)
 		}
 
-		return expr, next[1:], nil
+		p.consume(1)
+		return expr, nil
 	}
 
-	return nil, nil, fmt.Errorf("expected primary expression but got %s ('%s') at %d:%d", token.Type, token.Lexeme, token.Line, token.Col)
+	return nil, fmt.Errorf("expected primary expression but got %s ('%s') at %d:%d", token.Type, token.Lexeme, token.Line, token.Col)
 }
 
-func (p *Parser) parseFunctionCall(tokens []Token) (Expression, []Token, error) {
-	callToken := tokens[0]
+func (p *Parser) parseFunctionCall() (Expression, error) {
+	callToken := p.current()
 	identifier := callToken.Lexeme
 
 	builtin, found := builtins[identifier]
 	if !found {
 		tok := callToken
-		return nil, nil, fmt.Errorf("no such builtin function '%s' at %d:%d", identifier, tok.Line, tok.Col)
+		return nil, fmt.Errorf("no such builtin function '%s' at %d:%d", identifier, tok.Line, tok.Col)
 	}
 
-	tokens = tokens[2:] // Consume identifier and '('
+	p.consume(2) // Consume identifier and '('
 
 	arguments := make([]Expression, 0)
-	for len(tokens) > 0 {
+	for p.hasCurrent() {
 		// TODO: remove duplication
-		if tokens[0].Type == TokenParenClose {
-			tokens = tokens[1:]
+		if p.current().Type == TokenParenClose {
+			p.consume(1)
 			break
 		}
 
-		expr, next, err := p.parseExpression(tokens)
+		expr, err := p.parseExpression()
 		if err != nil {
-			return nil, nil, err
+			return nil, err
 		}
 
 		arguments = append(arguments, expr)
-		tokens = next
-		if len(tokens) > 0 {
-			if tokens[0].Type == TokenComma {
-				tokens = tokens[1:]
-			} else if tokens[0].Type != TokenParenClose {
-				tok := tokens[0]
-				return nil, nil, fmt.Errorf("expected ')' or ',' but got %s ('%s') at %d:%d", tok.Type, tok.Lexeme, tok.Line, tok.Col)
+		if p.hasCurrent() {
+			if p.current().Type == TokenComma {
+				p.consume(1)
+			} else if p.current().Type != TokenParenClose {
+				tok := p.current()
+				return nil, fmt.Errorf("expected ')' or ',' but got %s ('%s') at %d:%d", tok.Type, tok.Lexeme, tok.Line, tok.Col)
 			}
 		} else {
-			return nil, nil, fmt.Errorf("expected ')' or ',' but got end of input")
+			return nil, fmt.Errorf("expected ')' or ',' but got end of input")
 		}
 	}
 
 	if len(arguments) != builtin.Arity && builtin.Arity != ArityVariadic {
-		tok := tokens[0]
-		return nil, nil, fmt.Errorf("expected %d arguments but got %d for function '%s' at %d:%d", builtin.Arity, len(arguments), identifier, tok.Line, tok.Col)
+		tok := p.current()
+		return nil, fmt.Errorf("expected %d arguments but got %d for function '%s' at %d:%d", builtin.Arity, len(arguments), identifier, tok.Line, tok.Col)
 	}
 
-	return &FunctionCallExpression{Token: callToken, FunctionName: callToken.Lexeme, Arguments: arguments}, tokens, nil
+	return &FunctionCallExpression{Token: callToken, FunctionName: callToken.Lexeme, Arguments: arguments}, nil
 }
