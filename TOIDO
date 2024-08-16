@@ -5,6 +5,7 @@
 - floats (update docs)
 - nil? (update docs)
 - logical not (update docs)
-- for-each (update docs)
 - standard library (update docs)
 - better 'for' implementation
+- errors (update docs)
+- elseif (update docs)

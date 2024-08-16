@@ -1,0 +1,32 @@
+lines = inputLines()
+
+visited = map()
+accumulator = 0
+
+i = 0
+while 1 {
+    if i == len(lines) {
+        i = 0
+    }
+    if isSet(visited, string(i)) {
+        println(accumulator)
+        exit loop
+    }
+    [visited]string(i) = 1
+
+    parts = split([lines]i, " ")
+    operation = [parts]0
+    argumentNumber = int([parts]1)
+
+    if operation == "acc" {
+        accumulator = accumulator + argumentNumber
+        i = i + 1
+    } otherwise {
+        if operation == "jmp" {
+            i = i + argumentNumber
+        } otherwise {
+            // otherwise it's "nop", so we just advance
+            i = i + 1
+        }
+    }
+}
