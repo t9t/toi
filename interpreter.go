@@ -8,6 +8,9 @@ import (
 var ErrExitLoop = errors.New("exit loop")
 var ErrNextIteration = errors.New("next iteration")
 
+// TODO: global state is yuck, don't do it
+type Env map[string]any
+
 // TODO: global state is bad; also this seems rather inefficient
 type LineCol struct{ line, col int }
 
