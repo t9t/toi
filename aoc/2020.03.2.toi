@@ -2,7 +2,7 @@ lines = inputLines()
 grid = array()
 
 for line = [lines]i {
-    [grid]i = split([lines]i, "")
+    [grid]i = split(line, "")
 }
 
 lineCount = len(lines)
@@ -22,12 +22,9 @@ push(downs, 1)
 push(downs, 1)
 push(downs, 2)
 
-i = 0
 product = 1
-while i < len(rights) {
-    right = [rights]i
+for right = [rights]i {
     down = [downs]i
-    i = i + 1
 
     y = down
     x = right

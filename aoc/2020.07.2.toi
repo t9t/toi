@@ -1,8 +1,6 @@
-lines = inputLines()
-
 bags = map()
 
-for line = [lines]l {
+for line = [inputLines()]l {
     // light red bags contain 1 bright white bag, 2 muted yellow bags.
     // bright white bags contain 1 shiny gold bag.
     // dotted black bags contain no other bags.
@@ -12,12 +10,9 @@ for line = [lines]l {
     if [parts]1 == "no other bags." {
         [bags]outerColor = map()
     } otherwise {
-        parts = split([split([parts]1, ".")]0, ", ")
-        p = 0
         bagMap = map()
-        while p < len(parts) {
-            words = split([parts]p, " ")
-            p = p + 1
+        for part = [split([split([parts]1, ".")]0, ", ")]p {
+            words = split(part, " ")
 
             number = int([words]0)
             color = [words]1 _ " " _ [words]2
@@ -36,15 +31,8 @@ while len(search) {
     parts = split(item, ":")
     color = [parts]0
     number = int([parts]1)
-    contents = [bags]color
 
-    keys = keys(contents)
-    k = 0
-    while k < len(keys) {
-        key = [keys]k
-        k = k + 1
-
-        value = [contents]key
+    for value = [[bags]color]key {
         push(search, key _ ":" _ string(value * number))
         total = total + value * number
     }

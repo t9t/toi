@@ -22,8 +22,7 @@ while i <= lineCount {
     }
 
     if line <> "" {
-        parts = split(line, " ")
-        for part = [parts]p {
+        for part = [split(line, " ")]p {
             elems = split(part, ":")
             [passport]([elems]0) =  [elems]1
         }

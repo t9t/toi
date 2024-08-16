@@ -2,7 +2,7 @@ lines = inputLines()
 grid = array()
 
 for line = [lines]i {
-    [grid]i = split([lines]i, "")
+    [grid]i = split(line, "")
 }
 
 lineCount = len(lines)

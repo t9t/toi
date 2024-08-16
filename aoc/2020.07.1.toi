@@ -1,19 +1,14 @@
-lines = inputLines()
-
 containedBags = map()
 
-for line = [lines]l {
+for line = [inputLines()]l {
     parts = split(line, " bags contain ")
     outerColor = [parts]0
     otherBags = [parts]1
 
     if otherBags <> "no other bags." {
         // e.g. "5 faded blue bags, 6 dotted black bags, N <color>."
-        bags = split([split(otherBags, ".")]0, ", ")
-        b = 0
-        while b < len(bags) {
-            words = split([bags]b, " ")
-            b = b + 1
+        for bag = [split([split(otherBags, ".")]0, ", ")]b {
+            words = split(bag, " ")
 
             // [5, faded, blue, bags]; [1, bright, white, bag]
             color = [words]1 _ " " _ [words]2
@@ -37,11 +32,7 @@ while len(search) {
     color = pop(search)
 
     if isSet(containedBags, color) {
-        bags = [containedBags]color
-        i = 0
-        while i < len(bags) {
-            bag = [bags]i
-            i = i + 1
+        for bag = [[containedBags]color]i {
             push(search, bag)
             [hits]bag = 1
         }

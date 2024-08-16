@@ -23,8 +23,7 @@ while i <= lineCount {
         }
         passport = map()
     } otherwise {
-        parts = split(line, " ")
-        for part = [parts]p {
+        for part = [split(line, " ")]p {
             elems = split(part, ":")
             key = [elems]0
             value = [elems]1
@@ -78,10 +77,7 @@ while i <= lineCount {
                 if chl <> 7 | [ch]0 <> "#" {
                     exit loop
                 }
-                ci = 1
-                while ci < chl {
-                    c = [ch]ci
-                    ci = ci + 1
+                for c = [ch]ci {
                     if c <> "0" & c <> "1" & c <> "2" & c <> "3" & c <> "4" & //
                         c <> "5" & c <> "6" & c <> "7" & c <> "8" & c <> "9" & //
                         c <> "a" & c <> "b" & c <> "c" & c <> "d" & c <> "e" & //
@@ -100,10 +96,7 @@ while i <= lineCount {
                 if chl <> 9 {
                     exit loop
                 }
-                ci = 0
-                while ci < chl {
-                    c = [ch]ci
-                    ci = ci + 1
+                for c = [ch]ci {
                     if c <> "0" & c <> "1" & c <> "2" & c <> "3" & c <> "4" & //
                         c <> "5" & c <> "6" & c <> "7" & c <> "8" & c <> "9" {
                         exit loop

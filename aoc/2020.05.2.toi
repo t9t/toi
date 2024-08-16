@@ -1,7 +1,5 @@
-lines = inputLines()
-
 ids = map()
-for line = [lines]i {
+for line = [inputLines()]i {
     chars = chars(line)
 
     ci = 0

@@ -1,7 +1,5 @@
-lines = inputLines()
-
 validCount = 0
-for line = [lines]i {
+for line = [inputLines()]i {
     parts = split(line, ": ") // "1-3 a" + "abcde"
     password = [parts]1 // "abcde"
 

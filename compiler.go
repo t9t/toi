@@ -4,7 +4,6 @@ import "fmt"
 
 // TODO: no global state
 var constants = make([]any, 0)
-var exitLoops [][]byte
 
 // TODO: use a bytebuffer instead of slices for efficiency; although slices are nice and easy to patch jumps
 

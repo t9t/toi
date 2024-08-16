@@ -1,7 +1,5 @@
-lines = inputLines()
-
 highestId = 0
-for line = [lines]i {
+for line = [inputLines()]i {
     chars = chars(line)
 
     ci = 0
