@@ -2,17 +2,18 @@ package main
 
 import "fmt"
 
-// TODO: no global state
-var constants = make([]any, 0)
-
 // TODO: use a bytebuffer instead of slices for efficiency; although slices are nice and easy to patch jumps
+
+type Compiler struct {
+	constants []any
+}
 
 // Statements
 
-func (s *BlockStatement) compile() ([]byte, error) {
+func (s *BlockStatement) compile(compiler *Compiler) ([]byte, error) {
 	ops := make([]byte, 0)
 	for _, stmt := range s.Statements {
-		stmtOps, err := stmt.compile()
+		stmtOps, err := stmt.compile(compiler)
 		if err != nil {
 			return nil, err
 		}
@@ -21,20 +22,20 @@ func (s *BlockStatement) compile() ([]byte, error) {
 	return ops, nil
 }
 
-func (s *IfStatement) compile() ([]byte, error) {
-	condition, err := s.Condition.compile()
+func (s *IfStatement) compile(compiler *Compiler) ([]byte, error) {
+	condition, err := s.Condition.compile(compiler)
 	if err != nil {
 		return nil, err
 	}
 
-	then, err := s.Then.compile()
+	then, err := s.Then.compile(compiler)
 	if err != nil {
 		return nil, err
 	}
 
 	var otherwise []byte
 	if s.Otherwise != nil {
-		otherwise, err = (*s.Otherwise).compile()
+		otherwise, err = (*s.Otherwise).compile(compiler)
 		if err != nil {
 			return nil, err
 		}
@@ -58,20 +59,20 @@ func (s *IfStatement) compile() ([]byte, error) {
 	return combine(condition, jump, then, jumpOverOtherwise, otherwise), nil
 }
 
-func (s *WhileStatement) compile() ([]byte, error) {
+func (s *WhileStatement) compile(compiler *Compiler) ([]byte, error) {
 	isForLoop := s.Token.Type == TokenFor
-	condition, err := s.Condition.compile()
+	condition, err := s.Condition.compile(compiler)
 	if err != nil {
 		return nil, err
 	}
 	jumpOutOfLoop := []byte{OpJumpIfFalse, InvalidOp, InvalidOp}
 
-	body, err := s.Body.compile()
+	body, err := s.Body.compile(compiler)
 	if err != nil {
 		return nil, err
 	}
 	if s.AfterBody != nil {
-		afterBody, err := s.AfterBody.compile()
+		afterBody, err := s.AfterBody.compile(compiler)
 		if err != nil {
 			return nil, err
 		}
@@ -134,12 +135,12 @@ func (s *WhileStatement) compile() ([]byte, error) {
 	return combine(condition, jumpOutOfLoop, body, jumpBack), nil
 }
 
-func (s *ExitLoopStatement) compile() ([]byte, error) {
+func (s *ExitLoopStatement) compile(compiler *Compiler) ([]byte, error) {
 	// OpCompileTimeOnlyExitLoop will be replaced with a jump in the compile() function of While
 	return []byte{OpCompileTimeOnlyExitLoop, InvalidOp, InvalidOp}, nil
 }
 
-func (s *NextIterationStatement) compile() ([]byte, error) {
+func (s *NextIterationStatement) compile(compiler *Compiler) ([]byte, error) {
 	// OpCompileTimeOnlyNextIteration will be replaced with a jump in the compile() function of While
 	return []byte{OpCompileTimeOnlyNextIteration, InvalidOp, InvalidOp}, nil
 }
@@ -148,13 +149,13 @@ func encodeJumpAmount(amount int) (byte, byte) {
 	return byte(amount / 256), byte(amount % 256)
 }
 
-func (s *AssignmentStatement) compile() ([]byte, error) {
-	index, err := ensureConstant(s.Identifier.Lexeme)
+func (s *AssignmentStatement) compile(compiler *Compiler) ([]byte, error) {
+	index, err := compiler.ensureConstant(s.Identifier.Lexeme)
 	if err != nil {
 		return nil, err
 	}
 
-	expression, err := s.Expression.compile()
+	expression, err := s.Expression.compile(compiler)
 	if err != nil {
 		return nil, err
 	}
@@ -162,9 +163,9 @@ func (s *AssignmentStatement) compile() ([]byte, error) {
 	return combine(expression, []byte{OpSetVariable, index}), nil
 }
 
-func (s *ExpressionStatement) compile() ([]byte, error) {
+func (s *ExpressionStatement) compile(compiler *Compiler) ([]byte, error) {
 	/* Discard return value afterwards using pop */
-	ops, err := s.Expression.compile()
+	ops, err := s.Expression.compile(compiler)
 	if err != nil {
 		return nil, err
 	}
@@ -173,18 +174,18 @@ func (s *ExpressionStatement) compile() ([]byte, error) {
 
 // Expressions
 
-func (e *BinaryExpression) compile() ([]byte, error) {
+func (e *BinaryExpression) compile(compiler *Compiler) ([]byte, error) {
 	if e.Operator.Type == TokenPipe {
-		return e.compileOrOrAnd(true)
+		return e.compileOrOrAnd(compiler, true)
 	} else if e.Operator.Type == TokenAmpersand {
-		return e.compileOrOrAnd(false)
+		return e.compileOrOrAnd(compiler, false)
 	}
 
-	leftOps, err := e.Left.compile()
+	leftOps, err := e.Left.compile(compiler)
 	if err != nil {
 		return nil, err
 	}
-	rightOps, err := e.Right.compile()
+	rightOps, err := e.Right.compile(compiler)
 	if err != nil {
 		return nil, err
 	}
@@ -230,13 +231,13 @@ func (e *BinaryExpression) compile() ([]byte, error) {
 	return combine(leftOps, rightOps, ops), nil
 }
 
-func (e *BinaryExpression) compileOrOrAnd(withNot bool) ([]byte, error) {
-	leftOps, err := e.Left.compile()
+func (e *BinaryExpression) compileOrOrAnd(compiler *Compiler, withNot bool) ([]byte, error) {
+	leftOps, err := e.Left.compile(compiler)
 	if err != nil {
 		return nil, err
 	}
 
-	rightOps, err := e.Right.compile()
+	rightOps, err := e.Right.compile(compiler)
 	if err != nil {
 		return nil, err
 	}
@@ -254,23 +255,23 @@ func (e *BinaryExpression) compileOrOrAnd(withNot bool) ([]byte, error) {
 	return combine(leftOps, dupe, not, jump, rightOps), nil
 }
 
-func (e *ContainerAccessExpression) compile() ([]byte, error) {
+func (e *ContainerAccessExpression) compile(compiler *Compiler) ([]byte, error) {
 	f := &FunctionCallExpression{
 		Token:        e.Token,
 		FunctionName: "get",
 		Arguments:    []Expression{e.Container, e.Access},
 	}
-	return f.compile()
+	return f.compile(compiler)
 }
 
-func (e *FunctionCallExpression) compile() ([]byte, error) {
+func (e *FunctionCallExpression) compile(compiler *Compiler) ([]byte, error) {
 	if len(e.Arguments) > 50 {
 		return nil, fmt.Errorf("functions don't support more than 50 arguments (was %d for '%v')", len(e.Arguments), e.FunctionName)
 	}
 
 	ops := make([]byte, 0)
 	for _, arg := range e.Arguments {
-		exprOps, err := arg.compile()
+		exprOps, err := arg.compile(compiler)
 		if err != nil {
 			return nil, err
 		}
@@ -281,28 +282,28 @@ func (e *FunctionCallExpression) compile() ([]byte, error) {
 		return append(ops, []byte{OpPrintln, byte(len(e.Arguments))}...), nil
 	}
 
-	index, err := ensureConstant(e.FunctionName)
+	index, err := compiler.ensureConstant(e.FunctionName)
 	if err != nil {
 		return nil, err
 	}
 	return append(ops, []byte{OpCallBuiltin, index}...), nil
 }
 
-func (e *LiteralExpression) compile() ([]byte, error) {
+func (e *LiteralExpression) compile(compiler *Compiler) ([]byte, error) {
 	if i, ok := e.Token.Literal.(int); ok && i <= 0xFF {
 		return []byte{OpInlineNumber, byte(i)}, nil
 	}
 
-	index, err := ensureConstant(e.Token.Literal)
+	index, err := compiler.ensureConstant(e.Token.Literal)
 	if err != nil {
 		return nil, err
 	}
 	return []byte{OpLoadConstant, index}, nil
 }
 
-func (e *VariableExpression) compile() ([]byte, error) {
+func (e *VariableExpression) compile(compiler *Compiler) ([]byte, error) {
 	identifier := e.Token.Lexeme
-	index, err := ensureConstant(identifier)
+	index, err := compiler.ensureConstant(identifier)
 	if err != nil {
 		return nil, err
 	}
@@ -318,17 +319,17 @@ func combine(slices ...[]byte) []byte {
 	return target
 }
 
-func ensureConstant(value any) (byte, error) {
-	for i, v := range constants {
+func (c *Compiler) ensureConstant(value any) (byte, error) {
+	for i, v := range c.constants {
 		if v == value {
 			return byte(i), nil
 		}
 	}
 
-	if len(constants) == MaxConstants {
+	if len(c.constants) == MaxConstants {
 		return 0, fmt.Errorf("cannot add constant '%v' because the maximum of %d was reached", value, MaxConstants)
 	}
 
-	constants = append(constants, value)
-	return byte(len(constants) - 1), nil
+	c.constants = append(c.constants, value)
+	return byte(len(c.constants) - 1), nil
 }

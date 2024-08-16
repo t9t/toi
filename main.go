@@ -77,14 +77,13 @@ func runScript(scriptData []byte, stdin string) (string, error) {
 
 	toiStdout.Reset()
 
-	constants = make([]any, 0)
-	ops, err := scriptStatement.compile()
+	compiler := &Compiler{constants: make([]any, 0)}
+	ops, err := scriptStatement.compile(compiler)
 	if err != nil {
 		return "", fmt.Errorf("Compilation error: %w", err)
 	}
-	fmt.Printf("generated %d constants\n", len(constants))
-	//decompile(ops)
-	err = execute(constants, ops)
+	//decompile(compiler.constants, ops)
+	err = execute(compiler.constants, ops)
 	if err != nil {
 		return "", fmt.Errorf("VM execution error: %w", err)
 	}

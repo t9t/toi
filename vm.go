@@ -33,7 +33,7 @@ const (
 
 const (
 	MaxBlockSize = 60_000
-	MaxConstants = 255
+	MaxConstants = 250
 )
 
 const (

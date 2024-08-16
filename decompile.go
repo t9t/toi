@@ -2,7 +2,7 @@ package main
 
 import "fmt"
 
-func decompile(ops []byte) {
+func decompile(constants []any, ops []byte) {
 	fmt.Println("Constants:")
 	for i, constantValue := range constants {
 		fmt.Printf("    %d: %v\n", i, constantValue)
