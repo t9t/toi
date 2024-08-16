@@ -1,38 +1,12 @@
 numbers = inputNumbers()
 
-// TODO: use quicksort when implementing functions
-i = 1
-while i < len(numbers) {
-    number = [numbers]i
-    j = i - 1
-    while j >= 0 {
-        if number < [numbers]j {
-            [numbers](j+1) = [numbers]j
-            [numbers]j = number
-            j = j - 1
-        } otherwise {
-            exit loop
-        }
-    }
-    i = i + 1
-}
+map = map()
 
-l = 0
-r = len(numbers) - 1
-
-while l < r {
-    left = [numbers]l
-    right = [numbers]r
-
-    sum = left + right
-    if sum == 2020 {
-        println(left * right)
+for number = [numbers]i {
+    d = 2020 - number
+    if isSet(map, string(d)) {
+        println(d * number)
         exit loop
     }
-
-    if sum > 2020 {
-        r = r - 1
-    } otherwise { // sum < 2020
-        l = l + 1
-    }
+    [map](string(number)) = 1
 }
