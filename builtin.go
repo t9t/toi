@@ -19,9 +19,8 @@ type Builtin struct {
 const ArityVariadic = -1
 
 var builtins = map[string]Builtin{
-	"println":      {ArityVariadic, builtinPrintln, builtinPrintlnVm},
-	"inputNumbers": {0, builtinInputNumbers, builtinInputNumbersVm},
-	"inputLines":   {0, builtinInputLines, builtinInputLinesVm},
+	"println":    {ArityVariadic, builtinPrintln, builtinPrintlnVm},
+	"inputLines": {0, builtinInputLines, builtinInputLinesVm},
 
 	"split": {2, builtinSplit, builtinSplitVm},
 	"chars": {1, builtinChars, builtinCharsVm},
@@ -95,43 +94,12 @@ func builtinPrintlnVm(arguments []any) (any, error) {
 	return nil, nil
 }
 
-func getInputNumbers() ([]int, error) {
-	inputNumbers := make([]int, 0)
-	for _, line := range strings.Split(toiStdin, "\n") {
-		if line == "" {
-			continue
-		}
-		n, err := strconv.Atoi(line)
-		if err != nil {
-			return nil, err
-		}
-		inputNumbers = append(inputNumbers, n)
-	}
-	return inputNumbers, nil
-}
-
 func builtinInputLines(env Env, e []Expression) (any, error) {
 	return toToiArray(strings.Split(strings.TrimSpace(toiStdin), "\n")), nil
 }
 
 func builtinInputLinesVm(arguments []any) (any, error) {
 	return toToiArray(strings.Split(strings.TrimSpace(toiStdin), "\n")), nil
-}
-
-func builtinInputNumbers(env Env, e []Expression) (any, error) {
-	numbers, err := getInputNumbers()
-	if err != nil {
-		return nil, err
-	}
-	return toToiArray(numbers), nil
-}
-
-func builtinInputNumbersVm(arguments []any) (any, error) {
-	numbers, err := getInputNumbers()
-	if err != nil {
-		return nil, err
-	}
-	return toToiArray(numbers), nil
 }
 
 func builtinSplit(env Env, e []Expression) (any, error) {

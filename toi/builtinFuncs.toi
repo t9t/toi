@@ -1,8 +1,5 @@
 println(42)
 
-numbers = inputNumbers()
-println(get(numbers, 10-9))
-
 println(println(88))
 
 println(1337)

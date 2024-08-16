@@ -1,6 +1,9 @@
-numbers = inputNumbers()
-i = len(numbers)
+numbers = array()
+for line = [inputLines()]i {
+    push(numbers, int(line))
+}
 
+i = len(numbers)
 while i <> 0 {
     i = i - 1
     left = [numbers]i

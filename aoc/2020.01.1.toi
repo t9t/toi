@@ -1,12 +1,13 @@
-numbers = inputNumbers()
+lines = inputLines()
 
 map = map()
 
-for number = [numbers]i {
+for line = [inputLines()]i {
+    number = int(line)
     d = 2020 - number
     if isSet(map, string(d)) {
         println(d * number)
         exit loop
     }
-    [map](string(number)) = 1
+    [map]line = 1
 }

@@ -159,7 +159,6 @@ s = string(i) _ " " _ [words]1 _ " " _ [words]2 // string() converts an int into
 
 ## Other built-in functions
 `inputLines()` returns the standard input as lines
-`inputNumbers()` returns the standard input as an array of numbers, one number per line
 `chars(s)` returns an array with the characters in a string (each element is a string of length 1)
 `isSet(map, key)` returns 1 if the key is set in the map, and 0 if it's not
 `unset(map, key)` removes the key from the map
