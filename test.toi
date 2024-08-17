@@ -1,0 +1,19 @@
+
+i = 0
+while i < 150000000 {
+    i = i + 1
+    next iteration
+
+    println("a")
+    println("a")
+    println("a")
+    println("a")
+    println("a")
+    println("a")
+    println("a")
+    println("a")
+    println("a")
+    println("a")
+    println("a")
+    println("a")
+}

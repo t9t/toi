@@ -135,7 +135,6 @@ func (s *WhileStatement) compile(compiler *Compiler) error {
 		}
 	}
 
-	jumpBackIndex := compiler.len()
 	jumpBackAmount := compiler.len() - conditionIndex + 3 // I don't get why it's 3
 	b1, b2, err := encodeJumpAmount(jumpBackAmount)
 	if err != nil {
@@ -154,14 +153,26 @@ func (s *WhileStatement) compile(compiler *Compiler) error {
 	compiler.setByte(conditionFalseJumpIndex+1, b1)
 	compiler.setByte(conditionFalseJumpIndex+2, b2)
 
-	nextIterationJumpIndex := jumpBackIndex
+	var nextIterationJumpIndex int
 	if s.AfterBody != nil {
 		nextIterationJumpIndex = afterBodyIndex
+	} else {
+		nextIterationJumpIndex = conditionIndex
 	}
 
 	loopState := compiler.currentLoopState()
 	for _, index := range loopState.nextIterations {
-		jumpAmount := nextIterationJumpIndex - index - 3 // I don't understand why it must be 3
+		var jumpAmount int
+		if s.AfterBody != nil {
+			// For loop; jump to incrementor
+			compiler.setByte(index, OpJumpForward)
+			jumpAmount = nextIterationJumpIndex - index - 3 // I don't understand why it must be 3
+		} else {
+			// While loop; just jump to expression
+			compiler.setByte(index, OpJumpBack)
+			jumpAmount = index - nextIterationJumpIndex + 3 // I don't understand why it must be 3
+		}
+
 		b1, b2, err := encodeJumpAmount(jumpAmount)
 		if err != nil {
 			// TODO: error reporting with token/line/col
@@ -195,7 +206,8 @@ func (s *ExitLoopStatement) compile(compiler *Compiler) error {
 
 func (s *NextIterationStatement) compile(compiler *Compiler) error {
 	compiler.addNextIteration(compiler.len())
-	compiler.writeBytes(OpJumpForward, InvalidOp, InvalidOp)
+	// Jump type set in parseWhileStatement (back for while; forward for for)
+	compiler.writeBytes(InvalidOp, InvalidOp, InvalidOp)
 	return nil
 }
 
