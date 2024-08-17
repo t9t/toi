@@ -1,9 +1,9 @@
 preambleLength = 25
 lines = inputLines()
 
-preamble = array()
+preamble = map()
 for line = [lines]i {
-    push(preamble, int(line))
+    [preamble]line = i
 
     if i == preambleLength - 1 {
         exit loop
@@ -12,22 +12,16 @@ for line = [lines]i {
 
 i = preambleLength
 while i < len(lines) {
-    number = int([lines]i)
+    line = [lines]i
+    number = int(line)
     i = i + 1
 
     anyMatch = 0
-    l = 0
-    while anyMatch == 0 & l < len(preamble) {
-        left = [preamble]l
-        l = l + 1
-        r = l
-        while anyMatch == 0 & r < len(preamble) {
-            right = [preamble]r
-            r = r + 1
-
-            if left + right == number {
-                anyMatch = 1
-            }
+    for index = [preamble]key {
+        d = number - int(key)
+        if isSet(preamble, string(d)) {
+            anyMatch = 1
+            exit loop
         }
     }
 
@@ -36,12 +30,12 @@ while i < len(lines) {
         exit loop
     }
 
-    newPreamble = array()
-    n = 1
-    while n < len(preamble) {
-        push(newPreamble, [preamble]n)
-        n = n + 1
+    removeIndex = i - preambleLength - 1
+    for index = [preamble]key {
+        if index == removeIndex {
+            unset(preamble, key)
+            exit loop
+        }
     }
-    push(newPreamble, number)
-    preamble = newPreamble
+    [preamble]line = i
 }
