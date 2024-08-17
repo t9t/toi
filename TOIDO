@@ -1,12 +1,18 @@
 - structs/classes (update docs)
+- tuples (update docs)
 - functions (update docs)
 - booleans (update docs)
 - floats (update docs)
 - nil? (update docs)
+- explicit Toi types which are unrelated to Go types (update docs)
 - logical not (update docs)
 - standard library (update docs)
 - better 'for' implementation
+- indexed loop (update docs)
 - errors (update docs)
 - elseif (update docs)
-- break outer loop (update docs)
-- array and map literals
+- break/continue outer loop (update docs)
+- array and map literals (update docs)
+- compile to machine code (LLVM IR? GCC RTL?)
+- more robust error reporting and saner line/col reporting
+- get rid of globals
