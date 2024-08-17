@@ -1,0 +1,47 @@
+preambleLength = 25
+lines = inputLines()
+
+preamble = array()
+for line = [lines]i {
+    push(preamble, int(line))
+
+    if i == preambleLength - 1 {
+        exit loop
+    }
+}
+
+i = preambleLength
+while i < len(lines) {
+    number = int([lines]i)
+    i = i + 1
+
+    anyMatch = 0
+    l = 0
+    while anyMatch == 0 & l < len(preamble) {
+        left = [preamble]l
+        l = l + 1
+        r = l
+        while anyMatch == 0 & r < len(preamble) {
+            right = [preamble]r
+            r = r + 1
+
+            if left + right == number {
+                anyMatch = 1
+            }
+        }
+    }
+
+    if anyMatch == 0 {
+        println(number)
+        exit loop
+    }
+
+    newPreamble = array()
+    n = 1
+    while n < len(preamble) {
+        push(newPreamble, [preamble]n)
+        n = n + 1
+    }
+    push(newPreamble, number)
+    preamble = newPreamble
+}
