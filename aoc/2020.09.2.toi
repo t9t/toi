@@ -1,0 +1,80 @@
+preambleLength = 25
+lines = inputLines()
+
+preamble = map()
+for line = [lines]i {
+    [preamble]line = i
+
+    if i == preambleLength - 1 {
+        exit loop
+    }
+}
+
+invalidNumber = 0
+i = preambleLength
+while i < len(lines) {
+    line = [lines]i
+    number = int(line)
+    i = i + 1
+
+    anyMatch = 0
+    for index = [preamble]key {
+        d = number - int(key)
+        if isSet(preamble, string(d)) {
+            anyMatch = 1
+            exit loop
+        }
+    }
+
+    if anyMatch == 0 {
+        invalidNumber = number
+        exit loop
+    }
+
+    removeIndex = i - preambleLength - 1
+    for index = [preamble]key {
+        if index == removeIndex {
+            unset(preamble, key)
+            exit loop
+        }
+    }
+    [preamble]line = i
+}
+
+answer = 0
+
+for line = [lines]i {
+    j = i + 1
+    sum = int(line)
+    min = sum
+    max = sum
+    while j < len(lines) {
+        right = int([lines]j)
+        j = j + 1
+        sum = sum + right
+
+        if sum > invalidNumber {
+            exit loop
+        }
+
+        if right < min {
+            min = right
+        }
+        if right > max {
+            max = right
+        }
+
+        if sum == invalidNumber {
+            // Found what we're looking for
+            answer = min + max
+            exit loop
+        }
+
+    }
+
+    if answer {
+        exit loop
+    }
+}
+
+println(answer)
