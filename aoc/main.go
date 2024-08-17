@@ -11,9 +11,10 @@ import (
 type AocFunc func(string) any
 
 var funcs = map[string]AocFunc{
-	"1-1": day01part1,
-	"1-2": day01part2,
-	"7-2": day07part2,
+	"1-1":  day01part1,
+	"1-2":  day01part2,
+	"7-2":  day07part2,
+	"10-2": day10part2,
 }
 
 func main() {
