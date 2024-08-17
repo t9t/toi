@@ -53,8 +53,7 @@ func execute(constants []any, ops []byte) error {
 		ip++
 		return op
 	}
-	readConstantString := func() (string, error) {
-		index := int(readOpByte())
+	getConstant := func(index int) (string, error) {
 		constant := constants[index]
 		constantString, ok := constant.(string)
 		if !ok {
@@ -62,10 +61,13 @@ func execute(constants []any, ops []byte) error {
 		}
 		return constantString, nil
 	}
+	readConstantString := func() (string, error) {
+		return getConstant(int(readOpByte()))
+	}
 
 	maxStack := 20
 	stack := make([]any, maxStack)
-	variables := make(map[string]any, 0)
+	globals := make([]any, len(constants)) // TODO: some memory is wasted here; not every constant needs a global
 	stackNext := 0
 	popStack := func() any {
 		stackNext -= 1
@@ -155,21 +157,19 @@ func execute(constants []any, ops []byte) error {
 			index := int(readOpByte())
 			pushStack(constants[index])
 		case OpReadVariable:
-			variableName, err := readConstantString()
-			if err != nil {
-				return err
-			}
-			value, found := variables[variableName]
-			if !found {
+			index := (int(readOpByte()))
+			value := globals[index]
+			if value == nil {
+				variableName, err := readConstantString()
+				if err != nil {
+					return err
+				}
 				return fmt.Errorf("variable '%v' not defined at %d", variableName, ip)
 			}
 			pushStack(value)
 		case OpSetVariable:
-			variableName, err := readConstantString()
-			if err != nil {
-				return err
-			}
-			variables[variableName] = popStack()
+			index := int(readOpByte())
+			globals[index] = popStack()
 		case OpCallBuiltin:
 			functionName, err := readConstantString()
 			if err != nil {
