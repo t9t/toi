@@ -14,22 +14,36 @@ while 1 {
         newRow = array()
         for char = [row]c {
             adjacentOccupied = 0
-            dr = r - 1
-            while dr <= r + 1 {
-                if dr < 0 | dr == rowsLen {
-                    dr = dr + 1
-                    next iteration
-                }
-                drow = [rows]dr
-                dc = c - 1
-                while dc <= c + 1 {
-                    if dc < 0 | dc == rowLen | (dr == r & dc == c) {
+            dr = 0 - 1
+            while dr <= 1 {
+                dc = 0 - 1
+                while dc <= 1 {
+                    if dr == 0 & dc == 0 {
                         dc = dc + 1
                         next iteration
                     }
 
-                    if [drow]dc == "#" {
-                        adjacentOccupied = adjacentOccupied + 1
+                    d = 1
+                    while 1 {
+                        ddr = r + (d*dr)
+                        ddc = c + (d*dc)
+
+                        if ddr < 0 | ddc < 0 | ddr == rowsLen | ddc == rowLen {
+                            // Reached the edge
+                            exit loop
+                        }
+
+                        other = [[rows]ddr]ddc
+                        if other == "#" {
+                            adjacentOccupied = adjacentOccupied + 1
+                            exit loop
+                        }
+                        if other == "L" {
+                            // Obscured vision
+                            exit loop
+                        }
+
+                        d = d + 1
                     }
 
                     dc = dc + 1
@@ -42,7 +56,7 @@ while 1 {
                 newChar = "#"
                 changed = 1
             }
-            if char == "#" & adjacentOccupied >= 4 {
+            if char == "#" & adjacentOccupied >= 5 {
                 newChar = "L"
                 changed = 1
             }
