@@ -15,6 +15,7 @@ var funcs = map[string]AocFunc{
 	"1-2":  day01part2,
 	"7-2":  day07part2,
 	"10-2": day10part2,
+	"11-1": day11part1,
 }
 
 func main() {
