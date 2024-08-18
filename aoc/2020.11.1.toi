@@ -1,0 +1,68 @@
+lines = inputLines()
+rows = array()
+for line = [lines]i {
+    push(rows, chars(line))
+}
+
+rowsLen = len(rows)
+rowLen = len([rows]0)
+
+while 1 {
+    changed = 0
+    newRows = array()
+    for row = [rows]r {
+        newRow = array()
+        for char = [row]c {
+            adjacentOccupied = 0
+            dr = r - 1
+            while dr <= (r + 1) {
+                if dr < 0 | dr == rowsLen {
+                    dr = dr + 1
+                    next iteration
+                }
+                drow = [rows]dr
+                dc = c - 1
+                while dc <= (c + 1) {
+                    if dc < 0 | dc == rowLen | (dr == r & dc == c) {
+                        dc = dc + 1
+                        next iteration
+                    }
+
+                    if [drow]dc == "#" {
+                        adjacentOccupied = adjacentOccupied + 1
+                    }
+
+                    dc = dc + 1
+                }
+                dr = dr + 1
+            }
+
+            newChar = char
+            if char == "L" & adjacentOccupied == 0 {
+                newChar = "#"
+                changed = 1
+            }
+            if char == "#" & adjacentOccupied >= 4 {
+                newChar = "L"
+                changed = 1
+            }
+            push(newRow, newChar)
+        }
+        push(newRows, newRow)
+    }
+
+    rows = newRows
+    if changed == 0 {
+        exit loop
+    }
+}
+
+occupied = 0
+for row = [newRows]r {
+    for char = [row]c {
+        if char == "#" {
+            occupied = occupied + 1
+        }
+    }
+}
+println(occupied)
