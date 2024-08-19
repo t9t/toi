@@ -16,7 +16,7 @@ type Compiler struct {
 	bytes     []byte
 
 	loopStates []*LoopState
-	functions  map[string][]byte
+	functions  map[string]VmFunction
 }
 
 func (c *Compiler) writeByte(b byte) {
@@ -227,7 +227,11 @@ func (s *FunctionDeclarationStatement) compile(compiler *Compiler) error {
 	}
 	ops := functionCompiler.bytes
 	compiler.constants = functionCompiler.constants
-	compiler.functions[s.Identifier.Lexeme] = ops
+	params := make([]string, len(s.Parameters))
+	for i, param := range s.Parameters {
+		params[i] = param.Lexeme
+	}
+	compiler.functions[s.Identifier.Lexeme] = VmFunction{params: params, ops: ops}
 
 	return nil
 }

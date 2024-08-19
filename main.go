@@ -78,7 +78,7 @@ func runScript(scriptData []byte, stdin string) (string, error) {
 
 	toiStdout.Reset()
 
-	compiler := &Compiler{constants: make([]any, 0), functions: make(map[string][]byte)}
+	compiler := &Compiler{constants: make([]any, 0), functions: make(map[string]VmFunction)}
 	err = scriptStatement.compile(compiler)
 	if err != nil {
 		return "", fmt.Errorf("Compilation error: %w", err)

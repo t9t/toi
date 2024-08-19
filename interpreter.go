@@ -8,7 +8,6 @@ import (
 var ErrExitLoop = errors.New("exit loop")
 var ErrNextIteration = errors.New("next iteration")
 
-// TODO: global state is yuck, don't do it
 type Env map[string]any
 
 // TODO: global state is bad; also this seems rather inefficient
@@ -93,7 +92,19 @@ func (s *AssignmentStatement) execute(env Env) error {
 	if err != nil {
 		return err
 	}
-	env[s.Identifier.Lexeme] = v
+	identifier := s.Identifier.Lexeme
+	scopeEnv := env
+	for {
+		if _, found := scopeEnv[identifier]; found {
+			scopeEnv[identifier] = v
+		}
+		if parent, found := scopeEnv["_parent"]; found {
+			scopeEnv = parent.(Env)
+		} else {
+			break
+		}
+	}
+	env[identifier] = v
 	return nil
 }
 
@@ -235,7 +246,17 @@ func (e *FunctionCallExpression) evaluate(env Env) (any, error) {
 	}
 
 	stmt := env[getFuncEnvName(e.FunctionName)].(*FunctionDeclarationStatement)
-	return nil, stmt.Body.execute(env)
+
+	functionEnv := make(Env)
+	functionEnv["_parent"] = env
+	var err error
+	for i, param := range stmt.Parameters {
+		functionEnv[param.Lexeme], err = e.Arguments[i].evaluate(env)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return nil, stmt.Body.execute(functionEnv)
 }
 
 func (e *LiteralExpression) evaluate(env Env) (any, error) {
@@ -246,9 +267,17 @@ func (e *LiteralExpression) evaluate(env Env) (any, error) {
 func (e *VariableExpression) evaluate(env Env) (any, error) {
 	currentInterpreterLineCol = e.lineCol()
 	identifier := e.Token.Lexeme
-	val, found := env[identifier]
-	if found {
-		return val, nil
+	scopeEnv := env
+	for {
+		val, found := scopeEnv[identifier]
+		if found {
+			return val, nil
+		}
+		if parent, found := scopeEnv["_parent"]; found {
+			scopeEnv = parent.(Env)
+		} else {
+			break
+		}
 	}
 	return nil, fmt.Errorf("undefined variable '%s'", identifier)
 }

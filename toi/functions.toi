@@ -1,12 +1,12 @@
 i = 11
 
-modifyI|| {
-    i = i * 2
+modifyI|a b| {
+    i = i * a + b
 }
 
 println(i)
-modifyI()
+modifyI(1, 2)
 println(i)
-modifyI()
-modifyI()
+modifyI(2, 3)
+modifyI(3, 4)
 println(i)

@@ -47,26 +47,31 @@ const (
 	OpBinaryConcat
 )
 
+type VmFunction struct {
+	params []string
+	ops    []byte
+}
+
 type Vm struct {
 	ops       []byte
 	constants []any
-	globals   []any
-	functions map[string][]byte
+	variables []any
+	functions map[string]VmFunction
 }
 
-func execute(ops []byte, constants []any, functions map[string][]byte) error {
+func execute(ops []byte, constants []any, functions map[string]VmFunction) error {
 	globals := make([]any, len(constants)) // TODO: some memory is wasted here; not every constant needs a global
 	vm := &Vm{
 		ops:       ops,
 		constants: constants,
 		functions: functions,
-		globals:   globals,
+		variables: globals,
 	}
-	_, err := vm.execute()
+	_, err := vm.execute(make(map[string]any))
 	return err
 }
 
-func (vm *Vm) execute() ([]any, error) {
+func (vm *Vm) execute(arguments map[string]any) ([]any, error) {
 	constants, ops, functions := vm.constants, vm.ops, vm.functions
 
 	ip := 0
@@ -178,19 +183,23 @@ func (vm *Vm) execute() ([]any, error) {
 			index := int(readOpByte())
 			pushStack(constants[index])
 		case OpReadVariable:
-			index := (int(readOpByte()))
-			value := vm.globals[index]
-			if value == nil {
-				variableName, err := readConstantString()
-				if err != nil {
-					return nil, err
+			index := int(readOpByte())
+			variableName, err := getConstant(index)
+			if err != nil {
+				return nil, err
+			}
+
+			value, found := arguments[variableName]
+			if !found {
+				value = vm.variables[index]
+				if value == nil {
+					return nil, fmt.Errorf("variable '%v' not defined at %d", variableName, ip)
 				}
-				return nil, fmt.Errorf("variable '%v' not defined at %d", variableName, ip)
 			}
 			pushStack(value)
 		case OpSetVariable:
 			index := int(readOpByte())
-			vm.globals[index] = popStack()
+			vm.variables[index] = popStack()
 		case OpCallBuiltin:
 			functionName, err := readConstantString()
 			if err != nil {
@@ -215,15 +224,26 @@ func (vm *Vm) execute() ([]any, error) {
 			if err != nil {
 				return nil, err
 			}
-			// TODO: implement passing arguments
+			function := functions[functionName]
+			arguments := make([]any, len(function.params))
+			for i := 0; i < len(function.params); i++ {
+				arguments[i] = popStack()
+			}
+			slices.Reverse(arguments) // Arguments were pushed onto the stack in left-to-right order, so we read them right-to-left
+
 			functionVm := &Vm{
-				ops:       functions[functionName],
+				ops:       function.ops,
 				constants: constants,
 				functions: functions,
-				globals:   vm.globals,
+				variables: vm.variables,
 			}
 
-			_, err = functionVm.execute()
+			argumentMap := make(map[string]any)
+			for i, param := range function.params {
+				argumentMap[param] = arguments[i]
+			}
+
+			_, err = functionVm.execute(argumentMap)
 			if err != nil {
 				return nil, err
 			}

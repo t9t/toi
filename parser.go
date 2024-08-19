@@ -361,9 +361,15 @@ func (p *Parser) parseFunctionDeclarationStatement() (Statement, error) {
 		return nil, fmt.Errorf("function declarations cannot appear inside other functions at %d:%d", tok.Line, tok.Col)
 	}
 
+	parameters := make([]Token, 0)
+	for p.hasCurrent() && p.current().Type == TokenIdentifier {
+		parameters = append(parameters, p.current())
+		p.consume(1)
+	}
+
 	if !p.hasCurrent() || p.current().Type != TokenPipe {
 		tok := p.current()
-		return nil, fmt.Errorf("expected || after function name but got '%v' at %d:%d", tok.Type, tok.Line, tok.Col)
+		return nil, fmt.Errorf("expected '|' after function parameters but got '%v' at %d:%d", tok.Type, tok.Line, tok.Col)
 	}
 	p.consume(1)
 
@@ -379,7 +385,7 @@ func (p *Parser) parseFunctionDeclarationStatement() (Statement, error) {
 		return nil, fmt.Errorf("function '%v' re-declared %d:%d", identifier, tok.Line, tok.Col)
 	}
 
-	arity := 0
+	arity := len(parameters)
 	if arity > 50 {
 		tok := startToken
 		return nil, fmt.Errorf("functions don't support more than 50 arguments (was %d for '%v') at %d:%d", arity, tok.Lexeme, tok.Line, tok.Col)
@@ -395,7 +401,7 @@ func (p *Parser) parseFunctionDeclarationStatement() (Statement, error) {
 
 	return &FunctionDeclarationStatement{
 		Identifier: startToken,
-		Parameters: []Token{},
+		Parameters: parameters,
 		Body:       body,
 	}, nil
 }
