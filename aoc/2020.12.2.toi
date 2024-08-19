@@ -1,0 +1,59 @@
+lines = inputLines()
+
+// negative Y is towards North, positive Y towards South
+shipX = 0
+shipY = 0
+
+waypointRelativeX = 10
+waypointRelativeY = 0-1
+
+for line = [lines]l {
+    action = [chars(line)]0
+    value = int([split(line, action)]1)
+
+    if action == "N" {
+        waypointRelativeY = waypointRelativeY - value
+    }
+    if action == "S" {
+        waypointRelativeY = waypointRelativeY + value
+    }
+    if action == "E" {
+        waypointRelativeX = waypointRelativeX + value
+    }
+    if action == "W" {
+        waypointRelativeX = waypointRelativeX - value
+    }
+    if action == "L" {
+        i = 0
+        while i < value {
+            i = i + 90
+            tempX = waypointRelativeX
+            waypointRelativeX = waypointRelativeY
+            waypointRelativeY = tempX
+            waypointRelativeY = 0 - waypointRelativeY
+        }
+    }
+    if action == "R" {
+        i = 0
+        while i < value {
+            i = i + 90
+            tempX = waypointRelativeX
+            waypointRelativeX = waypointRelativeY
+            waypointRelativeY = tempX
+            waypointRelativeX = 0 - waypointRelativeX
+        }
+    }
+    if action == "F" {
+        shipX = shipX + value * waypointRelativeX
+        shipY = shipY + value * waypointRelativeY
+    }
+}
+
+if shipX < 0 {
+    shipX = 0 - shipX
+}
+if shipY < 0 {
+    shipY = 0 - shipY
+}
+
+println(shipX+shipY)
