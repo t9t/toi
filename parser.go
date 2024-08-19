@@ -353,6 +353,7 @@ func (p *Parser) parseNextIterationStatement() (Statement, error) {
 
 func (p *Parser) parseFunctionDeclarationStatement() (Statement, error) {
 	startToken := p.current()
+	identifier := startToken.Lexeme
 	p.consume(2) // identifier and |
 
 	if p.parsingFunctionDeclaration {
@@ -366,6 +367,18 @@ func (p *Parser) parseFunctionDeclarationStatement() (Statement, error) {
 	}
 	p.consume(1)
 
+	_, found := builtins[identifier]
+	if found {
+		tok := startToken
+		return nil, fmt.Errorf("cannot use '%v' as function name, it is a builtin function at %d:%d", identifier, tok.Line, tok.Col)
+	}
+
+	_, found = p.declaredFunctions[identifier]
+	if found {
+		tok := startToken
+		return nil, fmt.Errorf("function '%v' re-declared %d:%d", identifier, tok.Line, tok.Col)
+	}
+
 	arity := 0
 	if arity > 50 {
 		tok := startToken
@@ -373,21 +386,13 @@ func (p *Parser) parseFunctionDeclarationStatement() (Statement, error) {
 	}
 
 	p.parsingFunctionDeclaration = true
+	p.declaredFunctions[startToken.Lexeme] = arity // we got recursion baby
 	body, err := p.parseBlock("function parameters")
 	if err != nil {
 		return nil, err
 	}
 	p.parsingFunctionDeclaration = false
 
-	identifier := startToken.Lexeme
-
-	_, found := builtins[identifier]
-	if found {
-		tok := startToken
-		return nil, fmt.Errorf("cannot use '%v' as function name, it is a builtin function at %d:%d", identifier, tok.Line, tok.Col)
-	}
-
-	p.declaredFunctions[startToken.Lexeme] = arity
 	return &FunctionDeclarationStatement{
 		Identifier: startToken,
 		Parameters: []Token{},
