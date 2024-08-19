@@ -1,0 +1,64 @@
+lines = inputLines()
+
+// negative Y is towards North, positive Y towards South
+posX = 0
+posY = 0
+
+HeadingNorth = 0
+HeadingEast = 90
+HeadingSouth = 180
+HeadingWest = 270
+heading = HeadingEast
+
+for line = [lines]l {
+    action = [chars(line)]0
+    value = int([split(line, action)]1)
+
+    if action == "N" {
+        posY = posY - value
+    }
+    if action == "S" {
+        posY = posY + value
+    }
+    if action == "E" {
+        posX = posX + value
+    }
+    if action == "W" {
+        posX = posX - value
+    }
+    if action == "L" {
+        heading = heading - value
+        if heading < 0 {
+            heading = heading + 360
+        }
+    }
+    if action == "R" {
+        heading = heading + value
+        if heading >= 360 {
+            heading = heading - 360
+        }
+    }
+    if action == "F" {
+        if heading == HeadingNorth {
+            posY = posY - value
+        }
+        if heading == HeadingEast {
+            posX = posX + value
+        }
+        if heading == HeadingSouth {
+            posY = posY + value
+        }
+        if heading == HeadingWest {
+            posX = posX - value
+        }
+    }
+}
+
+if posX < 0 {
+    posX = 0 - posX
+}
+if posY < 0 {
+    posY = 0 - posY
+}
+
+println(posX+posY)
