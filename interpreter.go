@@ -80,6 +80,13 @@ func (s *NextIterationStatement) execute(env Env) error {
 	return ErrNextIteration
 }
 
+func (s *FunctionDeclarationStatement) execute(env Env) error {
+	currentInterpreterLineCol = s.lineCol()
+
+	env[getFuncEnvName(s.Identifier.Lexeme)] = s
+	return nil
+}
+
 func (s *AssignmentStatement) execute(env Env) error {
 	currentInterpreterLineCol = s.lineCol()
 	v, err := s.Expression.evaluate(env)
@@ -222,8 +229,13 @@ func (e *ContainerAccessExpression) evaluate(env Env) (any, error) {
 
 func (e *FunctionCallExpression) evaluate(env Env) (any, error) {
 	currentInterpreterLineCol = e.lineCol()
-	builtin := builtins[e.FunctionName]
-	return builtin.Func(env, e.Arguments)
+	if e.Builtin {
+		builtin := builtins[e.FunctionName]
+		return builtin.Func(env, e.Arguments)
+	}
+
+	stmt := env[getFuncEnvName(e.FunctionName)].(*FunctionDeclarationStatement)
+	return nil, stmt.Body.execute(env)
 }
 
 func (e *LiteralExpression) evaluate(env Env) (any, error) {
@@ -258,4 +270,8 @@ func intToBool(i int) bool {
 		return false
 	}
 	return true
+}
+
+func getFuncEnvName(identifier string) string {
+	return "_func_" + identifier
 }

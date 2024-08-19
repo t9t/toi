@@ -16,6 +16,7 @@ func TestToi(t *testing.T) {
 		{"comment", ""},
 		{"conditionals", ""},
 		{"for", ""},
+		{"functions", ""},
 		{"if", ""},
 		{"inputLines", "asdf\nkek"},
 		{"logicalOperators", ""},

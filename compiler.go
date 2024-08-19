@@ -16,6 +16,7 @@ type Compiler struct {
 	bytes     []byte
 
 	loopStates []*LoopState
+	functions  map[string][]byte
 }
 
 func (c *Compiler) writeByte(b byte) {
@@ -219,6 +220,18 @@ func encodeJumpAmount(amount int) (byte, byte, error) {
 	return byte(amount / 256), byte(amount % 256), nil
 }
 
+func (s *FunctionDeclarationStatement) compile(compiler *Compiler) error {
+	functionCompiler := &Compiler{constants: compiler.constants, functions: compiler.functions}
+	if err := s.Body.compile(functionCompiler); err != nil {
+		return err
+	}
+	ops := functionCompiler.bytes
+	compiler.constants = functionCompiler.constants
+	compiler.functions[s.Identifier.Lexeme] = ops
+
+	return nil
+}
+
 func (s *AssignmentStatement) compile(compiler *Compiler) error {
 	index, err := compiler.ensureConstant(s.Identifier.Lexeme)
 	if err != nil {
@@ -330,6 +343,7 @@ func (e *BinaryExpression) compileOrOrAnd(compiler *Compiler, withNot bool) erro
 func (e *ContainerAccessExpression) compile(compiler *Compiler) error {
 	f := &FunctionCallExpression{
 		Token:        e.Token,
+		Builtin:      true,
 		FunctionName: "get",
 		Arguments:    []Expression{e.Container, e.Access},
 	}
@@ -356,7 +370,12 @@ func (e *FunctionCallExpression) compile(compiler *Compiler) error {
 	if err != nil {
 		return err
 	}
-	compiler.writeBytes(OpCallBuiltin, index)
+
+	op := OpCallFunction
+	if e.Builtin {
+		op = OpCallBuiltin
+	}
+	compiler.writeBytes(op, index)
 	return nil
 }
 

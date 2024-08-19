@@ -61,6 +61,16 @@ func (s *NextIterationStatement) lineCol() LineCol {
 	return s.Token.LineCol()
 }
 
+type FunctionDeclarationStatement struct {
+	Identifier Token
+	Parameters []Token
+	Body       Statement
+}
+
+func (s *FunctionDeclarationStatement) lineCol() LineCol {
+	return s.Identifier.LineCol()
+}
+
 type AssignmentStatement struct {
 	Identifier Token
 	Expression Expression
@@ -101,6 +111,7 @@ func (e *ContainerAccessExpression) lineCol() LineCol {
 
 type FunctionCallExpression struct {
 	Token        Token
+	Builtin      bool
 	FunctionName string
 	Arguments    []Expression
 }

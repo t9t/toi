@@ -53,7 +53,7 @@ func runScript(scriptData []byte, stdin string) (string, error) {
 		return "", fmt.Errorf("tokenization error")
 	}
 
-	parser := &Parser{tokens: tokens}
+	parser := &Parser{tokens: tokens, declaredFunctions: make(map[string]int)}
 	scriptStatement, err := parser.parse()
 	if err != nil {
 		return "", fmt.Errorf("parse error: %w", err)
@@ -78,14 +78,14 @@ func runScript(scriptData []byte, stdin string) (string, error) {
 
 	toiStdout.Reset()
 
-	compiler := &Compiler{constants: make([]any, 0)}
+	compiler := &Compiler{constants: make([]any, 0), functions: make(map[string][]byte)}
 	err = scriptStatement.compile(compiler)
 	if err != nil {
 		return "", fmt.Errorf("Compilation error: %w", err)
 	}
 	ops := compiler.bytes
 	//decompile(compiler.constants, ops)
-	err = execute(compiler.constants, ops)
+	err = execute(ops, compiler.constants, compiler.functions)
 	if err != nil {
 		return "", fmt.Errorf("VM execution error: %w", err)
 	}

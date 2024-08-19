@@ -10,6 +10,9 @@ type Parser struct {
 
 	loopBodyCount int
 	forCounter    int
+
+	parsingFunctionDeclaration bool
+	declaredFunctions          map[string]int
 }
 
 func (p *Parser) consume(i int) {
@@ -88,6 +91,11 @@ func (p *Parser) parseStatement() (stmt Statement, err error) {
 		}
 	} else if p.current().Type == TokenNext {
 		stmt, err = p.parseNextIterationStatement()
+		if err != nil {
+			return nil, err
+		}
+	} else if p.hasNext() && p.current().Type == TokenIdentifier && p.next().Type == TokenPipe {
+		stmt, err = p.parseFunctionDeclarationStatement()
 		if err != nil {
 			return nil, err
 		}
@@ -251,6 +259,7 @@ func (p *Parser) parseForStatement() (Statement, error) {
 				Identifier: keysIdent,
 				Expression: &FunctionCallExpression{
 					Token:        keysIdent,
+					Builtin:      true,
 					FunctionName: "keys",
 					Arguments:    []Expression{containerExpr},
 				},
@@ -266,6 +275,7 @@ func (p *Parser) parseForStatement() (Statement, error) {
 					Operator: Token{Type: TokenLessThan, Lexeme: "<"},
 					Right: &FunctionCallExpression{
 						Token:        Token{Type: TokenIdentifier, Lexeme: "len"},
+						Builtin:      true,
 						FunctionName: "len",
 						Arguments:    []Expression{keysExpr},
 					},
@@ -277,6 +287,7 @@ func (p *Parser) parseForStatement() (Statement, error) {
 							Identifier: keyIdentifier,
 							Expression: &FunctionCallExpression{ // get(_for_keys, _for_index)
 								Token:        Token{Type: TokenIdentifier, Lexeme: "get"},
+								Builtin:      true,
 								FunctionName: "get",
 								Arguments:    []Expression{keysExpr, indexExpr},
 							},
@@ -285,6 +296,7 @@ func (p *Parser) parseForStatement() (Statement, error) {
 							Identifier: valueIdentifier,
 							Expression: &FunctionCallExpression{ // get(container, key)
 								Token:        Token{Type: TokenIdentifier, Lexeme: "get"},
+								Builtin:      true,
 								FunctionName: "get",
 								Arguments:    []Expression{containerExpr, &VariableExpression{keyIdentifier}},
 							},
@@ -339,6 +351,50 @@ func (p *Parser) parseNextIterationStatement() (Statement, error) {
 	return &NextIterationStatement{Token: token}, nil
 }
 
+func (p *Parser) parseFunctionDeclarationStatement() (Statement, error) {
+	startToken := p.current()
+	p.consume(2) // identifier and |
+
+	if p.parsingFunctionDeclaration {
+		tok := startToken
+		return nil, fmt.Errorf("function declarations cannot appear inside other functions at %d:%d", tok.Line, tok.Col)
+	}
+
+	if !p.hasCurrent() || p.current().Type != TokenPipe {
+		tok := p.current()
+		return nil, fmt.Errorf("expected || after function name but got '%v' at %d:%d", tok.Type, tok.Line, tok.Col)
+	}
+	p.consume(1)
+
+	arity := 0
+	if arity > 50 {
+		tok := startToken
+		return nil, fmt.Errorf("functions don't support more than 50 arguments (was %d for '%v') at %d:%d", arity, tok.Lexeme, tok.Line, tok.Col)
+	}
+
+	p.parsingFunctionDeclaration = true
+	body, err := p.parseBlock("function parameters")
+	if err != nil {
+		return nil, err
+	}
+	p.parsingFunctionDeclaration = false
+
+	identifier := startToken.Lexeme
+
+	_, found := builtins[identifier]
+	if found {
+		tok := startToken
+		return nil, fmt.Errorf("cannot use '%v' as function name, it is a builtin function at %d:%d", identifier, tok.Line, tok.Col)
+	}
+
+	p.declaredFunctions[startToken.Lexeme] = arity
+	return &FunctionDeclarationStatement{
+		Identifier: startToken,
+		Parameters: []Token{},
+		Body:       body,
+	}, nil
+}
+
 func (p *Parser) parseAssignmentStatement() (Statement, error) {
 	startToken := p.current()
 	left, err := p.parseExpression()
@@ -361,6 +417,7 @@ func (p *Parser) parseAssignmentStatement() (Statement, error) {
 			Token: startToken,
 			Expression: &FunctionCallExpression{
 				Token:        access.Token,
+				Builtin:      true,
 				FunctionName: "set",
 				Arguments:    []Expression{access.Container, access.Access, right},
 			},
@@ -518,10 +575,16 @@ func (p *Parser) parseFunctionCall() (Expression, error) {
 	callToken := p.current()
 	identifier := callToken.Lexeme
 
-	builtin, found := builtins[identifier]
-	if !found {
+	builtin, builtinFound := builtins[identifier]
+	functionArity, functionFound := p.declaredFunctions[identifier]
+	if builtinFound {
+		// This is safe, because parseFunctionDeclaration disallows overwriting builtin functions
+		functionArity = builtin.Arity
+	}
+
+	if !builtinFound && !functionFound {
 		tok := callToken
-		return nil, fmt.Errorf("no such builtin function '%s' at %d:%d", identifier, tok.Line, tok.Col)
+		return nil, fmt.Errorf("no such function '%s' (note, functions have to be declared before usage) at %d:%d", identifier, tok.Line, tok.Col)
 	}
 
 	p.consume(2) // Consume identifier and '('
@@ -552,10 +615,15 @@ func (p *Parser) parseFunctionCall() (Expression, error) {
 		}
 	}
 
-	if len(arguments) != builtin.Arity && builtin.Arity != ArityVariadic {
+	if len(arguments) != functionArity && functionArity != ArityVariadic {
 		tok := p.current()
-		return nil, fmt.Errorf("expected %d arguments but got %d for function '%s' at %d:%d", builtin.Arity, len(arguments), identifier, tok.Line, tok.Col)
+		return nil, fmt.Errorf("expected %d arguments but got %d for function '%s' at %d:%d", functionArity, len(arguments), identifier, tok.Line, tok.Col)
 	}
 
-	return &FunctionCallExpression{Token: callToken, FunctionName: callToken.Lexeme, Arguments: arguments}, nil
+	return &FunctionCallExpression{
+		Token:        callToken,
+		Builtin:      builtinFound,
+		FunctionName: callToken.Lexeme,
+		Arguments:    arguments,
+	}, nil
 }

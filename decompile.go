@@ -91,7 +91,12 @@ func decompile(constants []any, ops []byte) {
 			index := ops[i]
 			i++
 			constantValue := constants[index]
-			fmt.Printf("[2] Builtin %d '%v'", index, constantValue)
+			fmt.Printf("[2] Builtin call %d '%v'", index, constantValue)
+		case OpCallFunction:
+			index := ops[i]
+			i++
+			constantValue := constants[index]
+			fmt.Printf("[2] Function call %d '%v'", index, constantValue)
 		case OpDuplicate:
 			fmt.Print("[1] Duplicate")
 		case InvalidOp:
