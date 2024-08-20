@@ -1,0 +1,20 @@
+lines = inputLines()
+
+earliestTimestamp = int([lines]0)
+busses = split([lines]1, ",")
+
+earliestDepart = 2147483647
+earliestDepartId = 0
+for bus = [busses]b {
+    if bus == "x" {
+        next iteration
+    }
+    id = int(bus)
+    depart = ((earliestTimestamp / id) * id) + id
+    if depart < earliestDepart {
+        earliestDepart = depart
+        earliestDepartId = id
+    }
+}
+
+println((earliestDepart - earliestTimestamp) * earliestDepartId)
