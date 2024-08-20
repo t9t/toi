@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"slices"
-	"time"
 )
 
 // type Opcode byte
@@ -111,7 +110,6 @@ func (vm *Vm) execute() ([]any, error) {
 		stackNext += 1
 	}
 
-	start := time.Now()
 	for ip < len(ops) {
 		instruction := readOpByte()
 
@@ -279,6 +277,5 @@ func (vm *Vm) execute() ([]any, error) {
 		}
 	}
 
-	fmt.Printf("VM run time: %v\n", time.Since(start))
 	return stack, nil
 }

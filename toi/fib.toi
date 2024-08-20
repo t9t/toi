@@ -1,0 +1,9 @@
+fib|n| out {
+    if n < 2 {
+        out = n
+    } otherwise {
+        out = fib(n - 1) + fib(n - 2)
+    }
+}
+
+println(fib(40))

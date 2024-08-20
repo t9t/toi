@@ -85,10 +85,13 @@ func runScript(scriptData []byte, stdin string) (string, error) {
 	}
 	ops := compiler.bytes
 	//decompile(compiler.constants, ops)
+	start = time.Now()
 	err = execute(ops, compiler.constants, compiler.variables, compiler.functions)
 	if err != nil {
 		return "", fmt.Errorf("VM execution error: %w", err)
 	}
+	// TODO: kinda annoying that it also counts initialization time
+	fmt.Printf("VM run time: %v\n", time.Since(start))
 
 	vmOutput := toiStdout.String()
 
