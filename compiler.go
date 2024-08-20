@@ -222,9 +222,18 @@ func encodeJumpAmount(amount int) (byte, byte, error) {
 }
 
 func (s *FunctionDeclarationStatement) compile(compiler *Compiler) error {
+	hasOutVar := s.OutVariable != nil
+	outVarIdentifier := ""
+	if hasOutVar {
+		outVarIdentifier = s.OutVariable.Lexeme
+	}
+
 	functionVariables := make([]string, len(s.Parameters))
 	for i, param := range s.Parameters {
 		functionVariables[i] = param.Lexeme
+	}
+	if hasOutVar {
+		functionVariables = append(functionVariables, outVarIdentifier)
 	}
 
 	functionCompiler := &Compiler{constants: compiler.constants, functions: compiler.functions, variables: functionVariables}
@@ -237,7 +246,7 @@ func (s *FunctionDeclarationStatement) compile(compiler *Compiler) error {
 	for i, param := range s.Parameters {
 		params[i] = param.Lexeme
 	}
-	compiler.functions[s.Identifier.Lexeme] = VmFunction{params: params, ops: ops, variableDefinitions: functionCompiler.variables}
+	compiler.functions[s.Identifier.Lexeme] = VmFunction{params: params, ops: ops, variableDefinitions: functionCompiler.variables, hasOutVar: hasOutVar}
 
 	return nil
 }

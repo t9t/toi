@@ -62,9 +62,10 @@ func (s *NextIterationStatement) lineCol() LineCol {
 }
 
 type FunctionDeclarationStatement struct {
-	Identifier Token
-	Parameters []Token
-	Body       Statement
+	Identifier  Token
+	Parameters  []Token
+	OutVariable *Token
+	Body        Statement
 }
 
 func (s *FunctionDeclarationStatement) lineCol() LineCol {

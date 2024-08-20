@@ -237,6 +237,9 @@ func (e *FunctionCallExpression) evaluate(env Env) (any, error) {
 	stmt := env[getFuncEnvName(e.FunctionName)].(*FunctionDeclarationStatement)
 
 	functionEnv := make(Env)
+	if stmt.OutVariable != nil {
+		functionEnv[stmt.OutVariable.Lexeme] = nil
+	}
 	var err error
 	for i, param := range stmt.Parameters {
 		functionEnv[param.Lexeme], err = e.Arguments[i].evaluate(env)
@@ -244,7 +247,13 @@ func (e *FunctionCallExpression) evaluate(env Env) (any, error) {
 			return nil, err
 		}
 	}
-	return nil, stmt.Body.execute(functionEnv)
+	if err = stmt.Body.execute(functionEnv); err != nil {
+		return nil, err
+	}
+	if stmt.OutVariable != nil {
+		return functionEnv[stmt.OutVariable.Lexeme], nil
+	}
+	return nil, nil
 }
 
 func (e *LiteralExpression) evaluate(env Env) (any, error) {

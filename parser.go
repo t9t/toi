@@ -362,7 +362,13 @@ func (p *Parser) parseFunctionDeclarationStatement() (Statement, error) {
 	}
 
 	parameters := make([]Token, 0)
+	paramMap := make(map[string]struct{})
 	for p.hasCurrent() && p.current().Type == TokenIdentifier {
+		if _, found := paramMap[p.current().Lexeme]; found {
+			tok := p.current()
+			return nil, fmt.Errorf("duplicate parameter name '%v' in function declaration '%v' at %d:%d", tok.Lexeme, identifier, tok.Line, tok.Col)
+		}
+		paramMap[p.current().Lexeme] = struct{}{}
 		parameters = append(parameters, p.current())
 		p.consume(1)
 	}
@@ -391,6 +397,18 @@ func (p *Parser) parseFunctionDeclarationStatement() (Statement, error) {
 		return nil, fmt.Errorf("functions don't support more than 50 arguments (was %d for '%v') at %d:%d", arity, tok.Lexeme, tok.Line, tok.Col)
 	}
 
+	var outVariable *Token
+	if p.hasCurrent() && p.current().Type == TokenIdentifier {
+		tok := p.current()
+		if _, found := paramMap[tok.Lexeme]; found {
+			return nil, fmt.Errorf("duplicate parameter name '%v' in function declaration '%v' at %d:%d", tok.Lexeme, identifier, tok.Line, tok.Col)
+		}
+		paramMap[tok.Lexeme] = struct{}{}
+
+		outVariable = &tok
+		p.consume(1)
+	}
+
 	p.parsingFunctionDeclaration = true
 	p.declaredFunctions[startToken.Lexeme] = arity // we got recursion baby
 	body, err := p.parseBlock("function parameters")
@@ -400,9 +418,10 @@ func (p *Parser) parseFunctionDeclarationStatement() (Statement, error) {
 	p.parsingFunctionDeclaration = false
 
 	return &FunctionDeclarationStatement{
-		Identifier: startToken,
-		Parameters: parameters,
-		Body:       body,
+		Identifier:  startToken,
+		Parameters:  parameters,
+		OutVariable: outVariable,
+		Body:        body,
 	}, nil
 }
 

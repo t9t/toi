@@ -161,6 +161,39 @@ s = string(i) _ " " _ [words]1 _ " " _ [words]2 // string() converts an int into
 ```
 
 
+## Functions
+A simple function that does not take any arguments can be written like this:
+
+```
+printHelloWorld|| {
+    println("Hello, world!")
+}
+
+printHelloWorld()
+```
+
+Parameter names are written between the opening `|` and the closing `|`:
+
+```
+printGreeting|greeting what| {
+    println(greeting _ ", " _ what _ "!")
+}
+
+printGreeting("Hello", "world")
+```
+
+To get a value out of a function, an out-variable is used, which is written
+after the closing `|`:
+
+```
+getGreeting|greeting what| fullGreeting {
+    fullGreeting = greeting _ ", " _ what _ "!"
+}
+
+println(getGreeting("Hello", "world"))
+```
+
+
 ## Other built-in functions
 `inputLines()` returns the standard input as lines
 `chars(s)` returns an array with the characters in a string (each element is a string of length 1)

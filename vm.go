@@ -51,6 +51,7 @@ type VmFunction struct {
 	params              []string
 	ops                 []byte
 	variableDefinitions []string
+	hasOutVar           bool
 }
 
 type Vm struct {
@@ -250,8 +251,12 @@ func (vm *Vm) execute() ([]any, error) {
 				return nil, err
 			}
 
-			// TODO: implement return values
-			pushStack(nil)
+			var outVar any = nil
+			if function.hasOutVar {
+				outVar = functionVariables[len(functionVariables)-1]
+			}
+
+			pushStack(outVar)
 		case OpPrintln:
 			argumentCount := int(readOpByte())
 			arguments := make([]any, argumentCount)
