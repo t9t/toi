@@ -38,6 +38,7 @@ const (
 	OpBinarySubtract
 	OpBinaryMultiply
 	OpBinaryDivide
+	OpBinaryRemainder
 
 	OpBinaryEqual
 	OpBinaryGreaterThan
@@ -133,6 +134,8 @@ func (vm *Vm) execute() ([]any, error) {
 				result, err = intBinaryOp(left, right, "*", func(l int, r int) int { return l * r })
 			case OpBinaryDivide:
 				result, err = intBinaryOp(left, right, "/", func(l int, r int) int { return l / r })
+			case OpBinaryRemainder:
+				result, err = intBinaryOp(left, right, "%", func(l int, r int) int { return l % r })
 
 			case OpBinaryEqual:
 				result = boolToInt(left == right)

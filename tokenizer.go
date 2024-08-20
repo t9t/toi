@@ -24,6 +24,7 @@ const (
 	TokenMinus      TokenType = "Minus"
 	TokenAsterisk   TokenType = "Asterisk"
 	TokenSlash      TokenType = "Slash"
+	TokenPercent    TokenType = "Percent"
 	TokenUnderscore TokenType = "Underscore"
 
 	TokenAmpersand TokenType = "Ampersand"
@@ -79,6 +80,7 @@ var singleCharTokens = map[rune]TokenType{
 	'_': TokenUnderscore,
 	'-': TokenMinus,
 	'*': TokenAsterisk,
+	'%': TokenPercent,
 
 	'&': TokenAmpersand,
 	'|': TokenPipe,

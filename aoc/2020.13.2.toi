@@ -1,0 +1,28 @@
+lines = inputLines()
+
+earliestTimestamp = int([lines]0)
+busses = split([lines]1, ",")
+
+timestamp = 0
+product = 0
+for bus = [busses]b {
+    if bus == "x" {
+        if b == 0 {
+            println("I don't know how to deal with x in the first position")
+            exit loop
+        }
+        next iteration
+    }
+    id = int(bus)
+    if b == 0 {
+        product = id
+        next iteration
+    }
+
+    while (timestamp + b) % id <> 0 {
+        timestamp = timestamp + product
+    }
+    product = product * id
+}
+
+println(timestamp)

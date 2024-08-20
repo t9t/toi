@@ -538,7 +538,11 @@ func (p *Parser) parseDivide() (Expression, error) {
 }
 
 func (p *Parser) parseMultiply() (Expression, error) {
-	return p.parseBinary(TokenAsterisk, p.parseStringConcat)
+	return p.parseBinary(TokenAsterisk, p.parseRemainder)
+}
+
+func (p *Parser) parseRemainder() (Expression, error) {
+	return p.parseBinary(TokenPercent, p.parseStringConcat)
 }
 
 func (p *Parser) parseStringConcat() (Expression, error) {
