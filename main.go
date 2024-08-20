@@ -13,12 +13,18 @@ var toiStdout bytes.Buffer
 var toiStdin string
 
 func main() {
-	if len(os.Args) != 1 && len(os.Args) != 2 {
-		fmt.Fprintln(os.Stderr, "Expected either:")
-		fmt.Fprintln(os.Stderr, "\tNo arguments: provide script in stdin")
-		fmt.Fprintln(os.Stderr, "\t1 argument:   script file (so stdin can be fed to the script)")
-		os.Exit(1)
-		return
+	args := os.Args[1:] // strip command
+	outFile := ""
+	if len(args) != 0 && args[0] == "-o" {
+		if len(args) == 1 {
+			printUsageAndExit()
+		}
+		outFile = args[1]
+		args = args[2:]
+	}
+
+	if len(args) > 1 {
+		printUsageAndExit()
 	}
 
 	var stdout string
@@ -27,12 +33,12 @@ func main() {
 	ohno(err)
 
 	var scriptName string
-	if len(os.Args) == 1 {
+	if len(args) == 0 {
 		scriptName = "(stdin)"
-		stdout, err = runScript(stdin, "")
-	} else if len(os.Args) == 2 {
-		scriptName = os.Args[1]
-		stdout, err = runScriptFile(scriptName, string(stdin))
+		stdout, err = runScript(stdin, outFile, "")
+	} else if len(args) == 1 {
+		scriptName = args[0]
+		stdout, err = runScriptFile(scriptName, outFile, string(stdin))
 	}
 
 	fmt.Print(stdout)
@@ -43,7 +49,7 @@ func main() {
 	return
 }
 
-func runScript(scriptData []byte, stdin string) (string, error) {
+func runScript(scriptData []byte, outFile string, stdin string) (string, error) {
 	tokens, errors := tokenize(string(scriptData))
 	if len(errors) != 0 {
 		fmt.Fprintf(os.Stderr, "Got %d errors:\n", len(errors))
@@ -85,6 +91,12 @@ func runScript(scriptData []byte, stdin string) (string, error) {
 	}
 	ops := compiler.bytes
 	//decompile(compiler.constants, ops)
+
+	if outFile != "" {
+		err = dump(outFile, ops, compiler.constants, compiler.variables, compiler.functions)
+		ohno(err)
+	}
+
 	start = time.Now()
 	err = execute(ops, compiler.constants, compiler.variables, compiler.functions)
 	if err != nil {
@@ -107,7 +119,7 @@ func runScript(scriptData []byte, stdin string) (string, error) {
 	return treeOutput, nil
 }
 
-func runScriptFile(filepath string, stdin string) (string, error) {
+func runScriptFile(filepath string, outFile string, stdin string) (string, error) {
 	var scriptData []byte
 	var err error
 	scriptData, err = os.ReadFile(filepath)
@@ -115,11 +127,19 @@ func runScriptFile(filepath string, stdin string) (string, error) {
 		return "", err
 	}
 
-	return runScript(scriptData, stdin)
+	return runScript(scriptData, outFile, stdin)
 }
 
 func ohno(err error) {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func printUsageAndExit() {
+	fmt.Fprintf(os.Stderr, "Usage: %s [-o outfile] [script file]\n", os.Args[0])
+	fmt.Fprintf(os.Stderr, "    -o outfile:    write the produced bytcode to the <outfile>\n")
+	fmt.Fprintf(os.Stderr, "    script file:   run the script file; if not provided, provide the script in stdin\n")
+	os.Exit(1)
+	return
 }
