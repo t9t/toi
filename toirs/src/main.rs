@@ -2,6 +2,8 @@ use std::env;
 use std::fs::File;
 use std::io::{self, BufRead};
 
+mod vm;
+
 fn main() {
     let file_path = env::args().nth(1).expect("No file path provided");
 
@@ -32,7 +34,8 @@ fn main() {
         panic!("expected no more data, but got: {:?}", rest)
     }
 
-    println!("done reading")
+    println!("done reading");
+    vm::run(&instructions);
 }
 
 fn assert(expected: &str, actual: &str) {
