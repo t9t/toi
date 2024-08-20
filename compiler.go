@@ -14,6 +14,7 @@ type LoopState struct {
 type Compiler struct {
 	constants []any
 	bytes     []byte
+	variables []string // index = id; value = name
 
 	loopStates []*LoopState
 	functions  map[string]VmFunction
@@ -221,7 +222,12 @@ func encodeJumpAmount(amount int) (byte, byte, error) {
 }
 
 func (s *FunctionDeclarationStatement) compile(compiler *Compiler) error {
-	functionCompiler := &Compiler{constants: compiler.constants, functions: compiler.functions}
+	functionVariables := make([]string, len(s.Parameters))
+	for i, param := range s.Parameters {
+		functionVariables[i] = param.Lexeme
+	}
+
+	functionCompiler := &Compiler{constants: compiler.constants, functions: compiler.functions, variables: functionVariables}
 	if err := s.Body.compile(functionCompiler); err != nil {
 		return err
 	}
@@ -231,13 +237,13 @@ func (s *FunctionDeclarationStatement) compile(compiler *Compiler) error {
 	for i, param := range s.Parameters {
 		params[i] = param.Lexeme
 	}
-	compiler.functions[s.Identifier.Lexeme] = VmFunction{params: params, ops: ops}
+	compiler.functions[s.Identifier.Lexeme] = VmFunction{params: params, ops: ops, variableDefinitions: functionCompiler.variables}
 
 	return nil
 }
 
 func (s *AssignmentStatement) compile(compiler *Compiler) error {
-	index, err := compiler.ensureConstant(s.Identifier.Lexeme)
+	index, err := compiler.registerVariable(s.Identifier.Lexeme)
 	if err != nil {
 		return err
 	}
@@ -399,9 +405,10 @@ func (e *LiteralExpression) compile(compiler *Compiler) error {
 
 func (e *VariableExpression) compile(compiler *Compiler) error {
 	identifier := e.Token.Lexeme
-	index, err := compiler.ensureConstant(identifier)
-	if err != nil {
-		return err
+	index, found := compiler.findVariableIndex(identifier)
+	if !found {
+		tok := e.Token
+		return fmt.Errorf("variable '%v' used before set at %d:%d", identifier, tok.Line, tok.Col)
 	}
 
 	compiler.writeBytes(OpReadVariable, index)
@@ -430,4 +437,29 @@ func (c *Compiler) ensureConstant(value any) (byte, error) {
 
 	c.constants = append(c.constants, value)
 	return byte(len(c.constants) - 1), nil
+}
+
+func (c *Compiler) registerVariable(name string) (byte, error) {
+	for i, v := range c.variables {
+		if v == name {
+			return byte(i), nil
+		}
+	}
+
+	if len(c.constants) == MaxConstants {
+		return 0, fmt.Errorf("cannot add variable '%v' because the maximum of %d was reached", name, MaxConstants)
+	}
+
+	c.variables = append(c.variables, name)
+	return byte(len(c.variables) - 1), nil
+}
+
+func (c *Compiler) findVariableIndex(name string) (byte, bool) {
+	for i, v := range c.variables {
+		if v == name {
+			return byte(i), true
+		}
+	}
+
+	return 0, false
 }

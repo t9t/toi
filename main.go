@@ -78,14 +78,14 @@ func runScript(scriptData []byte, stdin string) (string, error) {
 
 	toiStdout.Reset()
 
-	compiler := &Compiler{constants: make([]any, 0), functions: make(map[string]VmFunction)}
+	compiler := &Compiler{functions: make(map[string]VmFunction)}
 	err = scriptStatement.compile(compiler)
 	if err != nil {
 		return "", fmt.Errorf("Compilation error: %w", err)
 	}
 	ops := compiler.bytes
 	//decompile(compiler.constants, ops)
-	err = execute(ops, compiler.constants, compiler.functions)
+	err = execute(ops, compiler.constants, compiler.variables, compiler.functions)
 	if err != nil {
 		return "", fmt.Errorf("VM execution error: %w", err)
 	}

@@ -1,12 +1,5 @@
-i = 11
-
-modifyI|a b| {
-    i = i * a + b
+plus|a b| {
+    println(a+b)
 }
 
-println(i)
-modifyI(1, 2)
-println(i)
-modifyI(2, 3)
-modifyI(3, 4)
-println(i)
+plus(11, 22)

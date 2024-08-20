@@ -48,30 +48,33 @@ const (
 )
 
 type VmFunction struct {
-	params []string
-	ops    []byte
+	params              []string
+	ops                 []byte
+	variableDefinitions []string
 }
 
 type Vm struct {
-	ops       []byte
-	constants []any
-	variables []any
-	functions map[string]VmFunction
+	ops                 []byte
+	constants           []any
+	variableDefinitions []string
+	variables           []any
+	functions           map[string]VmFunction
 }
 
-func execute(ops []byte, constants []any, functions map[string]VmFunction) error {
-	globals := make([]any, len(constants)) // TODO: some memory is wasted here; not every constant needs a global
+func execute(ops []byte, constants []any, variableDefinitions []string, functions map[string]VmFunction) error {
+	variables := make([]any, len(variableDefinitions))
 	vm := &Vm{
-		ops:       ops,
-		constants: constants,
-		functions: functions,
-		variables: globals,
+		ops:                 ops,
+		constants:           constants,
+		functions:           functions,
+		variableDefinitions: variableDefinitions,
+		variables:           variables,
 	}
-	_, err := vm.execute(make(map[string]any))
+	_, err := vm.execute()
 	return err
 }
 
-func (vm *Vm) execute(arguments map[string]any) ([]any, error) {
+func (vm *Vm) execute() ([]any, error) {
 	constants, ops, functions := vm.constants, vm.ops, vm.functions
 
 	ip := 0
@@ -184,17 +187,10 @@ func (vm *Vm) execute(arguments map[string]any) ([]any, error) {
 			pushStack(constants[index])
 		case OpReadVariable:
 			index := int(readOpByte())
-			variableName, err := getConstant(index)
-			if err != nil {
-				return nil, err
-			}
-
-			value, found := arguments[variableName]
-			if !found {
-				value = vm.variables[index]
-				if value == nil {
-					return nil, fmt.Errorf("variable '%v' not defined at %d", variableName, ip)
-				}
+			value := vm.variables[index]
+			if value == nil {
+				variableName := vm.variableDefinitions[index]
+				return nil, fmt.Errorf("variable '%v' not defined at %d", variableName, ip)
 			}
 			pushStack(value)
 		case OpSetVariable:
@@ -231,11 +227,17 @@ func (vm *Vm) execute(arguments map[string]any) ([]any, error) {
 			}
 			slices.Reverse(arguments) // Arguments were pushed onto the stack in left-to-right order, so we read them right-to-left
 
+			functionVariables := make([]any, len(function.variableDefinitions))
+			for i := 0; i < len(function.params); i++ {
+				functionVariables[i] = arguments[i]
+			}
+
 			functionVm := &Vm{
-				ops:       function.ops,
-				constants: constants,
-				functions: functions,
-				variables: vm.variables,
+				ops:                 function.ops,
+				constants:           constants,
+				functions:           functions,
+				variables:           functionVariables,
+				variableDefinitions: function.variableDefinitions,
 			}
 
 			argumentMap := make(map[string]any)
@@ -243,7 +245,7 @@ func (vm *Vm) execute(arguments map[string]any) ([]any, error) {
 				argumentMap[param] = arguments[i]
 			}
 
-			_, err = functionVm.execute(argumentMap)
+			_, err = functionVm.execute()
 			if err != nil {
 				return nil, err
 			}

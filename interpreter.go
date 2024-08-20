@@ -93,17 +93,6 @@ func (s *AssignmentStatement) execute(env Env) error {
 		return err
 	}
 	identifier := s.Identifier.Lexeme
-	scopeEnv := env
-	for {
-		if _, found := scopeEnv[identifier]; found {
-			scopeEnv[identifier] = v
-		}
-		if parent, found := scopeEnv["_parent"]; found {
-			scopeEnv = parent.(Env)
-		} else {
-			break
-		}
-	}
 	env[identifier] = v
 	return nil
 }
@@ -248,7 +237,6 @@ func (e *FunctionCallExpression) evaluate(env Env) (any, error) {
 	stmt := env[getFuncEnvName(e.FunctionName)].(*FunctionDeclarationStatement)
 
 	functionEnv := make(Env)
-	functionEnv["_parent"] = env
 	var err error
 	for i, param := range stmt.Parameters {
 		functionEnv[param.Lexeme], err = e.Arguments[i].evaluate(env)
@@ -267,17 +255,9 @@ func (e *LiteralExpression) evaluate(env Env) (any, error) {
 func (e *VariableExpression) evaluate(env Env) (any, error) {
 	currentInterpreterLineCol = e.lineCol()
 	identifier := e.Token.Lexeme
-	scopeEnv := env
-	for {
-		val, found := scopeEnv[identifier]
-		if found {
-			return val, nil
-		}
-		if parent, found := scopeEnv["_parent"]; found {
-			scopeEnv = parent.(Env)
-		} else {
-			break
-		}
+	val, found := env[identifier]
+	if found {
+		return val, nil
 	}
 	return nil, fmt.Errorf("undefined variable '%s'", identifier)
 }
