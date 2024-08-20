@@ -1,33 +1,69 @@
-pub fn run(instructions: &[u8]) {
+use crate::Constant;
+
+pub fn run(instructions: &[u8], constants: &[Constant]) {
+    println!("===== running vm =====");
     println!("instructions: {:?}", instructions);
 
     let mut stack: Vec<i64> = Vec::new();
 
-    let mut i = 0;
-    while i < instructions.len() {
-        let instruction = instructions[i];
-        println!("instruction {i}: {}", instruction);
-        i += 1;
+    let mut ip = 0;
+    while ip < instructions.len() {
+        let instruction = instructions[ip];
+        println!("instruction {ip}: {}; stack: {:?}", instruction, stack);
+        ip += 1;
         match instruction {
-            OP_POP => println!("pop"),
+            OP_POP => {
+                println!("pop: {:?}", stack.pop().unwrap());
+            }
             OP_BINARY => {
-                println!("binary of {}", instructions[i]);
-                i += 1;
+                let binop = instructions[ip];
+                println!("binary of {}", binop);
+                ip += 1;
+                let right = stack.pop().unwrap();
+                let left = stack.pop().unwrap();
+
+                match binop {
+                    OP_BINARY_PLUS => stack.push(left + right),
+                    OP_BINARY_SUBTRACT => stack.push(left - right),
+                    OP_BINARY_MULTIPLY => stack.push(left * right),
+                    OP_BINARY_DIVIDE => stack.push(left / right),
+                    _ => panic!("unknown binary operation {binop} at index {}", ip - 1),
+                }
             }
             OP_INLINE_NUMBER => {
-                println!("inline number {}", instructions[i]);
-                i += 1;
+                let value = instructions[ip] as i64;
+                println!("inline number {}", value);
+                stack.push(value);
+                ip += 1;
             }
             OP_LOAD_CONSTANT => {
-                println!("load constant {}", instructions[i]);
-                i += 1;
+                let id = instructions[ip] as usize;
+                let constant = &constants[id];
+                println!("load constant {} = {:?}", id, constant);
+                match constant {
+                    Constant::Number(number) => {
+                        println!("  number: {}", number);
+                        stack.push(*number);
+                    }
+                    Constant::String(str) => {
+                        println!("  string: {}", str);
+                        todo!("cannot handle strings yet");
+                    }
+                }
+                ip += 1;
             }
             OP_PRINTLN => {
-                let arg_count = instructions[i] as usize;
+                let arg_count = instructions[ip] as usize;
                 println!("println with {} arguments", arg_count);
-                i += 1;
+                let mut values: Vec<i64> = Vec::new();
+                for _ in 0..arg_count {
+                    values.push(stack.pop().unwrap());
+                }
+                println!("println({:?})", values);
+                stack.push(0); // TODO: the println return value is technically Go's "nil" (wich Toi doesn't support)
+                ip += 1;
             }
-            _ => panic!("unknown instruction {instruction} at index {i}"),
+            _ => panic!("unknown instruction {instruction} at index {}", ip - 1),
         }
     }
 }

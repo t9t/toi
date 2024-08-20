@@ -35,7 +35,7 @@ fn main() {
     }
 
     println!("done reading");
-    vm::run(&instructions);
+    vm::run(&instructions, &constants);
 }
 
 fn assert(expected: &str, actual: &str) {
