@@ -1,13 +1,22 @@
 printAPlusB|a b| {
     println(a+b)
 }
-
 printAPlusB(11, 22)
+
 
 multiply|a b| c {
     println(a, b)
     c = a * b
     println(c)
 }
-
 println(multiply(11, 22))
+
+
+recursion|a| {
+    println("recursion", a)
+    if a > 0 {
+        recursion(a - 1)
+    }
+}
+
+recursion(3)

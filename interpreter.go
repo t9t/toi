@@ -10,6 +10,8 @@ var ErrNextIteration = errors.New("next iteration")
 
 type Env map[string]any
 
+const outerScope = "_outer"
+
 // TODO: global state is bad; also this seems rather inefficient
 type LineCol struct{ line, col int }
 
@@ -234,9 +236,19 @@ func (e *FunctionCallExpression) evaluate(env Env) (any, error) {
 		return builtin.Func(env, e.Arguments)
 	}
 
-	stmt := env[getFuncEnvName(e.FunctionName)].(*FunctionDeclarationStatement)
+	var envToFindFunc = env
+	if outer, found := env[outerScope]; found {
+		envToFindFunc = outer.(Env)
+	}
+	stmt := envToFindFunc[getFuncEnvName(e.FunctionName)].(*FunctionDeclarationStatement)
 
 	functionEnv := make(Env)
+	if outer, found := env[outerScope]; found {
+		functionEnv[outerScope] = outer
+	} else {
+		functionEnv[outerScope] = env
+	}
+
 	if stmt.OutVariable != nil {
 		functionEnv[stmt.OutVariable.Lexeme] = nil
 	}
