@@ -1,6 +1,11 @@
-use crate::Constant;
+use crate::{Constant, FunctionDefinition};
 
-pub fn run(instructions: &[u8], constants: &[Constant]) {
+pub fn run(
+    instructions: &[u8],
+    constants: &[Constant],
+    variables: &[String],
+    functions: &[FunctionDefinition],
+) {
     println!("===== running vm =====");
     println!("instructions: {:?}", instructions);
 

@@ -35,7 +35,7 @@ fn main() {
     }
 
     println!("done reading");
-    vm::run(&instructions, &constants);
+    vm::run(&instructions, &constants, &variables, &functions);
 }
 
 fn assert(expected: &str, actual: &str) {
@@ -58,7 +58,6 @@ fn parse_constants(lines: &[String]) -> (Vec<Constant>, &[String]) {
     let mut constants: Vec<Constant> = Vec::new();
     for i in 2..=count + 1 {
         let line = &lines[i];
-        println!("Reading line {line}");
         let parts: Vec<&str> = line.split(":").to_owned().collect();
         let constant = if parts[0] == "int" {
             Constant::Number(parts[1].parse().unwrap())
@@ -72,20 +71,57 @@ fn parse_constants(lines: &[String]) -> (Vec<Constant>, &[String]) {
     return (constants, &lines[2 + count..]);
 }
 
-fn parse_functions(lines: &[String]) -> (Vec<Constant>, &[String]) {
+fn parse_functions(lines: &[String]) -> (Vec<FunctionDefinition>, &[String]) {
     assert("functions", &lines[0]);
-    assert("0", &lines[1]);
 
-    // TODO: implement
-    return (vec![], &lines[2..]);
+    let count: usize = lines[1].parse().unwrap();
+    let mut functions: Vec<FunctionDefinition> = Vec::new();
+    let mut rest = &lines[2..];
+    for _ in 2..=count + 1 {
+        let (function, more) = parse_function(&rest);
+        rest = more;
+        functions.push(function);
+    }
+
+    return (functions, &rest);
 }
 
-fn parse_variables(lines: &[String]) -> (Vec<Constant>, &[String]) {
-    assert("variables", &lines[0]);
-    assert("0", &lines[1]);
+fn parse_function(lines: &[String]) -> (FunctionDefinition, &[String]) {
+    println!("parsing: {:?}", lines);
+    let name = &lines[0];
+    let has_out_var: bool = lines[1].parse().unwrap();
 
-    // TODO: implement
-    return (vec![], &lines[2..]);
+    let rest: &[String] = &lines[2..];
+    let (parameters, rest) = parse_strings("parameters", &rest);
+    let (variables, rest) = parse_variables(&rest);
+    let (instructions, rest) = parse_instructions(&rest);
+
+    return (
+        FunctionDefinition {
+            name: name.to_owned(),
+            has_out_var,
+            parameters,
+            variables,
+            instructions,
+        },
+        &rest,
+    );
+}
+
+fn parse_strings<'a>(header: &str, lines: &'a [String]) -> (Vec<String>, &'a [String]) {
+    assert(header, &lines[0]);
+
+    let count: usize = lines[1].parse().unwrap();
+    let mut strings: Vec<String> = Vec::new();
+    for i in 2..=count + 1 {
+        let line = &lines[i];
+        strings.push(line.to_owned());
+    }
+    return (strings, &lines[2 + count..]);
+}
+
+fn parse_variables(lines: &[String]) -> (Vec<String>, &[String]) {
+    return parse_strings("variables", &lines);
 }
 
 fn parse_instructions(lines: &[String]) -> (Vec<u8>, &[String]) {
@@ -105,4 +141,13 @@ fn parse_instructions(lines: &[String]) -> (Vec<u8>, &[String]) {
 enum Constant {
     Number(i64),
     String(String),
+}
+
+#[derive(Debug)]
+struct FunctionDefinition {
+    name: String,
+    has_out_var: bool,
+    parameters: Vec<String>,
+    variables: Vec<String>,
+    instructions: Vec<u8>,
 }
