@@ -16,7 +16,7 @@ fn run2(
     mut variables: Vec<i64>,
     functions: &[FunctionDefinition],
 ) -> i64 {
-    let mut stack: Vec<i64> = Vec::new();
+    let mut stack: Vec<i64> = Vec::with_capacity(20);
 
     let mut ip = 0;
     while ip < instructions.len() {
