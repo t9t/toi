@@ -62,6 +62,8 @@ type Vm struct {
 	functions           map[string]VmFunction
 }
 
+const maxStack = 50
+
 func execute(ops []byte, constants []any, variableDefinitions []string, functions map[string]VmFunction) error {
 	variables := make([]any, len(variableDefinitions))
 	vm := &Vm{
@@ -71,11 +73,12 @@ func execute(ops []byte, constants []any, variableDefinitions []string, function
 		variableDefinitions: variableDefinitions,
 		variables:           variables,
 	}
-	_, err := vm.execute()
+	stack := make([]any, maxStack)
+	err := vm.execute(stack)
 	return err
 }
 
-func (vm *Vm) execute() ([]any, error) {
+func (vm *Vm) execute(stack []any) error {
 	constants, ops, functions := vm.constants, vm.ops, vm.functions
 
 	ip := 0
@@ -96,8 +99,6 @@ func (vm *Vm) execute() ([]any, error) {
 		return getConstant(int(readOpByte()))
 	}
 
-	maxStack := 20
-	stack := make([]any, maxStack)
 	stackNext := 0
 	popStack := func() any {
 		stackNext -= 1
@@ -148,11 +149,11 @@ func (vm *Vm) execute() ([]any, error) {
 				result, err = stringConcat(left, right)
 
 			default:
-				return nil, fmt.Errorf("unsupported binary operator %v at %d", binop, ip)
+				return fmt.Errorf("unsupported binary operator %v at %d", binop, ip)
 			}
 
 			if err != nil {
-				return nil, err
+				return err
 			}
 
 			pushStack(result)
@@ -160,7 +161,7 @@ func (vm *Vm) execute() ([]any, error) {
 			v := popStack()
 			i, ok := v.(int)
 			if !ok {
-				return nil, fmt.Errorf("operand of NOT operation must be int, but was '%v' at %d", v, ip)
+				return fmt.Errorf("operand of NOT operation must be int, but was '%v' at %d", v, ip)
 			}
 			pushStack(boolToInt(!intToBool(i)))
 		case OpJumpIfFalse:
@@ -192,7 +193,7 @@ func (vm *Vm) execute() ([]any, error) {
 			value := vm.variables[index]
 			if value == nil {
 				variableName := vm.variableDefinitions[index]
-				return nil, fmt.Errorf("variable '%v' not defined at %d", variableName, ip)
+				return fmt.Errorf("variable '%v' not defined at %d", variableName, ip)
 			}
 			pushStack(value)
 		case OpSetVariable:
@@ -201,11 +202,11 @@ func (vm *Vm) execute() ([]any, error) {
 		case OpCallBuiltin:
 			functionName, err := readConstantString()
 			if err != nil {
-				return nil, err
+				return err
 			}
 			builtin, found := builtins[functionName]
 			if !found {
-				return nil, fmt.Errorf("builtin function '%v' not found at %d", functionName, ip)
+				return fmt.Errorf("builtin function '%v' not found at %d", functionName, ip)
 			}
 			arguments := make([]any, builtin.Arity)
 			for i := 0; i < builtin.Arity; i++ {
@@ -214,13 +215,13 @@ func (vm *Vm) execute() ([]any, error) {
 			slices.Reverse(arguments) // Arguments were pushed onto the stack in left-to-right order, so we read them right-to-left
 			returnValue, err := builtin.VmFunc(arguments)
 			if err != nil {
-				return nil, err
+				return err
 			}
 			pushStack(returnValue)
 		case OpCallFunction:
 			functionName, err := readConstantString()
 			if err != nil {
-				return nil, err
+				return err
 			}
 			function := functions[functionName]
 			functionVariables := make([]any, len(function.variableDefinitions))
@@ -236,9 +237,9 @@ func (vm *Vm) execute() ([]any, error) {
 				variableDefinitions: function.variableDefinitions,
 			}
 
-			_, err = functionVm.execute()
+			err = functionVm.execute(stack[stackNext:])
 			if err != nil {
-				return nil, err
+				return err
 			}
 
 			var outVar any = nil
@@ -256,7 +257,7 @@ func (vm *Vm) execute() ([]any, error) {
 			slices.Reverse(arguments) // Arguments were pushed onto the stack in left-to-right order, so we read them right-to-left
 			returnValue, err := builtinPrintlnVm(arguments)
 			if err != nil {
-				return nil, err
+				return err
 			}
 			pushStack(returnValue)
 		case OpDuplicate:
@@ -265,9 +266,9 @@ func (vm *Vm) execute() ([]any, error) {
 			pushStack(v)
 
 		default:
-			return nil, fmt.Errorf("unknown instruction %v at %d", instruction, ip)
+			return fmt.Errorf("unknown instruction %v at %d", instruction, ip)
 		}
 	}
 
-	return stack, nil
+	return nil
 }
