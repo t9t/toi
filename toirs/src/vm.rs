@@ -117,14 +117,10 @@ fn run2(
                 }
                 let function = ff.unwrap();
                 let mut function_variables: Vec<i64> = vec![0; function.variables.len()];
-                let mut arguments: Vec<i64> = vec![0; function.parameters.len()];
-                for i in 0..function.parameters.len() {
-                    arguments[i] = stack.pop().unwrap();
-                }
-                arguments.reverse(); // TODO: reverse while iterating
-                for i in 0..arguments.len() {
-                    // TODO: fill while iterating above
-                    function_variables[i] = arguments[i]
+                let mut i = function.parameters.len() as i64 - 1;
+                while i >= 0 {
+                    function_variables[i as usize] = stack.pop().unwrap();
+                    i -= 1;
                 }
 
                 let out_var = run2(
