@@ -6,36 +6,22 @@ mod vm;
 
 fn main() {
     let file_path = env::args().nth(1).expect("No file path provided");
-
     let lines = read_lines_from_file(&file_path);
-    // Print out the lines.
-
-    println!("lines: {}", lines.len());
 
     let rest: &[String] = &lines;
 
     let (constants, rest) = parse_constants(&rest);
-    println!("Constants: {:?}", constants);
-    println!("Rest: {:?}", rest);
-
     let (functions, rest) = parse_functions(&rest);
-    println!("Functions: {:?}", functions);
-    println!("Rest: {:?}", rest);
-
     let (variables, rest) = parse_variables(&rest);
-    println!("Variables: {:?}", variables);
-    println!("Rest: {:?}", rest);
-
     let (instructions, rest) = parse_instructions(&rest);
-    println!("Instructions: {:?}", instructions);
-    println!("Rest: {:?}", rest);
 
     if rest.len() != 0 {
         panic!("expected no more data, but got: {:?}", rest)
     }
 
-    println!("done reading");
+    let start = std::time::Instant::now();
     vm::run(&instructions, &constants, &variables, &functions);
+    println!("Run time: {:?}", start.elapsed());
 }
 
 fn assert(expected: &str, actual: &str) {
@@ -87,7 +73,6 @@ fn parse_functions(lines: &[String]) -> (Vec<FunctionDefinition>, &[String]) {
 }
 
 fn parse_function(lines: &[String]) -> (FunctionDefinition, &[String]) {
-    println!("parsing: {:?}", lines);
     let name = &lines[0];
     let has_out_var: bool = lines[1].parse().unwrap();
 
@@ -131,7 +116,6 @@ fn parse_instructions(lines: &[String]) -> (Vec<u8>, &[String]) {
     let mut instructions: Vec<u8> = Vec::new();
     for i in 2..=count + 1 {
         let line = &lines[i];
-        println!("Reading line {line}");
         instructions.push(line.parse().unwrap());
     }
     return (instructions, &lines[2 + count..]);
