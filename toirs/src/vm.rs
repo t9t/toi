@@ -109,18 +109,10 @@ fn run2(
                 } else {
                     panic!("epxected string");
                 };
-                let mut ff: Option<&FunctionDefinition> = Option::None;
-                for f in functions {
-                    if f.name == *function_name {
-                        ff = Option::Some(f);
-                    }
-                }
-                let function = ff.unwrap();
+                let function = functions.iter().find(|f| f.name == *function_name).unwrap();
                 let mut function_variables: Vec<i64> = vec![0; function.variables.len()];
-                let mut i = function.parameters.len() as i64 - 1;
-                while i >= 0 {
+                for i in (0..function.parameters.len()).rev() {
                     function_variables[i as usize] = stack.pop().unwrap();
-                    i -= 1;
                 }
 
                 let out_var = run2(
