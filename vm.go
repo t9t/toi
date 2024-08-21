@@ -223,15 +223,9 @@ func (vm *Vm) execute() ([]any, error) {
 				return nil, err
 			}
 			function := functions[functionName]
-			arguments := make([]any, len(function.params))
-			for i := 0; i < len(function.params); i++ {
-				arguments[i] = popStack()
-			}
-			slices.Reverse(arguments) // Arguments were pushed onto the stack in left-to-right order, so we read them right-to-left
-
 			functionVariables := make([]any, len(function.variableDefinitions))
-			for i := 0; i < len(function.params); i++ {
-				functionVariables[i] = arguments[i]
+			for i := len(function.params) - 1; i >= 0; i-- {
+				functionVariables[i] = popStack()
 			}
 
 			functionVm := &Vm{
@@ -240,11 +234,6 @@ func (vm *Vm) execute() ([]any, error) {
 				functions:           functions,
 				variables:           functionVariables,
 				variableDefinitions: function.variableDefinitions,
-			}
-
-			argumentMap := make(map[string]any)
-			for i, param := range function.params {
-				argumentMap[param] = arguments[i]
 			}
 
 			_, err = functionVm.execute()
