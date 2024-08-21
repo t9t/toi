@@ -7,8 +7,33 @@ pub fn run(
     functions: &[FunctionDefinition],
 ) {
     let variables: Vec<i64> = vec![0; variable_names.len()];
-    let mut stack: Vec<i64> = Vec::with_capacity(20);
+    let mut stack = Stack::new();
     run2(instructions, constants, variables, functions, &mut stack);
+    println!("stack max: {}", stack.max);
+}
+
+struct Stack {
+    stack: Vec<i64>,
+    max: usize,
+}
+
+impl Stack {
+    fn new() -> Stack {
+        return Stack {
+            stack: Vec::with_capacity(20),
+            max: 0,
+        };
+    }
+
+    fn push(&mut self, value: i64) {
+        self.stack.push(value);
+        self.max = std::cmp::max(self.max, self.stack.len());
+    }
+
+    fn pop(&mut self) -> i64 {
+        let value = self.stack.pop().unwrap();
+        return value;
+    }
 }
 
 fn run2(
@@ -16,7 +41,7 @@ fn run2(
     constants: &[Constant],
     mut variables: Vec<i64>,
     functions: &[FunctionDefinition],
-    mut stack: &mut Vec<i64>,
+    mut stack: &mut Stack,
 ) {
     let mut ip = 0;
     while ip < instructions.len() {
@@ -24,14 +49,14 @@ fn run2(
         ip += 1;
         match instruction {
             OP_POP => {
-                stack.pop().unwrap();
+                stack.pop();
             }
             OP_JUMP_IF_FALSE => {
                 let b1 = instructions[ip] as usize;
                 let b2 = instructions[ip + 1] as usize;
                 ip += 2;
                 let jump_amount = b1 * 256 + b2;
-                let value = stack.pop().unwrap();
+                let value = stack.pop();
                 if value == 0 {
                     ip += jump_amount
                 }
@@ -46,8 +71,8 @@ fn run2(
             OP_BINARY => {
                 let binop = instructions[ip];
                 ip += 1;
-                let right = stack.pop().unwrap();
-                let left = stack.pop().unwrap();
+                let right = stack.pop();
+                let left = stack.pop();
 
                 match binop {
                     OP_BINARY_PLUS => stack.push(left + right),
@@ -85,7 +110,7 @@ fn run2(
             }
             OP_SET_VARIABLE => {
                 let id = instructions[ip] as usize;
-                let value = stack.pop().unwrap();
+                let value = stack.pop();
                 variables[id] = value;
                 ip += 1;
             }
@@ -93,7 +118,7 @@ fn run2(
                 let arg_count = instructions[ip] as usize;
                 let mut values: Vec<i64> = vec![0; arg_count];
                 for i in 0..arg_count {
-                    values[i] = stack.pop().unwrap();
+                    values[i] = stack.pop();
                 }
                 values.reverse(); // TODO: reverse during iteration
                 println!("println({:?})", values);
@@ -112,7 +137,7 @@ fn run2(
                 let function = functions.iter().find(|f| f.name == *function_name).unwrap();
                 let mut function_variables: Vec<i64> = vec![0; function.variables.len()];
                 for i in (0..function.parameters.len()).rev() {
-                    function_variables[i as usize] = stack.pop().unwrap();
+                    function_variables[i as usize] = stack.pop();
                 }
 
                 run2(
