@@ -7,8 +7,8 @@ pub fn run(
     functions: &[FunctionDefinition],
 ) {
     let variables: Vec<i64> = vec![0; variable_names.len()];
-    let stack: Vec<i64> = Vec::with_capacity(20);
-    run2(instructions, constants, variables, functions, stack);
+    let mut stack: Vec<i64> = Vec::with_capacity(20);
+    run2(instructions, constants, variables, functions, &mut stack);
 }
 
 fn run2(
@@ -16,8 +16,8 @@ fn run2(
     constants: &[Constant],
     mut variables: Vec<i64>,
     functions: &[FunctionDefinition],
-    mut stack: Vec<i64>,
-) -> Vec<i64> {
+    mut stack: &mut Vec<i64>,
+) {
     let mut ip = 0;
     while ip < instructions.len() {
         let instruction = instructions[ip];
@@ -115,12 +115,12 @@ fn run2(
                     function_variables[i as usize] = stack.pop().unwrap();
                 }
 
-                stack = run2(
+                run2(
                     &function.instructions,
                     constants,
                     function_variables,
                     functions,
-                    stack,
+                    &mut stack,
                 );
             }
             _ => panic!("unknown instruction {instruction} at index {}", ip - 1),
