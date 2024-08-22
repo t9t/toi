@@ -16,7 +16,7 @@ while run {
 
 b = 1
 i = 20
-while b & i < 23 {
+while b and i < 23 {
     println(i)
     i = i + 1
 }
@@ -68,7 +68,7 @@ while 1 {
 i = 0
 while i < 5 {
     i = i + 1
-    if i == 2 | i == 4 {
+    if i == 2 or i == 4 {
         next iteration
     }
     println(i)

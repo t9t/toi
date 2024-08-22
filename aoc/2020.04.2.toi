@@ -18,7 +18,7 @@ while i <= lineCount {
         if len(passport) == 8 {
             validCount = validCount + 1
         }
-        if len(passport) == 7 & isSet(passport, "cid") == 0 {
+        if len(passport) == 7 and isSet(passport, "cid") == 0 {
             validCount = validCount + 1
         }
         passport = map()
@@ -30,21 +30,21 @@ while i <= lineCount {
 
             if key == "byr" {
                 byr = int(value)
-                if byr < 1920 | byr > 2002 {
+                if byr < 1920 or byr > 2002 {
                     exit loop
                 }
             }
 
             if key == "iyr" {
                 iyr = int(value)
-                if iyr < 2010 | iyr > 2020 {
+                if iyr < 2010 or iyr > 2020 {
                     exit loop
                 }
             }
 
             if key == "eyr" {
                 eyr = int(value)
-                if eyr < 2020 | eyr > 2030 {
+                if eyr < 2020 or eyr > 2030 {
                     exit loop
                 }
             }
@@ -53,42 +53,42 @@ while i <= lineCount {
             chl = len(ch)
 
             if key == "hgt" {
-                if [ch](chl-2) == "c" & [ch](chl-1) == "m" {
+                if [ch](chl-2) == "c" and [ch](chl-1) == "m" {
                     cm = int([split(value, "cm")]0)
-                    if cm < 150 | cm > 193 {
+                    if cm < 150 or cm > 193 {
                         exit loop
                     }
                 }
-                if [ch](chl-2) == "i" & [ch](chl-1) == "n" {
+                if [ch](chl-2) == "i" and [ch](chl-1) == "n" {
                     cm = int([split(value, "in")]0)
-                    if cm < 59 | cm > 76 {
+                    if cm < 59 or cm > 76 {
                         exit loop
                     }
                 }
 
-                if [ch](chl-2) <> "c" & [ch](chl-1) <> "m" {
-                    if [ch](chl-2) <> "i" & [ch](chl-1) <> "n" {
+                if [ch](chl-2) <> "c" and [ch](chl-1) <> "m" {
+                    if [ch](chl-2) <> "i" and [ch](chl-1) <> "n" {
                         exit loop
                     }
                 }
             }
 
             if key == "hcl" {
-                if chl <> 7 | [ch]0 <> "#" {
+                if chl <> 7 or [ch]0 <> "#" {
                     exit loop
                 }
                 for c = [ch]ci {
-                    if c <> "0" & c <> "1" & c <> "2" & c <> "3" & c <> "4" & //
-                        c <> "5" & c <> "6" & c <> "7" & c <> "8" & c <> "9" & //
-                        c <> "a" & c <> "b" & c <> "c" & c <> "d" & c <> "e" & //
+                    if c <> "0" and c <> "1" and c <> "2" and c <> "3" and c <> "4" and //
+                        c <> "5" and c <> "6" and c <> "7" and c <> "8" and c <> "9" and //
+                        c <> "a" and c <> "b" and c <> "c" and c <> "d" and c <> "e" and //
                         c <> "f" {
                         exit loop
                     }
                 }
             }
 
-            if key == "ecl" & value <> "amb" & value <> "blu" & value <> "brn" & //
-                value <> "gry" & value <> "grn" & value <> "hzl" & value <> "oth" {
+            if key == "ecl" and value <> "amb" and value <> "blu" and value <> "brn" and //
+                value <> "gry" and value <> "grn" and value <> "hzl" and value <> "oth" {
                 exit loop
             }
 
@@ -97,8 +97,8 @@ while i <= lineCount {
                     exit loop
                 }
                 for c = [ch]ci {
-                    if c <> "0" & c <> "1" & c <> "2" & c <> "3" & c <> "4" & //
-                        c <> "5" & c <> "6" & c <> "7" & c <> "8" & c <> "9" {
+                    if c <> "0" and c <> "1" and c <> "2" and c <> "3" and c <> "4" and //
+                        c <> "5" and c <> "6" and c <> "7" and c <> "8" and c <> "9" {
                         exit loop
                     }
                 }

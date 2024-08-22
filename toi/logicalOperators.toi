@@ -1,21 +1,21 @@
-println(42 & 1337) // prints right operand
-println(42 & 0) // prints right operand
-println(0 & 42) // prints left operand
-println(0 & 0) // prints left operand
+println(42 and 1337) // prints right operand
+println(42 and 0) // prints right operand
+println(0 and 42) // prints left operand
+println(0 and 0) // prints left operand
 
 a = 11
 b = 22
-println(a & b)
+println(a and b)
 
-println(0 & a & b)
-
-arr = array()
-println(0 & get(arr, 3)) // should not give an index out of range because of short-circuit
-
-println(42 | 1337) // prints left operand
-println(42 | 0) // prints left operand
-println(0 | 42) // prints right operand
-println(0 | 0) // prints right operand
+println(0 and a and b)
 
 arr = array()
-println(1 | get(arr, 3)) // should not give an index out of range because of short-circuit
+println(0 and get(arr, 3)) // should not give an index out of range because of short-circuit
+
+println(42 or 1337) // prints left operand
+println(42 or 0) // prints left operand
+println(0 or 42) // prints right operand
+println(0 or 0) // prints right operand
+
+arr = array()
+println(1 or get(arr, 3)) // should not give an index out of range because of short-circuit

@@ -30,6 +30,9 @@ const (
 	TokenAmpersand TokenType = "Ampersand"
 	TokenPipe      TokenType = "Pipe"
 
+	TokenOr  TokenType = "LogicalOr"
+	TokenAnd TokenType = "LogicalAnd"
+
 	TokenEquals TokenType = "Equals"
 
 	TokenParenOpen    TokenType = "ParenOpen"
@@ -95,6 +98,8 @@ var keywordTokens = map[string]TokenType{
 	"loop":      TokenLoop,
 	"next":      TokenNext,
 	"iteration": TokenIteration,
+	"or":        TokenOr,
+	"and":       TokenAnd,
 }
 
 func tokenize(input string) (tokens []Token, errors []error) {

@@ -277,9 +277,9 @@ func (s *ExpressionStatement) compile(compiler *Compiler) error {
 // Expressions
 
 func (e *BinaryExpression) compile(compiler *Compiler) error {
-	if e.Operator.Type == TokenPipe {
+	if e.Operator.Type == TokenOr {
 		return e.compileOrOrAnd(compiler, true)
-	} else if e.Operator.Type == TokenAmpersand {
+	} else if e.Operator.Type == TokenAnd {
 		return e.compileOrOrAnd(compiler, false)
 	}
 

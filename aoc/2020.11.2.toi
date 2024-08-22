@@ -18,7 +18,7 @@ while 1 {
             while dr <= 1 {
                 dc = 0 - 1
                 while dc <= 1 {
-                    if dr == 0 & dc == 0 {
+                    if dr == 0 and dc == 0 {
                         dc = dc + 1
                         next iteration
                     }
@@ -28,7 +28,7 @@ while 1 {
                         ddr = r + (d*dr)
                         ddc = c + (d*dc)
 
-                        if ddr < 0 | ddc < 0 | ddr == rowsLen | ddc == rowLen {
+                        if ddr < 0 or ddc < 0 or ddr == rowsLen or ddc == rowLen {
                             // Reached the edge
                             exit loop
                         }
@@ -52,11 +52,11 @@ while 1 {
             }
 
             newChar = char
-            if char == "L" & adjacentOccupied == 0 {
+            if char == "L" and adjacentOccupied == 0 {
                 newChar = "#"
                 changed = 1
             }
-            if char == "#" & adjacentOccupied >= 5 {
+            if char == "#" and adjacentOccupied >= 5 {
                 newChar = "L"
                 changed = 1
             }

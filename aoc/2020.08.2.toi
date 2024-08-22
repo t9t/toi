@@ -5,7 +5,7 @@ exitPosition = len(lines)
 replace = 0
 while replace < len(lines) {
     parts = split([lines]replace, " ")
-    if [parts]0 <> "jmp" & [parts]0 <> "nop" {
+    if [parts]0 <> "jmp" and [parts]0 <> "nop" {
         replace = replace + 1
         next iteration
     }

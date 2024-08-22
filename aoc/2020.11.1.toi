@@ -16,14 +16,14 @@ while 1 {
             adjacentOccupied = 0
             dr = r - 1
             while dr <= r + 1 {
-                if dr < 0 | dr == rowsLen {
+                if dr < 0 or dr == rowsLen {
                     dr = dr + 1
                     next iteration
                 }
                 drow = [rows]dr
                 dc = c - 1
                 while dc <= c + 1 {
-                    if dc < 0 | dc == rowLen | (dr == r & dc == c) {
+                    if dc < 0 or dc == rowLen or (dr == r and dc == c) {
                         dc = dc + 1
                         next iteration
                     }
@@ -38,11 +38,11 @@ while 1 {
             }
 
             newChar = char
-            if char == "L" & adjacentOccupied == 0 {
+            if char == "L" and adjacentOccupied == 0 {
                 newChar = "#"
                 changed = 1
             }
-            if char == "#" & adjacentOccupied >= 4 {
+            if char == "#" and adjacentOccupied >= 4 {
                 newChar = "L"
                 changed = 1
             }

@@ -10,7 +10,7 @@ while a < 3 {
         next iteration
     }
     for v = [array]i {
-        if a == 2 & v == 1337 {
+        if a == 2 and v == 1337 {
             exit loop
         }
         println(a, i, v)

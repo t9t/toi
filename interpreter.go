@@ -109,9 +109,9 @@ func (s *ExpressionStatement) execute(env Env) error {
 
 func (e *BinaryExpression) evaluate(env Env) (any, error) {
 	currentInterpreterLineCol = e.lineCol()
-	if e.Operator.Type == TokenPipe {
+	if e.Operator.Type == TokenOr {
 		return e.evaluateOrOrAnd(env, isWeirdlyTrue)
-	} else if e.Operator.Type == TokenAmpersand {
+	} else if e.Operator.Type == TokenAnd {
 		return e.evaluateOrOrAnd(env, func(v any) bool { return !isWeirdlyTrue(v) })
 	}
 

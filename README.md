@@ -58,7 +58,7 @@ branch to statements when the if condition doesn't match, the `otherwise`
 keyword is used.
 All the usual logical operators are supported, like `<`, `>`, `>=`, `<=`, `==`,
 and `<>` for "not equals".
-Logical expressions can be composed by using `&` for logical AND and `|` for
+Logical expressions can be composed by using `and` for logical AND and `or` for
 logical OR.
 
 Booleans do not exist (yet). The number zero (`0`) is false, all other numbers
@@ -71,7 +71,7 @@ if i == 42 { // equivalent to: "if i" because 42 is not false (0)
     println("is not 42")
 }
 
-if i < 42 & greeting == "world" | j <> 13 {
+if i < 42 and greeting == "world" or j <> 13 {
     // code
 }
 ```

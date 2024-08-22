@@ -38,7 +38,7 @@ while i < 1023 {
     this = isSet(ids, string(i))
     plus1 = isSet(ids, string(i + 1))
 
-    if min1 <> 0 & this == 0 & plus1 <> 0 {
+    if min1 <> 0 and this == 0 and plus1 <> 0 {
         println(i)
     }
 

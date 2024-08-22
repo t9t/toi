@@ -494,11 +494,11 @@ func (p *Parser) parseContainerAccess() (Expression, error) {
 }
 
 func (p *Parser) parseLogicalOr() (Expression, error) {
-	return p.parseBinary(TokenPipe, p.parseLogicalAnd)
+	return p.parseBinary(TokenOr, p.parseLogicalAnd)
 }
 
 func (p *Parser) parseLogicalAnd() (Expression, error) {
-	return p.parseBinary(TokenAmpersand, p.parseEqualEqual)
+	return p.parseBinary(TokenAnd, p.parseEqualEqual)
 }
 
 func (p *Parser) parseEqualEqual() (Expression, error) {

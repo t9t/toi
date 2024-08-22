@@ -28,7 +28,7 @@ var builtins = map[string]Builtin{
 	"int":    {1, builtinInt, builtinIntVm},
 	"string": {1, builtinString, builtinStringVm},
 
-	// "Arrays" & "Maps"
+	// "Arrays" and "Maps"
 	"array": {0, builtinArray, builtinArrayVm},
 	"map":   {0, builtinMap, builtinMapVm},
 	"get":   {2, builtinGet, builtinGetVm},

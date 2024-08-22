@@ -15,11 +15,11 @@ for line = [inputLines()]i {
     char1 = [passwordChars](pos1 - 1)
     char2 = [passwordChars](pos2 - 1)
 
-    if char1 == policyLetter & char2 <> policyLetter {
+    if char1 == policyLetter and char2 <> policyLetter {
         validCount = validCount + 1
     }
 
-    if char1 <> policyLetter & char2 == policyLetter {
+    if char1 <> policyLetter and char2 == policyLetter {
         validCount = validCount + 1
     }
 }

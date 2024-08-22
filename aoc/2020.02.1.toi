@@ -17,7 +17,7 @@ for line = [inputLines()]i {
         }
     }
 
-    if letterCount >= min & letterCount <= max {
+    if letterCount >= min and letterCount <= max {
         validCount = validCount + 1
     }
 }
