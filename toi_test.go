@@ -39,7 +39,7 @@ func TestToi(t *testing.T) {
 			}
 			expected := string(expectedBytes)
 
-			stdout, err := runScriptFile(baseFilename+".toi", testCase.Stdin)
+			stdout, err := runScriptFile(baseFilename+".toi", "", testCase.Stdin)
 			if err != nil {
 				t.Errorf("expected no error but got: %v", err)
 				t.Fail()

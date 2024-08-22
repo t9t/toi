@@ -25,7 +25,7 @@ func TestAoc(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			stdout, err := runScriptFile(fmt.Sprintf("aoc/2020.%02d.%d.toi", day, part), string(inputData))
+			stdout, err := runScriptFile(fmt.Sprintf("aoc/2020.%02d.%d.toi", day, part), "", string(inputData))
 			if err != nil {
 				t.Errorf("expected no error but got: %v", err)
 				t.Fail()
