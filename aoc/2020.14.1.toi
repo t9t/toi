@@ -14,8 +14,6 @@ for line = [lines]l {
             if c == "X" {
                 andMask = andMask + power
             }
-            if c == "0" {
-            }
             if c == "1" {
                 andMask = andMask + power
                 orMask = orMask + power
@@ -27,7 +25,6 @@ for line = [lines]l {
         next iteration
     }
 
-    // "mem[nnn]"
     address = [split([split([parts]0, "[")]1, "]")]0
     value = int([parts]1)
 

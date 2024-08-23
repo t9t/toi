@@ -306,6 +306,8 @@ func (e *BinaryExpression) compile(compiler *Compiler) error {
 		binaryOp = OpBinaryBinaryAnd
 	case TokenBOr:
 		binaryOp = OpBinaryBinaryOr
+	case TokenXOr:
+		binaryOp = OpBinaryBinaryXor
 
 	case TokenUnderscore:
 		binaryOp = OpBinaryConcat

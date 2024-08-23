@@ -33,6 +33,7 @@ const (
 	TokenOr   TokenType = "Or"
 	TokenAnd  TokenType = "And"
 	TokenBOr  TokenType = "BOr"
+	TokenXOr  TokenType = "XOr"
 	TokenBAnd TokenType = "BAnd"
 
 	TokenEquals TokenType = "Equals"
@@ -103,6 +104,7 @@ var keywordTokens = map[string]TokenType{
 	"or":        TokenOr,
 	"and":       TokenAnd,
 	"bor":       TokenBOr,
+	"xor":       TokenXOr,
 	"band":      TokenBAnd,
 }
 

@@ -502,7 +502,11 @@ func (p *Parser) parseLogicalAnd() (Expression, error) {
 }
 
 func (p *Parser) parseBinaryOr() (Expression, error) {
-	return p.parseBinary(TokenBOr, p.parseBinaryAnd)
+	return p.parseBinary(TokenBOr, p.parseBinaryXor)
+}
+
+func (p *Parser) parseBinaryXor() (Expression, error) {
+	return p.parseBinary(TokenXOr, p.parseBinaryAnd)
 }
 
 func (p *Parser) parseBinaryAnd() (Expression, error) {
