@@ -1,0 +1,42 @@
+lines = inputLines()
+
+memory = map()
+for line = [lines]l {
+    parts = split(line, " = ")
+    if [parts]0 == "mask" {
+        mask = chars([parts]1)
+        power = 1
+        andMask = 0
+        orMask = 0
+        i = len(mask)-1
+        while i >= 0 {
+            c = [mask]i
+            if c == "X" {
+                andMask = andMask + power
+            }
+            if c == "0" {
+            }
+            if c == "1" {
+                andMask = andMask + power
+                orMask = orMask + power
+            }
+            i = i - 1
+            power = power * 2
+        }
+
+        next iteration
+    }
+
+    // "mem[nnn]"
+    address = [split([split([parts]0, "[")]1, "]")]0
+    value = int([parts]1)
+
+    [memory]address = (value band andMask) bor orMask
+}
+
+sum = 0
+for value = [memory]address {
+    sum = sum + value
+}
+
+println(sum)
