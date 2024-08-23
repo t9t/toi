@@ -1,0 +1,15 @@
+println(42 band 1337)
+println(42 band 0)
+println(0 band 42)
+println(0 band 0)
+
+a = 11
+b = 22
+println(a band b)
+println(0 band a band b)
+
+
+println(42 bor 1337)
+println(42 bor 0)
+println(0 bor 42)
+println(0 bor 0)

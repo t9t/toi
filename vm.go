@@ -44,6 +44,9 @@ const (
 	OpBinaryGreaterThan
 	OpBinaryLessThan
 
+	OpBinaryBinaryOr
+	OpBinaryBinaryAnd
+
 	OpBinaryConcat
 )
 
@@ -137,6 +140,10 @@ func (vm *Vm) execute(stack []any) error {
 				result, err = intBinaryOp(left, right, "/", func(l int, r int) int { return l / r })
 			case OpBinaryRemainder:
 				result, err = intBinaryOp(left, right, "%", func(l int, r int) int { return l % r })
+			case OpBinaryBinaryAnd:
+				result, err = intBinaryOp(left, right, "%", func(l int, r int) int { return l & r })
+			case OpBinaryBinaryOr:
+				result, err = intBinaryOp(left, right, "%", func(l int, r int) int { return l | r })
 
 			case OpBinaryEqual:
 				result = boolToInt(left == right)

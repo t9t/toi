@@ -302,6 +302,10 @@ func (e *BinaryExpression) compile(compiler *Compiler) error {
 		binaryOp = OpBinaryDivide
 	case TokenPercent:
 		binaryOp = OpBinaryRemainder
+	case TokenBAnd:
+		binaryOp = OpBinaryBinaryAnd
+	case TokenBOr:
+		binaryOp = OpBinaryBinaryOr
 
 	case TokenUnderscore:
 		binaryOp = OpBinaryConcat

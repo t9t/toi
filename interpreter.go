@@ -139,6 +139,10 @@ func (e *BinaryExpression) evaluate(env Env) (any, error) {
 		return intBinaryOp(left, right, operator, func(l int, r int) int { return l / r })
 	case TokenPercent:
 		return intBinaryOp(left, right, operator, func(l int, r int) int { return l % r })
+	case TokenBAnd:
+		return intBinaryOp(left, right, operator, func(l int, r int) int { return l & r })
+	case TokenBOr:
+		return intBinaryOp(left, right, operator, func(l int, r int) int { return l | r })
 
 	case TokenUnderscore:
 		return stringConcat(left, right)
