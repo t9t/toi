@@ -1,25 +1,25 @@
-startingNumbers = array()
 whenSpoken = map()
 lastSpoken = 0
+turn = 1
 for number = [split([inputLines()]0, ",")]i {
     if i > 0 {
         [whenSpoken](string(lastSpoken)) = i
     }
     lastSpoken = int(number)
-    push(startingNumbers, lastSpoken)
+    turn = turn + 1
 }
 
-turn = len(startingNumbers)+1
 while turn <= 30000000 {
-    wasLastSpokenSpokenBefore = isSet(whenSpoken, string(lastSpoken))
+    s = string(lastSpoken)
+    wasLastSpokenSpokenBefore = isSet(whenSpoken, s)
     if wasLastSpokenSpokenBefore {
-        when = [whenSpoken](string(lastSpoken))
+        when = [whenSpoken]s
         diff = turn - 1 - when
         speak = diff
     } otherwise {
         speak = 0
     }
-    [whenSpoken](string(lastSpoken)) = turn-1
+    [whenSpoken]s = turn - 1
     lastSpoken = speak
     turn = turn + 1
 }
