@@ -8,6 +8,10 @@ import (
 )
 
 func TestAoc(t *testing.T) {
+	if os.Getenv("TEST_AOC") == "" {
+		t.Skip("Not running AOC tests")
+	}
+
 	outputsData, err := os.ReadFile("aoc/outputs.txt")
 	if err != nil {
 		t.Fatal(err)
