@@ -1,0 +1,134 @@
+
+parseRulePart|s| rule {
+    parts = split(s, "-")
+    rule = array()
+    push(rule, int([parts]0))
+    push(rule, int([parts]1))
+}
+
+parseTicket|s| ticket {
+    ticket = array()
+    for f = [split(s, ",")]i {
+        push(ticket, int(f))
+    }
+}
+
+ruleMatches|rule num| matches {
+    matches = 0
+    for r = [rule]i {
+        if num >= [r]0 and num <= [r]1 {
+            matches = 1
+            exit loop
+        }
+    }
+}
+
+step = 0
+nearbyTickets = array()
+rules = map()
+matches = map()
+
+for line = [inputLines()]i {
+    if line == "" {
+        step = step + 1
+        next iteration
+    }
+    if step == 0 { // Rules
+        parts = split(line, ": ")
+        name = [parts]0
+        parts = split([parts]1, " or ")
+
+        rule = array()
+        push(rule, parseRulePart([parts]0))
+        push(rule, parseRulePart([parts]1))
+        [rules]name = rule
+        [matches]name = map()
+
+        next iteration
+    }
+
+    if step == 1 { // My ticket
+        if line == "your ticket:" {
+            next iteration
+        }
+        myTicket = parseTicket(line)
+    }
+
+    if step == 2 { // Nearby tickets
+        if line == "nearby tickets:" {
+            next iteration
+        }
+
+        ticket = parseTicket(line)
+        allNumbersMatchAnyRule = 1
+        for num = [ticket]i {
+            matchesAnyRule = 0
+            for rule = [rules]r {
+                match = ruleMatches(rule, num)
+                if match {
+                    matchesAnyRule = 1
+                    exit loop
+                }
+            }
+
+            if matchesAnyRule == 0 {
+                allNumbersMatchAnyRule = 0
+                exit loop
+            }
+        }
+        if allNumbersMatchAnyRule {
+            push(nearbyTickets, parseTicket(line))
+        }
+    }
+}
+
+fieldIndex = 0
+while fieldIndex < len(myTicket) {
+    for rule = [rules]ruleName {
+        allMatches = 1
+        for ticket = [nearbyTickets]i {
+            num = [ticket]fieldIndex
+            if ruleMatches(rule, num) == 0 {
+                allMatches = 0
+                exit loop
+            }
+        }
+        if allMatches {
+            [[matches]ruleName](string(fieldIndex)) = 1
+        }
+    }
+    fieldIndex = fieldIndex + 1
+}
+
+finalMatches = map()
+i = 0
+while len(matches) > 0 {
+    i = i + 1
+    for match = [matches]ruleName {
+        if len(match) == 1 {
+            matchName = 0
+            for value = [match]key {
+                matchName = key
+            }
+
+            [finalMatches]ruleName = matchName
+            for match = [matches]r {
+                unset(match, matchName)
+            }
+            unset(matches, ruleName)
+
+            exit loop
+        }
+    }
+}
+
+product = 1
+for fieldIndex = [finalMatches]ruleName {
+    // TODO: there is no guarantuee that it starts with "departure ", it could
+    // be just "departure"; but we don't have a startsWith function.
+    if [split(ruleName, " ")]0 == "departure" {
+        product = product * [myTicket]int(fieldIndex)
+    }
+}
+
+println(product)
