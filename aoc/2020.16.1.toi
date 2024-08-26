@@ -1,0 +1,65 @@
+rules = array()
+
+// TODO: somehow returns a string...?
+parseRulePart|s| rule {
+    parts = split(s, "-")
+    rule = array()
+    push(rule, int([parts]0))
+    push(rule, int([parts]1))
+}
+
+sum = 0
+step = 0
+for line = [inputLines()]i {
+    if line == "" {
+        step = step + 1
+        next iteration
+    }
+    if step == 0 { // Rules
+        parts = split([split(line, ": ")]1, " or ")
+
+        rparts = split([parts]0, "-")
+        rule = array()
+        push(rule, int([rparts]0))
+        push(rule, int([rparts]1))
+        push(rules, rule)
+
+        rparts = split([parts]1, "-")
+        rule = array()
+        push(rule, int([rparts]0))
+        push(rule, int([rparts]1))
+        push(rules, rule)
+
+        next iteration
+    }
+
+    if step == 1 { // My ticket
+        next iteration
+    }
+
+    if step == 2 { // Nearby tickets
+        if line == "nearby tickets:" {
+            next iteration
+        }
+
+        parts = split(line, ",")
+        for part = [parts]p {
+            num = int(part)
+            valid = 0
+            for rule = [rules]r {
+                min = [rule]0
+                max = [rule]1
+
+                if num >= min and num <= max {
+                    valid = 1
+                    exit loop
+                }
+            }
+            if valid == 0 {
+                sum = sum + num
+            }
+        }
+    }
+}
+
+println(sum)
