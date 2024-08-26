@@ -1,6 +1,5 @@
 rules = array()
 
-// TODO: somehow returns a string...?
 parseRulePart|s| rule {
     parts = split(s, "-")
     rule = array()
@@ -18,17 +17,8 @@ for line = [inputLines()]i {
     if step == 0 { // Rules
         parts = split([split(line, ": ")]1, " or ")
 
-        rparts = split([parts]0, "-")
-        rule = array()
-        push(rule, int([rparts]0))
-        push(rule, int([rparts]1))
-        push(rules, rule)
-
-        rparts = split([parts]1, "-")
-        rule = array()
-        push(rule, int([rparts]0))
-        push(rule, int([rparts]1))
-        push(rules, rule)
+        push(rules, parseRulePart([parts]0))
+        push(rules, parseRulePart([parts]1))
 
         next iteration
     }

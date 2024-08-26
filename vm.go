@@ -254,7 +254,10 @@ func (vm *Vm) execute(stack []any) error {
 
 			var outVar any = nil
 			if function.hasOutVar {
-				outVar = functionVariables[len(functionVariables)-1]
+				// E.g. if a function has 2 input parameters, and 1 output parameter, then the variable spot for the
+				// output parameter is right after the input parameters, i.e. in the 3rd spot, or index 2, which is the
+				// length of the params slice
+				outVar = functionVariables[len(function.params)]
 			}
 
 			pushStack(outVar)

@@ -6,8 +6,9 @@ printAPlusB(11, 22)
 
 multiply|a b| c {
     println(a, b)
-    c = a * b
-    println(c)
+    mult = a * b
+    println(mult)
+    c = mult * 2
 }
 println(multiply(11, 22))
 
