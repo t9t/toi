@@ -1,0 +1,89 @@
+toString|x y z| str {
+    str = string(x) _ "," _ string(y) _ "," _ string(z)
+}
+
+deltas = array()
+z = 0-1
+while z <= 1 {
+    y = 0-1
+    while y <= 1 {
+        x = 0-1
+        while x <= 1 {
+            if z <> 0 or y <> 0 or x <> 0 {
+                push(deltas, toString(x, y, z))
+            }
+            x = x + 1
+        }
+        y = y + 1
+    }
+    z = z + 1
+}
+
+grid = map()
+
+for line = [inputLines()]y {
+    for char = [chars(line)]x {
+        z = 0
+        if char == "#" {
+            [grid](toString(x, y, z)) = 1
+        }
+    }
+}
+
+cycleInto|deltas grid coords newGrid| {
+    parts = split(coords, ",")
+    x = int([parts]0)
+    y = int([parts]1)
+    z = int([parts]2)
+
+    activeNeighbors = 0
+    for delta = [deltas]d {
+        parts = split(delta, ",")
+        dx = int([parts]0)
+        dy = int([parts]1)
+        dz = int([parts]2)
+
+        neighborKey = toString(x+dx, y+dy, z+dz)
+        if isSet(grid, neighborKey) {
+            activeNeighbors = activeNeighbors + 1
+        }
+    }
+
+    active = isSet(grid, coords)
+    if active {
+        if activeNeighbors == 2 or activeNeighbors == 3 {
+            [newGrid]coords = 1
+        }
+    } otherwise {
+        if activeNeighbors == 3 {
+            [newGrid]coords = 1
+        }
+    }
+
+}
+
+i = 1
+while i <= 6 {
+    newGrid = map()
+    for one = [grid]coords {
+        parts = split(coords, ",")
+        x = int([parts]0)
+        y = int([parts]1)
+        z = int([parts]2)
+
+        cycleInto(deltas, grid, coords, newGrid)
+
+        for delta = [deltas]d {
+            parts = split(delta, ",")
+            dx = int([parts]0)
+            dy = int([parts]1)
+            dz = int([parts]2)
+
+            cycleInto(deltas, grid, toString(x+dx, y+dy, z+dz), newGrid)
+        }
+    }
+    i = i + 1
+    grid = newGrid
+}
+
+println(len(grid))
