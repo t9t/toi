@@ -16,11 +16,12 @@ var funcs = map[string]AocFunc{
 	"7-2":  day07part2,
 	"10-2": day10part2,
 	"11-1": day11part1,
+	"17-1": day17part1,
 }
 
 func main() {
 	if len(os.Args) != 3 && len(os.Args) != 4 {
-		panic("invalid arguments; need day + part and optionall input file")
+		panic("invalid arguments; need day + part and optional input file")
 	}
 
 	day, part := os.Args[1], os.Args[2]
