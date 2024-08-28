@@ -12,6 +12,7 @@ func TestToi(t *testing.T) {
 	}{
 		{"arrays", ""},
 		{"assignment", ""},
+		{"binaryOperators", ""},
 		{"builtinFuncs", "10\n20"},
 		{"comment", ""},
 		{"conditionals", ""},
