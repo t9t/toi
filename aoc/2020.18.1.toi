@@ -1,0 +1,47 @@
+
+evaluate|chars i| out {
+    num = 0
+    op = ""
+    while i < len(chars) {
+        c = [chars]i
+        i = i + 1
+
+        if c == ")" {
+            exit loop
+        }
+        if c == " " {
+            next iteration
+        }
+        if c == "+" or c == "*" {
+            op = c
+            next iteration
+        }
+        if c == "(" {
+            other = evaluate(chars, i)
+            n = [other]0
+            i = [other]1
+        } otherwise {
+            n = int(c)
+        }
+        if op == "" {
+            num = n
+        }
+        if op == "+" {
+            num = num + n
+        }
+        if op == "*" {
+            num = num * n
+        }
+    }
+
+    out = array()
+    push(out, num)
+    push(out, i)
+}
+
+sum = 0
+for line = [inputLines()]l {
+    sum = sum + [evaluate(chars(line), 0)]0
+}
+
+println(sum)
