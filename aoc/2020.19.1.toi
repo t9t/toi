@@ -1,5 +1,12 @@
-rules = array()
+rules = map()
 messages = array()
+
+parseRule|s| rule {
+    rule = array()
+    for id = [split(s, " ")]i {
+        push(rule, id)
+    }
+}
 
 parsingRules = 1
 for line = [inputLines()]l {
@@ -10,15 +17,90 @@ for line = [inputLines()]l {
         }
 
         parts = split(line, ": ")
-        ruleNumber = int([parts]0)
+        ruleId = [parts]0
+
+        chars = chars([parts]1)
+        if len(chars) == 3 and [chars]0 == "${"}" {
+            // e.g. "a"
+            rule = array()
+            push(rule, [chars]1)
+            [rules]ruleId = rule
+            next iteration
+        }
 
         parts = split([parts]1, " | ")
-        leftParts = split([parts]0, " ")
-        if [parts]1 == "" {
-            rightParts = array()
+        left = parseRule([parts]0)
+        if len(parts) == 1 {
+            right = array()
         } otherwise {
-            rightParts = split([parts]1, " ")
+            right = parseRule([parts]1)
         }
-    } otherwise {
+        rule = array()
+        push(rule, left)
+        push(rule, right)
+        [rules]ruleId = rule
+    } otherwise { // not parsing rules, parsing messages
+        push(messages, chars(line))
     }
 }
+
+sequenceMatches|rules message i sequence nextRulesToMatch| matches {
+    nextRules = array()
+    for ruleId = [sequence]s {
+        push(nextRules, ruleId)
+    }
+
+    for ruleId = [nextRulesToMatch]r {
+        push(nextRules, ruleId)
+    }
+    matches = matches(rules, message, i, nextRules)
+}
+
+ruleMatches|rules message i ruleId nextRulesToMatch| matches {
+    rule = [rules]ruleId
+    // Rule with IDs always has length 2; rule with a letter always has length 1
+    if len(rule) == 1 { // e.g. "a"
+        if i < len(message) and [message]i == [rule]0 {
+            matches = matches(rules, message, i+1, nextRulesToMatch)
+        } otherwise {
+            matches = 0
+        }
+    } otherwise { // e.g. "4 1 5" or "2 3 | 3 2"
+        for matchRule = [rule]r {
+            matches = sequenceMatches(rules, message, i, matchRule, nextRulesToMatch)
+            if matches {
+                exit loop
+            }
+        }
+    }
+}
+
+matches|rules message i nextRulesToMatch| matches {
+    if i == len(message) {
+        matches = len(nextRulesToMatch) == 0
+    } otherwise {
+        if len(nextRulesToMatch) == 0 {
+            matches = 0
+        } otherwise {
+            firstRule = [nextRulesToMatch]0
+            otherRules = array()
+            for rule = [nextRulesToMatch]r {
+                if r <> 0 {
+                    push(otherRules, rule)
+                }
+            }
+            matches = ruleMatches(rules, message, i, firstRule, otherRules)
+        }
+    }
+}
+
+matching = 0
+for message = [messages]m {
+    nextRulesToMatch = array()
+    push(nextRulesToMatch, "0")
+    if matches(rules, message, 0, nextRulesToMatch) {
+        matching = matching + 1
+    }
+}
+
+println(matching)

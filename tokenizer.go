@@ -237,7 +237,7 @@ func tokenizeString(runes []rune, pos, line, col int) (Token, error) {
 			break
 		}
 		if i < len(runes)-4 && runes[i] == '$' && runes[i+1] == '{' && runes[i+2] == '"' && runes[i+3] == '}' {
-			i += 4
+			i += 3
 		}
 		i += 1
 	}
