@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"strconv"
+	"strings"
 )
 
 type TokenType string
@@ -231,7 +232,14 @@ func tokenize(input string) (tokens []Token, errors []error) {
 
 func tokenizeString(runes []rune, pos, line, col int) (Token, error) {
 	i := 0
-	for ; i < len(runes) && runes[i] != '"'; i++ {
+	for i < len(runes) {
+		if runes[i] == '"' {
+			break
+		}
+		if i < len(runes)-1 && runes[i] == '\\' && runes[i+1] == '"' {
+			i += 1
+		}
+		i += 1
 	}
 
 	if i == len(runes) || runes[i] != '"' {
@@ -239,7 +247,7 @@ func tokenizeString(runes []rune, pos, line, col int) (Token, error) {
 	}
 
 	lexeme := string(runes[0:i])
-	literal := lexeme
+	literal := strings.ReplaceAll(lexeme, "\\\"", "\"")
 
 	return Token{TokenString, lexeme, literal, pos, line, col}, nil
 }

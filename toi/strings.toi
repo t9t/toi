@@ -6,3 +6,5 @@ a = "Hello"
 b = "world"
 
 println(a _ ", variable " _ b)
+
+println("a\"b\"c")
