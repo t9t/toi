@@ -236,8 +236,8 @@ func tokenizeString(runes []rune, pos, line, col int) (Token, error) {
 		if runes[i] == '"' {
 			break
 		}
-		if i < len(runes)-1 && runes[i] == '\\' && runes[i+1] == '"' {
-			i += 1
+		if i < len(runes)-4 && runes[i] == '$' && runes[i+1] == '{' && runes[i+2] == '"' && runes[i+3] == '}' {
+			i += 4
 		}
 		i += 1
 	}
@@ -247,7 +247,7 @@ func tokenizeString(runes []rune, pos, line, col int) (Token, error) {
 	}
 
 	lexeme := string(runes[0:i])
-	literal := strings.ReplaceAll(lexeme, "\\\"", "\"")
+	literal := strings.ReplaceAll(lexeme, "${\"}", "\"")
 
 	return Token{TokenString, lexeme, literal, pos, line, col}, nil
 }
