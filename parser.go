@@ -5,7 +5,7 @@ import (
 	"strconv"
 )
 
-type FunctionCall struct {
+type ForwardCall struct {
 	Token         Token
 	ArgumentCount int
 }
@@ -18,7 +18,7 @@ type Parser struct {
 
 	parsingFunctionDeclaration bool
 	declaredFunctions          map[string]int
-	calledFunctions            []FunctionCall
+	forwardCalls               []ForwardCall
 }
 
 func (p *Parser) consume(i int) {
@@ -65,7 +65,7 @@ func (p *Parser) parse() (Statement, error) {
 		}
 	}
 
-	for _, call := range p.calledFunctions {
+	for _, call := range p.forwardCalls {
 		tok := call.Token
 		functionName := call.Token.Lexeme
 		arity, found := p.declaredFunctions[functionName]
@@ -675,7 +675,7 @@ func (p *Parser) parseFunctionCall() (Expression, error) {
 	}
 
 	if !builtinFound && !functionFound {
-		p.calledFunctions = append(p.calledFunctions, FunctionCall{Token: callToken, ArgumentCount: len(arguments)})
+		p.forwardCalls = append(p.forwardCalls, ForwardCall{Token: callToken, ArgumentCount: len(arguments)})
 	} else if len(arguments) != functionArity && functionArity != ArityVariadic {
 		tok := p.current()
 		return nil, fmt.Errorf("expected %d arguments but got %d for function '%s' at %d:%d", functionArity, len(arguments), identifier, tok.Line, tok.Col)
