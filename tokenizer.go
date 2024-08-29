@@ -189,7 +189,11 @@ func tokenize(input string) (tokens []Token, errors []error) {
 				addToken(Token{TokenLessThan, "<", nil, i, line, col})
 			}
 		case c == '"':
-			token := tokenizeString(runes[i+1:], i, line, col)
+			token, err := tokenizeString(runes[i+1:], i, line, col)
+			if err != nil {
+				addError(err)
+				break
+			}
 			addToken(token)
 			i += len(token.Lexeme) + 1
 			col += len(token.Lexeme) + 1
@@ -225,15 +229,19 @@ func tokenize(input string) (tokens []Token, errors []error) {
 	return
 }
 
-func tokenizeString(runes []rune, pos, line, col int) Token {
+func tokenizeString(runes []rune, pos, line, col int) (Token, error) {
 	i := 0
 	for ; i < len(runes) && runes[i] != '"'; i++ {
+	}
+
+	if i == len(runes) || runes[i] != '"' {
+		return Token{}, fmt.Errorf("unterminated string at %d:%d", line, col)
 	}
 
 	lexeme := string(runes[0:i])
 	literal := lexeme
 
-	return Token{TokenString, lexeme, literal, pos, line, col}
+	return Token{TokenString, lexeme, literal, pos, line, col}, nil
 }
 
 func tokenizeNumber(runes []rune, pos, line, col int) (Token, error) {
