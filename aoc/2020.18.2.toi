@@ -1,0 +1,102 @@
+
+tokenize|line| tokens {
+    tokens = array()
+    for char = [chars(line)]c {
+        if char <> " " {
+            push(tokens, char)
+        }
+    }
+}
+
+parse|tokens i| out {
+    out = parseMult(tokens, i)
+}
+
+parseMult|tokens i| out {
+    down = parsePlus(tokens, i)
+    left = [down]0
+    i = [down]1
+
+    while i < len(tokens) and [tokens]i == "*" {
+        i = i + 1 // consume '*'
+        down = parsePlus(tokens, i)
+        right = [down]0
+        i = [down]1
+        newLeft = array()
+        push(newLeft, "*")
+        push(newLeft, left)
+        push(newLeft, right)
+        left = newLeft
+    }
+
+    out = array()
+    push(out, left)
+    push(out, i)
+}
+
+parsePlus|tokens i| out {
+    down = parseParens(tokens, i)
+    left = [down]0
+    i = [down]1
+
+    while i < len(tokens) and [tokens]i == "+" {
+        i = i + 1 // consume '+'
+        down = parseParens(tokens, i)
+        right = [down]0
+        i = [down]1
+        newLeft = array()
+        push(newLeft, "+")
+        push(newLeft, left)
+        push(newLeft, right)
+        left = newLeft
+    }
+
+    out = array()
+    push(out, left)
+    push(out, i)
+}
+
+parseParens|tokens i| out {
+    if [tokens]i == "(" {
+        down = parse(tokens, i + 1)
+        out = array()
+        push(out, [down]0)
+        i = [down](1) + 1 // consume ')'
+        push(out, i)
+    } otherwise {
+        out = parseNumber(tokens, i)
+    }
+}
+
+parseNumber|tokens i| out {
+    tree = array()
+    push(tree, int([tokens]i))
+
+    out = array()
+    push(out, tree)
+    push(out, i + 1)
+}
+
+interpret|tree| out {
+    if len(tree) == 1 {
+        out = [tree]0
+    } otherwise { // len must be 3
+        operator = [tree]0
+        left = interpret([tree]1)
+        right = interpret([tree]2)
+
+        if operator == "*" {
+            out = left * right
+        } otherwise { // must be '+'
+            out = left + right
+        }
+    }
+}
+
+sum = 0
+for line = [inputLines()]l {
+    tokens = tokenize(line)
+    tree = [parse(tokens, 0)]0
+    sum = sum + interpret(tree)
+}
+println(sum)

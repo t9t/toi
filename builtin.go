@@ -265,7 +265,11 @@ func builtinGetVm(arguments []any) (any, error) {
 	return arrayOrMapOpVm(arguments,
 		func(slice *[]any, idx int, arguments []any) (any, error) {
 			// get(arr, 2)
-			return (*slice)[idx], nil
+			s := *slice
+			if idx >= len(s) {
+				return nil, fmt.Errorf("index out of bounds (requested %d; length %d)", idx, len(s))
+			}
+			return s[idx], nil
 		}, func(map_ *map[string]any, key string, arguments []any) (any, error) {
 			// get(arr, "hello")
 			return (*map_)[key], nil
