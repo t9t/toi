@@ -5,6 +5,11 @@ import (
 	"strconv"
 )
 
+type FunctionCall struct {
+	Token         Token
+	ArgumentCount int
+}
+
 type Parser struct {
 	tokens []Token
 
@@ -13,6 +18,7 @@ type Parser struct {
 
 	parsingFunctionDeclaration bool
 	declaredFunctions          map[string]int
+	calledFunctions            []FunctionCall
 }
 
 func (p *Parser) consume(i int) {
@@ -56,6 +62,18 @@ func (p *Parser) parse() (Statement, error) {
 		}
 		if stmt != nil {
 			statements = append(statements, stmt)
+		}
+	}
+
+	for _, call := range p.calledFunctions {
+		tok := call.Token
+		functionName := call.Token.Lexeme
+		arity, found := p.declaredFunctions[functionName]
+		if !found {
+			return nil, fmt.Errorf("no such function '%s' at %d:%d", functionName, tok.Line, tok.Col)
+		}
+		if call.ArgumentCount != arity {
+			return nil, fmt.Errorf("expected %d arguments but got %d for function '%s' at %d:%d", arity, call.ArgumentCount, functionName, tok.Line, tok.Col)
 		}
 	}
 
@@ -628,11 +646,6 @@ func (p *Parser) parseFunctionCall() (Expression, error) {
 		functionArity = builtin.Arity
 	}
 
-	if !builtinFound && !functionFound {
-		tok := callToken
-		return nil, fmt.Errorf("no such function '%s' (note, functions have to be declared before usage) at %d:%d", identifier, tok.Line, tok.Col)
-	}
-
 	p.consume(2) // Consume identifier and '('
 
 	arguments := make([]Expression, 0)
@@ -661,7 +674,9 @@ func (p *Parser) parseFunctionCall() (Expression, error) {
 		}
 	}
 
-	if len(arguments) != functionArity && functionArity != ArityVariadic {
+	if !builtinFound && !functionFound {
+		p.calledFunctions = append(p.calledFunctions, FunctionCall{Token: callToken, ArgumentCount: len(arguments)})
+	} else if len(arguments) != functionArity && functionArity != ArityVariadic {
 		tok := p.current()
 		return nil, fmt.Errorf("expected %d arguments but got %d for function '%s' at %d:%d", functionArity, len(arguments), identifier, tok.Line, tok.Col)
 	}

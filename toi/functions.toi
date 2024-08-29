@@ -21,3 +21,13 @@ recursion|a| {
 }
 
 recursion(3)
+
+forwardCallWorks|s| {
+    println(hello(s))
+}
+
+hello|s| return {
+    return = "Hello, " _ s
+}
+
+forwardCallWorks("forward call")
