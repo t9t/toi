@@ -160,6 +160,12 @@ s = string(i) _ " " _ [words]1 _ " " _ [words]2 // string() converts an int into
 // _ concatenates strings
 ```
 
+Double quotes inside strings can be escaped using `${"}` inside the string
+literal, like so:
+
+```
+println("Toi is ${"}stable${"} and looks ${"}nice${"}")
+```
 
 ## Functions
 A simple function that does not take any arguments can be written like this:
