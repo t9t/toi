@@ -1,0 +1,87 @@
+rules = map()
+messages = array()
+
+parsingRules = 1
+for line = [inputLines()]l {
+    if parsingRules {
+        if line == "" {
+            parsingRules = 0
+            next iteration
+        }
+
+        parts = split(line, ": ")
+        ruleId = [parts]0
+
+        if ruleId == "8" {
+            [parts]1 = "42 | 42 8"
+        }
+        if ruleId == "11" {
+            [parts]1 = "42 31 | 42 11 31"
+        }
+
+        chars = chars([parts]1)
+        if len(chars) == 3 and [chars]0 == "${"}" {
+            // e.g. "a"
+            rule = array()
+            push(rule, "letter")
+            push(rule, [chars]1)
+            [rules]ruleId = rule
+            next iteration
+        }
+
+        parts = split([parts]1, " | ")
+        rule = array()
+        for part = [parts]p {
+            subRule = array()
+            for id = [split(part, " ")]s {
+                push(subRule, id)
+            }
+            push(rule, subRule)
+        }
+        [rules]ruleId = rule
+    } otherwise { // not parsing rules, parsing messages
+        push(messages, chars(line))
+    }
+}
+
+matchRule|message i ruleId rules| matches {
+    rule = [rules]ruleId
+    matches = array()
+    if [rule]0 == "letter" {
+        if i < len(message) and [message]i == [rule]1 {
+            push(matches, i+1)
+        }
+    } otherwise {
+        matchingIndices = array()
+        for subRule = [rule]r {
+            currentIndices = array()
+            push(currentIndices, i)
+
+            for subRuleId = [subRule]s {
+                nextIndices = array()
+                for idx = [currentIndices]c {
+                    results = matchRule(message, idx, subRuleId, rules)
+                    for result = [results]r {
+                        push(nextIndices, result)
+                    }
+                }
+                currentIndices = nextIndices
+            }
+            for idx = [currentIndices]c {
+                push(matches, idx)
+            }
+        }
+    }
+}
+
+matching = 0
+for message = [messages]m {
+    for l = [matchRule(message, 0, "0", rules)]i {
+        if l == len(message) {
+            matching = matching + 1
+            exit loop
+        }
+    }
+}
+
+println(matching)
