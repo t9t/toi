@@ -45,6 +45,14 @@ func (s *WhileStatement) lineCol() LineCol {
 	return s.Token.LineCol()
 }
 
+type ExitFunctionStatement struct {
+	Token Token
+}
+
+func (s *ExitFunctionStatement) lineCol() LineCol {
+	return s.Token.LineCol()
+}
+
 type ExitLoopStatement struct {
 	Token Token
 }

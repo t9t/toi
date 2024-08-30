@@ -31,3 +31,18 @@ hello|s| return {
 }
 
 forwardCallWorks("forward call")
+
+exitTest|| out {
+    i = 0
+    while i < 10 {
+        println(i)
+        if i == 5 {
+            exit function
+        }
+        out = "out_" _ string(i)
+        i = i + 1
+    }
+}
+
+println(exitTest())
+println("a")

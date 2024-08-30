@@ -103,7 +103,7 @@ func (p *Parser) parseStatement() (stmt Statement, err error) {
 			return nil, err
 		}
 	} else if p.current().Type == TokenExit {
-		stmt, err = p.parseExitLoopStatement()
+		stmt, err = p.parseExitStatement()
 		if err != nil {
 			return nil, err
 		}
@@ -335,21 +335,31 @@ func (p *Parser) parseForStatement() (Statement, error) {
 	}, nil
 }
 
-func (p *Parser) parseExitLoopStatement() (Statement, error) {
+func (p *Parser) parseExitStatement() (Statement, error) {
 	token := p.current()
 
-	if !p.hasNext() || p.next().Type != TokenLoop {
+	if !p.hasNext() || (p.next().Type != TokenLoop && p.next().Type != TokenFunction) {
 		tok := p.next()
 		return nil, fmt.Errorf("expected 'loop' after 'exit' at %d:%d", tok.Line, tok.Col)
 	}
 
-	if p.loopBodyCount == 0 {
-		tok := token
-		return nil, fmt.Errorf("can only use 'exit loop' in 'while' or 'for' body at %d:%d", tok.Line, tok.Col)
-	}
+	if p.next().Type == TokenLoop {
+		if p.loopBodyCount == 0 {
+			tok := token
+			return nil, fmt.Errorf("can only use 'exit loop' in 'while' or 'for' body at %d:%d", tok.Line, tok.Col)
+		}
 
-	p.consume(2)
-	return &ExitLoopStatement{Token: token}, nil
+		p.consume(2)
+		return &ExitLoopStatement{Token: token}, nil
+	} else {
+		if !p.parsingFunctionDeclaration {
+			tok := token
+			return nil, fmt.Errorf("can only use 'exit function' inside a function at %d:%d", tok.Line, tok.Col)
+		}
+
+		p.consume(2)
+		return &ExitFunctionStatement{Token: token}, nil
+	}
 }
 
 func (p *Parser) parseNextIterationStatement() (Statement, error) {

@@ -54,6 +54,7 @@ const (
 	TokenFor       TokenType = "For"
 
 	TokenExit      TokenType = "Exit"
+	TokenFunction  TokenType = "Function"
 	TokenLoop      TokenType = "Loop"
 	TokenNext      TokenType = "Next"
 	TokenIteration TokenType = "Iteration"
@@ -99,6 +100,7 @@ var keywordTokens = map[string]TokenType{
 	"while":     TokenWhile,
 	"for":       TokenFor,
 	"exit":      TokenExit,
+	"function":  TokenFunction,
 	"loop":      TokenLoop,
 	"next":      TokenNext,
 	"iteration": TokenIteration,

@@ -16,8 +16,9 @@ type Compiler struct {
 	bytes     []byte
 	variables []string // index = id; value = name
 
-	loopStates []*LoopState
-	functions  map[string]VmFunction
+	loopStates    []*LoopState
+	functions     map[string]VmFunction
+	exitFunctions []int
 }
 
 func (c *Compiler) writeByte(b byte) {
@@ -200,6 +201,12 @@ func (s *WhileStatement) compile(compiler *Compiler) error {
 	return nil
 }
 
+func (s *ExitFunctionStatement) compile(compiler *Compiler) error {
+	compiler.exitFunctions = append(compiler.exitFunctions, compiler.len())
+	compiler.writeBytes(OpJumpForward, InvalidOp, InvalidOp)
+	return nil
+}
+
 func (s *ExitLoopStatement) compile(compiler *Compiler) error {
 	compiler.addExitLoop(compiler.len())
 	compiler.writeBytes(OpJumpForward, InvalidOp, InvalidOp)
@@ -240,6 +247,19 @@ func (s *FunctionDeclarationStatement) compile(compiler *Compiler) error {
 	if err := s.Body.compile(functionCompiler); err != nil {
 		return err
 	}
+
+	endOfLoopIndex := functionCompiler.len()
+	for _, index := range functionCompiler.exitFunctions {
+		jumpAmount := endOfLoopIndex - index - 3 // I don't understand why it must be 3
+		b1, b2, err := encodeJumpAmount(jumpAmount)
+		if err != nil {
+			// TODO: error reporting with token/line/col
+			return err
+		}
+		functionCompiler.setByte(index+1, b1)
+		functionCompiler.setByte(index+2, b2)
+	}
+
 	ops := functionCompiler.bytes
 	compiler.constants = functionCompiler.constants
 	params := make([]string, len(s.Parameters))

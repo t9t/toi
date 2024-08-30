@@ -5,6 +5,7 @@ import (
 	"fmt"
 )
 
+var ErrExitFunction = errors.New("exit function")
 var ErrExitLoop = errors.New("exit loop")
 var ErrNextIteration = errors.New("next iteration")
 
@@ -69,6 +70,11 @@ func (s *WhileStatement) execute(env Env) error {
 		}
 	}
 	return nil
+}
+
+func (s *ExitFunctionStatement) execute(env Env) error {
+	currentInterpreterLineCol = s.lineCol()
+	return ErrExitFunction
 }
 
 func (s *ExitLoopStatement) execute(env Env) error {
@@ -268,7 +274,9 @@ func (e *FunctionCallExpression) evaluate(env Env) (any, error) {
 		}
 	}
 	if err = stmt.Body.execute(functionEnv); err != nil {
-		return nil, err
+		if !errors.Is(err, ErrExitFunction) {
+			return nil, err
+		}
 	}
 	if stmt.OutVariable != nil {
 		return functionEnv[stmt.OutVariable.Lexeme], nil

@@ -199,6 +199,20 @@ getGreeting|greeting what| fullGreeting {
 println(getGreeting("Hello", "world"))
 ```
 
+A function can be exited early by using `exit function`:
+
+```
+printNumbers|maximum| {
+    i = 0
+    while 1 {
+        println(i)
+        if i == maximum {
+            exit function
+        }
+        i = i + 1
+    }
+}
+```
 
 ## Other built-in functions
 `inputLines()` returns the standard input as lines
