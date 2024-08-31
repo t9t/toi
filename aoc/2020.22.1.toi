@@ -1,0 +1,70 @@
+reverse|array| out {
+    out = array()
+    i = len(array) - 1
+    while i >= 0 {
+        push(out, [array]i)
+        i = i - 1
+    }
+}
+
+deck = array()
+state = 0
+for line = [inputLines()]l {
+    if state == 0 {
+        if l <> 0 {
+            deck1 = reverse(deck)
+            deck = array()
+        }
+        state = 1
+    } otherwise {
+        if line == "" {
+            state = 0
+        } otherwise {
+            push(deck, int(line))
+        }
+    }
+}
+
+deck2 = reverse(deck)
+
+putAtFront|losing winning deck| out {
+    out = array()
+    push(out, losing)
+    push(out, winning)
+    for item = [deck]i {
+        push(out, item)
+    }
+}
+
+removeFirst|deck| out {
+    out = array()
+    i = 1
+    while i < len(deck) {
+        push(out, [deck]i)
+        i = i + 1
+    }
+}
+
+while len(deck1) <> 0 and len(deck2) <> 0 {
+    card1 = pop(deck1)
+    card2 = pop(deck2)
+
+    if card1 > card2 {
+        deck1 = putAtFront(card2, card1, deck1)
+    } otherwise {
+        deck2 = putAtFront(card1, card2, deck2)
+    }
+}
+
+winning = deck1
+if len(deck1) == 0 {
+    winning = deck2
+}
+
+
+score = 0
+for item = [winning]i {
+    score = score + (i+1)*item
+}
+
+println(score)
