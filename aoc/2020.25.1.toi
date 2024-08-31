@@ -1,0 +1,19 @@
+lines = inputLines()
+card = int([lines]0)
+door = int([lines]1)
+
+cardLoopSize = 0
+value = 1
+while value <> card {
+    cardLoopSize = cardLoopSize + 1
+    value = (value * 7) % 20201227
+}
+
+i = 0
+value = 1
+while i < cardLoopSize {
+    value = (value * door) % 20201227
+    i = i + 1
+}
+
+println(value)
