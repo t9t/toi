@@ -1,18 +1,9 @@
-reverse|array| out {
-    out = array()
-    i = len(array) - 1
-    while i >= 0 {
-        push(out, [array]i)
-        i = i - 1
-    }
-}
-
 deck = array()
 state = 0
 for line = [inputLines()]l {
     if state == 0 {
         if l <> 0 {
-            deck1 = reverse(deck)
+            deck1 = deck
             deck = array()
         }
         state = 1
@@ -25,39 +16,34 @@ for line = [inputLines()]l {
     }
 }
 
-deck2 = reverse(deck)
-
-putAtFront|losing winning deck| out {
-    out = array()
-    push(out, losing)
-    push(out, winning)
-    for card = [deck]i {
-        push(out, card)
-    }
-}
-
-removeFirst|deck| out {
-    out = array()
-    i = 1
-    while i < len(deck) {
-        push(out, [deck]i)
-        i = i + 1
-    }
-}
+deck2 = deck
 
 copy|deck n| out {
     out = array()
-    i = len(deck) -  n
-    while i < len(deck) {
+    i = 0
+    while i < n {
         push(out, [deck]i)
         i = i + 1
     }
 }
 
 calculateScore|deck| score {
+    worth = 1
     score = 0
-    for card = [deck]i {
-        score = score + (i+1)*card
+    i = len(deck)-1
+    while i >= 0 {
+        score = score + worth*[deck]i
+        i = i - 1
+        worth = worth + 1
+    }
+}
+
+skipFirst|deck| out {
+    out = array()
+    i = 1
+    while i < len(deck) {
+        push(out, [deck]i)
+        i = i + 1
     }
 }
 
@@ -73,8 +59,10 @@ playRecursiveCombat|deck1 deck2 game| gameWinner {
         }
         [cache]cacheKey = 1
 
-        card1 = pop(deck1)
-        card2 = pop(deck2)
+        card1 = [deck1]0
+        deck1 = skipFirst(deck1)
+        card2 = [deck2]0
+        deck2 = skipFirst(deck2)
 
         if len(deck1) >= card1 and len(deck2) >= card2 {
             recurseDeck1 = copy(deck1, card1)
@@ -89,9 +77,11 @@ playRecursiveCombat|deck1 deck2 game| gameWinner {
         }
 
         if roundWinner == 1 {
-            deck1 = putAtFront(card2, card1, deck1)
+            push(deck1, card1)
+            push(deck1, card2)
         } otherwise {
-            deck2 = putAtFront(card1, card2, deck2)
+            push(deck2, card2)
+            push(deck2, card1)
         }
     }
 
