@@ -149,7 +149,7 @@ func (vm *Vm) execute(stack []any) error {
 				result, err = intBinaryOp(left, right, "%", func(l int, r int) int { return l ^ r })
 
 			case OpBinaryEqual:
-				result = boolToInt(left == right)
+				result = boolToInt(isEqual(left, right))
 			case OpBinaryGreaterThan:
 				result, err = intBinaryOp(left, right, ">", func(l int, r int) int { return boolToInt(l > r) })
 			case OpBinaryLessThan:

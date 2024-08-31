@@ -1,0 +1,109 @@
+reverse|chars| out {
+    out = array()
+    i = len(chars) - 1
+    while i >= 0 {
+        push(out, [chars]i)
+        i = i - 1
+    }
+}
+
+tiles = map()
+tileIds = array()
+
+readingMode = 0 // 0 = title; 1 = data
+
+// TODO: "Compilation error: variable used before set"; while it's set in previous iteration
+currentTile = array()
+leftColumn = array()
+rightColumn = array()
+tileId = ""
+
+for line = [inputLines()]l {
+    if readingMode == 0 { // reading title, e.g. "Tile 2311:"
+        if l <> 0 {
+            push(currentTile, leftColumn)
+            push(currentTile, reverse(leftColumn))
+            push(currentTile, rightColumn)
+            push(currentTile, reverse(rightColumn))
+            [tiles]tileId = currentTile
+        }
+
+        tileId = [split([split(line, " ")]1, ":")]0
+        push(tileIds, tileId)
+        readingMode = 1
+        lineNumber = 0
+
+        currentTile = array()
+        leftColumn = array()
+        rightColumn = array()
+    } otherwise {
+        if line == "" {
+            readingMode = 0
+            next iteration
+        }
+
+        chars = chars(line)
+        if lineNumber == 0 { // Top row
+            push(currentTile, chars)
+            push(currentTile, reverse(chars))
+        }
+        if lineNumber == 9 { // Bottom row
+            push(currentTile, chars)
+            push(currentTile, reverse(chars))
+        }
+        push(leftColumn, [chars]0)
+        push(rightColumn, [chars](len(chars)-1))
+
+        lineNumber = lineNumber + 1
+    }
+}
+
+push(currentTile, leftColumn)
+push(currentTile, reverse(leftColumn))
+push(currentTile, rightColumn)
+push(currentTile, reverse(rightColumn))
+[tiles]tileId = currentTile
+
+fitting = map()
+for tile = [tiles]tileId {
+    [fitting]tileId = 0
+}
+
+i = 0
+while i < len(tileIds) {
+    leftTileId = [tileIds]i
+    leftTile = [tiles]leftTileId
+    j = i + 1
+    while j < len(tileIds) {
+        rightTileId = [tileIds]j
+        rightTile = [tiles]rightTileId
+
+        isMatching = 0
+        for leftSide = [leftTile]l {
+            for rightSide = [rightTile]r {
+                if leftSide == rightSide {
+                    isMatching = 1
+                    [fitting]leftTileId = [fitting]leftTileId + 1
+                    [fitting]rightTileId = [fitting]rightTileId + 1
+                    exit loop
+                }
+            }
+            if isMatching {
+                // TODO: be able to break out of multiple levels of loops
+                exit loop
+            }
+        }
+
+        j = j + 1
+    }
+    i = i + 1
+}
+
+product = 1
+for count = [fitting]tileId {
+    if count == 2 {
+        product = product * int(tileId)
+    }
+}
+
+println(product)

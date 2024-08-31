@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"slices"
 )
 
 var ErrExitFunction = errors.New("exit function")
@@ -156,7 +157,7 @@ func (e *BinaryExpression) evaluate(env Env) (any, error) {
 		return stringConcat(left, right)
 
 	case TokenEqualEqual:
-		return boolToInt(left == right), nil
+		return boolToInt(isEqual(left, right)), nil
 	case TokenNotEqual:
 		return boolToInt(left != right), nil
 	case TokenGreaterThan:
@@ -213,6 +214,18 @@ func intBinaryOp(left, right any, operator string, op func(int, int) int) (any, 
 	}
 
 	return op(leftInt, rightInt), nil
+}
+
+func isEqual(left, right any) bool {
+	leftArray, ok := left.(*[]any)
+	if ok {
+		rightArray, ok := right.(*[]any)
+		if ok {
+			return slices.Equal(*leftArray, *rightArray)
+		}
+	}
+
+	return left == right
 }
 
 func castToInt(v any, side, operator string) (int, error) {
