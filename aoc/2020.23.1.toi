@@ -1,0 +1,71 @@
+// TODO: assumptions: there are 9 total numbers; lowest number is 1; highest number is 9
+
+prev = 0 // dummy value that will never be used to satisfy the compiler
+for char = [chars([inputLines()]0)]c {
+    cup = array()
+    push(cup, int(char))
+    if c <> 0 {
+        push(prev, cup)
+    } otherwise {
+        first = cup
+    }
+    prev = cup
+}
+push(prev, first)
+
+removeNext|current| nExt { // cannot call it "next" as it is a reserved word
+    nExt = [current]1
+    [current]1 = pop(nExt)
+}
+
+insertAfter|destination cup| {
+    nExt = [destination]1
+    [destination]1 = cup
+    [cup]1 = nExt
+}
+
+findDestination|current| destination {
+    label = [current]0
+    while 1 {
+        label = label - 1
+        if label < 1 {
+            label = 9
+        }
+        destination = current
+        i = 0
+        while i < 6 {
+            if [destination]0 == label {
+                exit function
+            }
+            i = i + 1
+            destination = [destination]1
+        }
+    }
+}
+
+current = first
+move = 0
+while move < 100 {
+    move = move + 1
+    clockwise1 = removeNext(current)
+    clockwise2 = removeNext(current)
+    clockwise3 = removeNext(current)
+    destination = findDestination(current)
+    insertAfter(destination, clockwise3)
+    insertAfter(destination, clockwise2)
+    insertAfter(destination, clockwise1)
+    current = [current]1
+}
+
+while [current]0 <> 1 {
+    current = [current]1
+}
+
+i = 0
+s = ""
+while i < 8 {
+    current = [current]1
+    i = i + 1
+    s = s _ string([current]0)
+}
+println(s)
