@@ -87,6 +87,11 @@ func decompile(constants []any, ops []byte) {
 			constantValue := constants[index]
 			i++
 			fmt.Printf("[2] SetVariable %d '%v'", index, constantValue)
+		case OpInstantiate:
+			index := ops[i]
+			constantValue := constants[index]
+			i++
+			fmt.Printf("[2] Instantiate %d '%v'", index, constantValue)
 		case OpCallBuiltin:
 			index := ops[i]
 			i++
@@ -97,6 +102,16 @@ func decompile(constants []any, ops []byte) {
 			i++
 			constantValue := constants[index]
 			fmt.Printf("[2] Function call %d '%v'", index, constantValue)
+		case OpFieldAccess:
+			index := ops[i]
+			constantValue := constants[index]
+			i++
+			fmt.Printf("[2] Field access %d '%v'", index, constantValue)
+		case OpSetField:
+			index := ops[i]
+			constantValue := constants[index]
+			i++
+			fmt.Printf("[2] Set field %d '%v'", index, constantValue)
 		case OpDuplicate:
 			fmt.Print("[1] Duplicate")
 		case InvalidOp:
