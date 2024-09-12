@@ -135,6 +135,28 @@ func (s *AssignmentStatement) execute(env Env) error {
 	return nil
 }
 
+func (s *FieldAssignmentStatement) execute(env Env) error {
+	left, err := s.Left.evaluate(env)
+	if err != nil {
+		return err
+	}
+	instance, ok := left.(*ToiInstance)
+	if !ok {
+		return fmt.Errorf("left-hand operand of '.' must be a type instance but was '%v'", left)
+	}
+	value, err := s.Expression.evaluate(env)
+	if err != nil {
+		return err
+	}
+	for i, field := range instance.toiType.Fields {
+		if field.Lexeme == s.Identifier.Lexeme {
+			instance.fieldValues[i] = value
+			return nil
+		}
+	}
+	return fmt.Errorf("field '%v' not found on type '%v'", s.Identifier.Lexeme, instance.toiType.Identifier.Lexeme)
+}
+
 func (s *ExpressionStatement) execute(env Env) error {
 	currentInterpreterLineCol = s.lineCol()
 	_, err := s.Expression.evaluate(env) /* Discard return value */

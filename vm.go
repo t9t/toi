@@ -26,6 +26,7 @@ const (
 	OpCallFunction
 	OpPrintln // Special op because it's variadic
 	OpFieldAccess
+	OpSetField
 	OpDuplicate
 
 	InvalidOp
@@ -337,6 +338,28 @@ func (vm *Vm) execute(stack []any) error {
 			for i, field := range instance.vmType.Fields {
 				if field == identifier {
 					pushStack(instance.values[i])
+					fieldFound = true
+					break
+				}
+			}
+			if !fieldFound {
+				return fmt.Errorf("field '%v' not found on type '%v'", identifier, instance.vmType.Name)
+			}
+		case OpSetField:
+			identifier, err := readConstantString()
+			if err != nil {
+				return err
+			}
+			value := popStack()
+			target := popStack()
+			instance, ok := target.(*VmInstance)
+			if !ok {
+				return fmt.Errorf("left-hand operand of '.' must be a type instance but was '%v'", target)
+			}
+			fieldFound := false
+			for i, field := range instance.vmType.Fields {
+				if field == identifier {
+					instance.values[i] = value
 					fieldFound = true
 					break
 				}

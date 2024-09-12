@@ -13,8 +13,8 @@ println(data.a)
 println(data.b)
 println(data.c)
 
-//data.a = 3
-//println(data)
+data.a = 3
+println(data)
 
 //data.a = data.a * 3
 //[data.c]0 = 1337

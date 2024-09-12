@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"reflect"
 	"strconv"
 )
 
@@ -551,7 +552,21 @@ func (p *Parser) parseAssignmentStatement() (Statement, error) {
 		}, nil
 	}
 
-	return &AssignmentStatement{Identifier: startToken, Expression: right}, nil
+	if access, ok := left.(*FieldAccessExpression); ok {
+		return &FieldAssignmentStatement{
+			Token:      startToken,
+			Left:       access.Left,
+			Identifier: access.Identifier,
+			Expression: right,
+		}, nil
+	}
+
+	variable, ok := left.(*VariableExpression)
+	if !ok {
+		return nil, fmt.Errorf("expected variable expression on the left side of an assignment, but got '%v'", reflect.TypeOf(left))
+	}
+
+	return &AssignmentStatement{Identifier: variable.Token, Expression: right}, nil
 }
 
 func (p *Parser) parseExpression() (Expression, error) {

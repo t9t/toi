@@ -2,3 +2,4 @@ Data{a=2,b=asdf,c=[42]}
 2
 asdf
 [42]
+Data{a=3,b=asdf,c=[42]}

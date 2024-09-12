@@ -99,6 +99,17 @@ func (s *AssignmentStatement) lineCol() LineCol {
 	return s.Identifier.LineCol()
 }
 
+type FieldAssignmentStatement struct {
+	Token      Token
+	Left       Expression
+	Identifier Token
+	Expression Expression
+}
+
+func (s *FieldAssignmentStatement) lineCol() LineCol {
+	return s.Token.LineCol()
+}
+
 type ExpressionStatement struct {
 	Token      Token
 	Expression Expression

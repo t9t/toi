@@ -301,6 +301,22 @@ func (s *AssignmentStatement) compile(compiler *Compiler) error {
 	return nil
 }
 
+func (s *FieldAssignmentStatement) compile(compiler *Compiler) error {
+	if err := s.Left.compile(compiler); err != nil {
+		return err
+	} else if err := s.Expression.compile(compiler); err != nil {
+		return err
+	}
+
+	index, err := compiler.ensureConstant(s.Identifier.Lexeme)
+	if err != nil {
+		return err
+	}
+
+	compiler.writeBytes(OpSetField, index)
+	return nil
+}
+
 func (s *ExpressionStatement) compile(compiler *Compiler) error {
 	/* Discard return value afterwards using pop */
 	if err := s.Expression.compile(compiler); err != nil {
