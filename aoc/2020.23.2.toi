@@ -1,0 +1,62 @@
+// TODO: assumption: lowest number is 1
+Cup{num nextCup}
+
+max = 0
+cache = map()
+
+prev = 0 // dummy value that will never be used to satisfy the compiler
+for char = [chars([inputLines()]0)]c {
+    num = int(char)
+    if num > max {
+        max = num
+    }
+    cup = Cup(num, 0)
+    [cache]string(num) = cup
+    if c == 0 {
+        first = cup
+    } otherwise {
+        prev.nextCup = cup
+    }
+    prev = cup
+}
+
+num = max+1
+while num <= 1000000 {
+    cup = Cup(num, 0)
+    [cache]string(num) = cup
+    prev.nextCup = cup
+    prev = cup
+    num = num + 1
+}
+max = 1000000
+prev.nextCup = first
+
+current = first
+move = 1
+while move <= 10000000 {
+    clockwise1 = current.nextCup
+    clockwise2 = clockwise1.nextCup
+    clockwise3 = clockwise2.nextCup
+    current.nextCup = clockwise3.nextCup
+
+    destNum = current.num
+    while 1 {
+        destNum = destNum - 1
+        if destNum < 1 {
+            destNum = max
+        }
+        if destNum <> clockwise1.num and destNum <> clockwise2.num and destNum <> clockwise3.num {
+            exit loop
+        }
+    }
+
+    destination = [cache]string(destNum)
+    clockwise3.nextCup = destination.nextCup
+    destination.nextCup = clockwise1
+
+    current = current.nextCup
+    move = move + 1
+}
+
+cup1 = [cache]"1"
+println(cup1.nextCup.num * cup1.nextCup.nextCup.num)
