@@ -1,3 +1,5 @@
+Rule{type data}
+
 rules = map()
 messages = array()
 
@@ -22,17 +24,17 @@ for line = [inputLines()]l {
         chars = chars([parts]1)
         if len(chars) == 3 and [chars]0 == "${"}" {
             // e.g. "a"
-            rule = array("letter", [chars]1)
+            rule = Rule("letter", [chars]1)
             [rules]ruleId = rule
             next iteration
         }
 
         parts = split([parts]1, " | ")
-        rule = array()
+        ruleData = array()
         for part = [parts]p {
-            push(rule, parseRule(part))
+            push(ruleData, parseRule(part))
         }
-        [rules]ruleId = rule
+        [rules]ruleId = Rule("or", ruleData)
     } otherwise { // not parsing rules, parsing messages
         push(messages, chars(line))
     }
@@ -53,14 +55,14 @@ sequenceMatches|rules message i sequence nextRulesToMatch| matches {
 ruleMatches|rules message i ruleId nextRulesToMatch| matches {
     rule = [rules]ruleId
     // Rule with IDs always has length 2; rule with a letter always has length 1
-    if [rule]0 == "letter" { // e.g. "a"
-        if i < len(message) and [message]i == [rule]1 {
+    if rule.type == "letter" { // e.g. "a"
+        if i < len(message) and [message]i == rule.data {
             matches = matches(rules, message, i+1, nextRulesToMatch)
         } otherwise {
             matches = 0
         }
     } otherwise { // e.g. "4 1 5" or "2 3 | 3 2"
-        for matchRule = [rule]r {
+        for matchRule = [rule.data]r {
             matches = sequenceMatches(rules, message, i, matchRule, nextRulesToMatch)
             if matches {
                 exit loop

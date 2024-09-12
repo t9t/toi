@@ -1,3 +1,5 @@
+Rule{type data}
+
 rules = map()
 messages = array()
 
@@ -22,21 +24,21 @@ for line = [inputLines()]l {
         chars = chars([parts]1)
         if len(chars) == 3 and [chars]0 == "${"}" {
             // e.g. "a"
-            rule = array("letter", [chars]1)
+            rule = Rule("letter", [chars]1)
             [rules]ruleId = rule
             next iteration
         }
 
         parts = split([parts]1, " | ")
-        rule = array()
+        ruleData = array()
         for part = [parts]p {
             subRule = array()
             for id = [split(part, " ")]s {
                 push(subRule, id)
             }
-            push(rule, subRule)
+            push(ruleData, subRule)
         }
-        [rules]ruleId = rule
+        [rules]ruleId = Rule("or", ruleData)
     } otherwise { // not parsing rules, parsing messages
         push(messages, chars(line))
     }
@@ -45,13 +47,13 @@ for line = [inputLines()]l {
 matchRule|message i ruleId rules| matches {
     rule = [rules]ruleId
     matches = array()
-    if [rule]0 == "letter" {
-        if i < len(message) and [message]i == [rule]1 {
+    if rule.type == "letter" {
+        if i < len(message) and [message]i == rule.data {
             push(matches, i+1)
         }
     } otherwise {
         matchingIndices = array()
-        for subRule = [rule]r {
+        for subRule = [rule.data]r {
             currentIndices = array(i)
 
             for subRuleId = [subRule]s {
