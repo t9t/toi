@@ -1,1 +1,4 @@
-Data{a=1,b=asdf,c=[42]}
+Data{a=2,b=asdf,c=[42]}
+2
+asdf
+[42]

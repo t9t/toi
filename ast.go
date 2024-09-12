@@ -118,6 +118,16 @@ func (e *BinaryExpression) lineCol() LineCol {
 	return e.Operator.LineCol()
 }
 
+type FieldAccessExpression struct {
+	Token      Token
+	Left       Expression
+	Identifier Token
+}
+
+func (e *FieldAccessExpression) lineCol() LineCol {
+	return e.Token.LineCol()
+}
+
 type ContainerAccessExpression struct {
 	Token     Token
 	Container Expression

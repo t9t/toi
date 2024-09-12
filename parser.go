@@ -558,38 +558,6 @@ func (p *Parser) parseExpression() (Expression, error) {
 	return p.parseLogicalOr()
 }
 
-func (p *Parser) parseContainerAccess() (Expression, error) {
-	startToken := p.current()
-	nestedLevel := 0
-	for p.hasCurrent() && p.current().Type == TokenBracketOpen {
-		nestedLevel += 1
-		p.consume(1)
-	}
-
-	innerExpression, err := p.parsePrimary()
-	if err != nil {
-		return nil, err
-	} else if nestedLevel == 0 {
-		return innerExpression, nil
-	}
-
-	for i := 0; i < nestedLevel; i += 1 {
-		if p.current().Type != TokenBracketClose {
-			tok := p.current()
-			return nil, fmt.Errorf("expected ']' after '[' and expression but got '%v' at %d:%d", tok.Type, tok.Line, tok.Col)
-		}
-		p.consume(1)
-
-		indexExpr, err := p.parsePrimary()
-		if err != nil {
-			return nil, err
-		}
-
-		innerExpression = &ContainerAccessExpression{Token: startToken, Container: innerExpression, Access: indexExpr}
-	}
-	return innerExpression, nil
-}
-
 func (p *Parser) parseLogicalOr() (Expression, error) {
 	return p.parseBinary(TokenOr, p.parseLogicalAnd)
 }
@@ -673,6 +641,59 @@ func (p *Parser) parseBinary(tokenType TokenType, down func() (Expression, error
 		}
 
 		left = &BinaryExpression{Left: left, Operator: operator, Right: right}
+	}
+
+	return left, nil
+}
+
+func (p *Parser) parseContainerAccess() (Expression, error) {
+	startToken := p.current()
+	nestedLevel := 0
+	for p.hasCurrent() && p.current().Type == TokenBracketOpen {
+		nestedLevel += 1
+		p.consume(1)
+	}
+
+	innerExpression, err := p.parseFieldAccess()
+	if err != nil {
+		return nil, err
+	} else if nestedLevel == 0 {
+		return innerExpression, nil
+	}
+
+	for i := 0; i < nestedLevel; i += 1 {
+		if p.current().Type != TokenBracketClose {
+			tok := p.current()
+			return nil, fmt.Errorf("expected ']' after '[' and expression but got '%v' at %d:%d", tok.Type, tok.Line, tok.Col)
+		}
+		p.consume(1)
+
+		indexExpr, err := p.parseFieldAccess()
+		if err != nil {
+			return nil, err
+		}
+
+		innerExpression = &ContainerAccessExpression{Token: startToken, Container: innerExpression, Access: indexExpr}
+	}
+	return innerExpression, nil
+}
+
+func (p *Parser) parseFieldAccess() (Expression, error) {
+	left, err := p.parsePrimary()
+	if err != nil {
+		return nil, err
+	}
+
+	for p.hasCurrent() && p.current().Type == TokenFullStop {
+		if !p.hasNext() || p.next().Type != TokenIdentifier {
+			tok := p.next()
+			return nil, fmt.Errorf("expected identifier after '.' but got '%v' at %d:%d", tok.Type, tok.Line, tok.Col)
+		}
+		fullStop := p.current()
+		identifier := p.next()
+		p.consume(2)
+
+		left = &FieldAccessExpression{Token: fullStop, Left: left, Identifier: identifier}
 	}
 
 	return left, nil

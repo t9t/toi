@@ -14,7 +14,7 @@ var ErrNextIteration = errors.New("next iteration")
 type Env map[string]any
 
 type ToiInstance struct {
-	toiType     TypeStatement
+	toiType     *TypeStatement
 	fieldValues []any
 }
 
@@ -54,7 +54,6 @@ func (s *BlockStatement) execute(env Env) error {
 }
 
 func (s *TypeStatement) execute(env Env) error {
-	fmt.Printf("Interpreting TypeStatement: %+v\n", s)
 	currentInterpreterLineCol = s.lineCol()
 
 	env[getFuncEnvName(s.Identifier.Lexeme)] = s
@@ -280,6 +279,23 @@ func stringConcat(left, right any) (any, error) {
 	return leftString + rightString, nil
 }
 
+func (e *FieldAccessExpression) evaluate(env Env) (any, error) {
+	left, err := e.Left.evaluate(env)
+	if err != nil {
+		return nil, err
+	}
+	instance, ok := left.(*ToiInstance)
+	if !ok {
+		return nil, fmt.Errorf("left-hand operand of '.' must be a type instance but was '%v'", left)
+	}
+	for i, field := range instance.toiType.Fields {
+		if field.Lexeme == e.Identifier.Lexeme {
+			return instance.fieldValues[i], nil
+		}
+	}
+	return nil, fmt.Errorf("field '%v' not found on type '%v'", e.Identifier.Lexeme, instance.toiType.Identifier.Lexeme)
+}
+
 func (e *ContainerAccessExpression) evaluate(env Env) (any, error) {
 	currentInterpreterLineCol = e.lineCol()
 	get := builtins["get"]
@@ -343,7 +359,7 @@ func (e *FunctionCallExpression) evaluate(env Env) (any, error) {
 		}
 
 		return &ToiInstance{
-			toiType:     *typeStmt,
+			toiType:     typeStmt,
 			fieldValues: fieldValues,
 		}, nil
 	}

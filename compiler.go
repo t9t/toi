@@ -83,6 +83,7 @@ func (s *TypeStatement) compile(compiler *Compiler) error {
 		Fields: fields,
 	}
 	compiler.declaredTypes[vmType.Name] = vmType
+
 	return nil
 }
 
@@ -399,6 +400,20 @@ func (e *BinaryExpression) compileOrOrAnd(compiler *Compiler, withNot bool) erro
 
 	compiler.setByte(jumpIndex+1, b1)
 	compiler.setByte(jumpIndex+2, b2)
+	return nil
+}
+
+func (e *FieldAccessExpression) compile(compiler *Compiler) error {
+	if err := e.Left.compile(compiler); err != nil {
+		return err
+	}
+
+	index, err := compiler.ensureConstant(e.Identifier.Lexeme)
+	if err != nil {
+		return err
+	}
+
+	compiler.writeBytes(OpFieldAccess, index)
 	return nil
 }
 

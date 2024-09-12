@@ -6,9 +6,24 @@ type Data{a b c}
 array = array()
 push(array, 42)
 
-data = Data(1, "asdf", array)
+data = Data(2, "asdf", array)
 
 println(data)
-//println(data.a)
-//println(data.b)
-//println(data.c)
+println(data.a)
+println(data.b)
+println(data.c)
+
+//data.a = 3
+//println(data)
+
+//data.a = data.a * 3
+//[data.c]0 = 1337
+//println(data)
+//push(array, data)
+//([array]1).b = "changed"
+//println(data)
+//([([array]1).c]3).a = 5521
+//println(data)
+//data.b = Data(5, 8, 13)
+//data.b.c = data.b.a + data.b.b
+//println(data)
