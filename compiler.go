@@ -462,7 +462,8 @@ func (e *FunctionCallExpression) compile(compiler *Compiler) error {
 		return err
 	}
 
-	if e.FunctionName == "println" || e.FunctionName == "array" {
+	builtin, found := builtins[e.FunctionName]
+	if found && builtin.Arity == ArityVariadic {
 		compiler.writeBytes(OpCallVariadicFunction, index, byte(len(e.Arguments)))
 		return nil
 	}

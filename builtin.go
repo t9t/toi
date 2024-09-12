@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"reflect"
 	"slices"
 	"strconv"
 	"strings"
@@ -31,7 +32,7 @@ var builtins = map[string]Builtin{
 
 	// "Arrays" and "Maps"
 	"array": {ArityVariadic, builtinArray, builtinArrayVm},
-	"map":   {0, builtinMap, builtinMapVm},
+	"map":   {ArityVariadic, builtinMap, builtinMapVm},
 	"get":   {2, builtinGet, builtinGetVm},
 	"push":  {2, builtinPush, builtinPushVm},
 	"pop":   {1, builtinPop, builtinPopVm},
@@ -217,11 +218,36 @@ func builtinArrayVm(arguments []any) (any, error) {
 }
 
 func builtinMap(env Env, e []Expression) (any, error) {
-	return builtinMapVm([]any{})
+	arguments := make([]any, len(e))
+	for i, expr := range e {
+		value, err := expr.evaluate(env)
+		if err != nil {
+			return nil, err
+		}
+		arguments[i] = value
+	}
+
+	return builtinMapVm(arguments)
 }
 
 func builtinMapVm(arguments []any) (any, error) {
-	return &map[string]any{}, nil
+	if len(arguments)%2 != 0 {
+		return nil, fmt.Errorf("map() argument count needs to be divisible by 2 but was %d", len(arguments))
+	}
+
+	map_ := make(map[string]any)
+	for i := 0; i < len(arguments); i += 2 {
+		keyEntry := arguments[i]
+		value := arguments[i+1]
+
+		if key, ok := keyEntry.(string); ok {
+			map_[key] = value
+		} else {
+			return nil, fmt.Errorf("map() arguments need to alternate between string keys and any value; got '%v' in position %d instead of a string", reflect.TypeOf(keyEntry), i)
+		}
+	}
+
+	return &map_, nil
 }
 
 func getSliceOrMapVm(arguments []any) (*[]any, *map[string]any, error) {

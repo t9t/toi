@@ -8,3 +8,4 @@ world, 42
 hello, world
 nesting!
 {a: hello, ab: nesting!, assigned: 5521, b: world, d: b}
+{a: 10, b: 20}

@@ -26,3 +26,6 @@ println([m]("a" _ ([m]"d")))
 
 [m]"assigned" = 5521
 println(m)
+
+m = map("a", 10, "b", 20)
+println(m)
