@@ -297,6 +297,7 @@ func (vm *Vm) execute(stack []any) error {
 				functions:           functions,
 				variables:           functionVariables,
 				variableDefinitions: function.variableDefinitions,
+				types:               types,
 			}
 
 			err = functionVm.execute(stack[stackNext:])

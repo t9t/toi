@@ -22,16 +22,18 @@ for line = [inputLines()]l {
     }
 }
 
-search = array(array("shiny gold", 1))
+Search{color number}
+
+search = array(Search("shiny gold", 1))
 total = 0
 
 while len(search) {
     item = pop(search)
-    color = [item]0
-    number = [item]1
+    color = item.color
+    number = item.number
 
     for value = [[bags]color]key {
-        push(search, array(key, value * number))
+        push(search, Search(key, value * number))
         total = total + value * number
     }
 }

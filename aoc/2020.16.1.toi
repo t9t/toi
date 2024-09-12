@@ -1,8 +1,9 @@
+Rule{min max}
 rules = array()
 
 parseRulePart|s| rule {
     parts = split(s, "-")
-    rule = array(int([parts]0), int([parts]1))
+    rule = Rule(int([parts]0), int([parts]1))
 }
 
 sum = 0
@@ -35,8 +36,8 @@ for line = [inputLines()]i {
             num = int(part)
             valid = 0
             for rule = [rules]r {
-                min = [rule]0
-                max = [rule]1
+                min = rule.min
+                max = rule.max
 
                 if num >= min and num <= max {
                     valid = 1

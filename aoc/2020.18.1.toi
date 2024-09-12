@@ -1,3 +1,4 @@
+Result{num i}
 
 evaluate|chars i| out {
     num = 0
@@ -18,8 +19,8 @@ evaluate|chars i| out {
         }
         if c == "(" {
             other = evaluate(chars, i)
-            n = [other]0
-            i = [other]1
+            n = other.num
+            i = other.i
         } otherwise {
             n = int(c)
         }
@@ -34,12 +35,12 @@ evaluate|chars i| out {
         }
     }
 
-    out = array(num, i)
+    out = Result(num, i)
 }
 
 sum = 0
 for line = [inputLines()]l {
-    sum = sum + [evaluate(chars(line), 0)]0
+    sum = sum + evaluate(chars(line), 0).num
 }
 
 println(sum)
