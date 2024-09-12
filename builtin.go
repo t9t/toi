@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"slices"
 	"strconv"
@@ -66,32 +67,50 @@ func builtinPrintlnVm(arguments []any) (any, error) {
 		if i != 0 {
 			toiStdout.WriteString(", ")
 		}
-		if array, ok := v.(*[]any); ok {
-			toiStdout.WriteRune('[')
-			for i, element := range *array {
-				if i != 0 {
-					toiStdout.WriteString(", ")
-				}
-				toiStdout.WriteString(fmt.Sprintf("%v", element))
-			}
-			toiStdout.WriteRune(']')
-		} else if map_, ok := v.(*map[string]any); ok {
-			toiStdout.WriteRune('{')
-			for i, key := range sortedMapKeys(map_) {
-				if i != 0 {
-					toiStdout.WriteString(", ")
-				}
-				toiStdout.WriteString(fmt.Sprintf("%v", key))
-				toiStdout.WriteString(": ")
-				toiStdout.WriteString(fmt.Sprintf("%v", (*map_)[key]))
-			}
-			toiStdout.WriteRune('}')
-		} else {
-			toiStdout.WriteString(fmt.Sprintf("%v", v))
-		}
+		writeValue(v, toiStdout)
 	}
 	toiStdout.WriteRune('\n')
 	return nil, nil
+}
+
+type printer interface {
+	print(out *bytes.Buffer)
+}
+
+func writeValue(v any, out *bytes.Buffer) {
+	if array, ok := v.(*[]any); ok {
+		writeArray(array, out)
+	} else if map_, ok := v.(*map[string]any); ok {
+		writeMap(map_, out)
+	} else if instance, ok := v.(printer); ok {
+		instance.print(out)
+	} else {
+		out.WriteString(fmt.Sprintf("%v", v))
+	}
+}
+
+func writeArray(array *[]any, out *bytes.Buffer) {
+	out.WriteRune('[')
+	for i, element := range *array {
+		if i != 0 {
+			out.WriteString(", ")
+		}
+		out.WriteString(fmt.Sprintf("%v", element))
+	}
+	out.WriteRune(']')
+}
+
+func writeMap(map_ *map[string]any, out *bytes.Buffer) {
+	out.WriteRune('{')
+	for i, key := range sortedMapKeys(map_) {
+		if i != 0 {
+			out.WriteString(", ")
+		}
+		out.WriteString(fmt.Sprintf("%v", key))
+		out.WriteString(": ")
+		out.WriteString(fmt.Sprintf("%v", (*map_)[key]))
+	}
+	out.WriteRune('}')
 }
 
 func builtinInputLines(env Env, e []Expression) (any, error) {

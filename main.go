@@ -9,7 +9,7 @@ import (
 )
 
 // TODO: definitely not globals
-var toiStdout bytes.Buffer
+var toiStdout *bytes.Buffer
 var toiStdin string
 
 func main() {
@@ -67,7 +67,7 @@ func runScript(scriptData []byte, outFile string, stdin string) (string, error) 
 
 	// TODO: better state management instead of globals
 	toiStdin = stdin
-	toiStdout = bytes.Buffer{}
+	toiStdout = &bytes.Buffer{}
 
 	vars := make(map[string]any)
 

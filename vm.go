@@ -1,9 +1,9 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"slices"
-	"strings"
 )
 
 // type Opcode byte
@@ -63,23 +63,20 @@ type VmInstance struct {
 	values []any
 }
 
-func (instance *VmInstance) String() string {
-	var sb strings.Builder
-	sb.WriteString(instance.vmType.Name)
-	sb.WriteRune('{')
+func (instance *VmInstance) print(out *bytes.Buffer) {
+	out.WriteString(instance.vmType.Name)
+	out.WriteRune('{')
 	for i := range len(instance.values) {
 		fieldName := instance.vmType.Fields[i]
 		fieldValue := instance.values[i]
 		if i != 0 {
-			sb.WriteRune(',')
+			out.WriteRune(',')
 		}
-		sb.WriteString(fieldName)
-		sb.WriteRune('=')
-		// TODO: better value to string
-		sb.WriteString(fmt.Sprintf("%+v", fieldValue))
+		out.WriteString(fieldName)
+		out.WriteRune('=')
+		writeValue(fieldValue, out)
 	}
-	sb.WriteRune('}')
-	return sb.String()
+	out.WriteRune('}')
 }
 
 type VmFunction struct {

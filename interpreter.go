@@ -1,10 +1,10 @@
 package main
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"slices"
-	"strings"
 )
 
 var ErrExitFunction = errors.New("exit function")
@@ -18,23 +18,20 @@ type ToiInstance struct {
 	fieldValues []any
 }
 
-func (instance *ToiInstance) String() string {
-	var sb strings.Builder
-	sb.WriteString(instance.toiType.Identifier.Lexeme)
-	sb.WriteRune('{')
+func (instance *ToiInstance) print(out *bytes.Buffer) {
+	out.WriteString(instance.toiType.Identifier.Lexeme)
+	out.WriteRune('{')
 	for i := range len(instance.fieldValues) {
 		fieldName := instance.toiType.Fields[i].Lexeme
 		fieldValue := instance.fieldValues[i]
 		if i != 0 {
-			sb.WriteRune(',')
+			out.WriteRune(',')
 		}
-		sb.WriteString(fieldName)
-		sb.WriteRune('=')
-		// TODO: better value to string
-		sb.WriteString(fmt.Sprintf("%+v", fieldValue))
+		out.WriteString(fieldName)
+		out.WriteRune('=')
+		writeValue(fieldValue, out)
 	}
-	sb.WriteRune('}')
-	return sb.String()
+	out.WriteRune('}')
 }
 
 const outerScope = "_outer"

@@ -1,1 +1,1 @@
-Data{a=1,b=asdf,c=&[42]}
+Data{a=1,b=asdf,c=[42]}
