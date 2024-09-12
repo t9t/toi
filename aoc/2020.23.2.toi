@@ -21,19 +21,19 @@ for char = [chars([inputLines()]0)]c {
 }
 
 num = max+1
-while num <= 1000000 {
+while num <= 1'000'000 {
     cup = Cup(num, 0)
     [cache]string(num) = cup
     prev.nextCup = cup
     prev = cup
     num = num + 1
 }
-max = 1000000
+max = 1'000'000
 prev.nextCup = first
 
 current = first
 move = 1
-while move <= 10000000 {
+while move <= 10'000'000 {
     clockwise1 = current.nextCup
     clockwise2 = clockwise1.nextCup
     clockwise3 = clockwise2.nextCup

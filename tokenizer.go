@@ -261,7 +261,7 @@ func tokenizeString(runes []rune, pos, line, col int) (Token, error) {
 
 func tokenizeNumber(runes []rune, pos, line, col int) (Token, error) {
 	i := 0
-	for ; i < len(runes) && isDigit(runes[i]); i++ {
+	for ; i < len(runes) && (isDigit(runes[i]) || runes[i] == '\''); i++ {
 	}
 
 	/* TODO: float support disabled for now lol
@@ -272,18 +272,19 @@ func tokenizeNumber(runes []rune, pos, line, col int) (Token, error) {
 	}
 	*/
 
-	lexeme := string(runes[0:i])
-	literal, err := strconv.Atoi(lexeme)
+	rawLexeme := string(runes[0:i])
+	fixedLexeme := strings.ReplaceAll(rawLexeme, "'", "")
+	literal, err := strconv.Atoi(fixedLexeme)
 	if err != nil {
 		// TODO: better errors for really big numbers
-		return Token{}, fmt.Errorf("error converting '%s' to int: %v", lexeme, err)
+		return Token{}, fmt.Errorf("error converting '%s' to int: %v", fixedLexeme, err)
 	}
 
-	if len(lexeme) > 1 && lexeme[0] == '0' && lexeme[1] != '.' {
+	if len(fixedLexeme) > 1 && fixedLexeme[0] == '0' && fixedLexeme[1] != '.' {
 		return Token{}, fmt.Errorf("numbers may not start with 0")
 	}
 
-	return Token{TokenNumber, lexeme, literal, pos, line, col}, nil
+	return Token{TokenNumber, rawLexeme, literal, pos, line, col}, nil
 }
 
 func isDigit(c rune) bool {
