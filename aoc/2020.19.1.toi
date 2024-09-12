@@ -22,9 +22,7 @@ for line = [inputLines()]l {
         chars = chars([parts]1)
         if len(chars) == 3 and [chars]0 == "${"}" {
             // e.g. "a"
-            rule = array()
-            push(rule, "letter")
-            push(rule, [chars]1)
+            rule = array("letter", [chars]1)
             [rules]ruleId = rule
             next iteration
         }
@@ -92,8 +90,7 @@ matches|rules message i nextRulesToMatch| matches {
 
 matching = 0
 for message = [messages]m {
-    nextRulesToMatch = array()
-    push(nextRulesToMatch, "0")
+    nextRulesToMatch = array("0")
     if matches(rules, message, 0, nextRulesToMatch) {
         matching = matching + 1
     }

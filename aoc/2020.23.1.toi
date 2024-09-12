@@ -2,8 +2,7 @@
 
 prev = 0 // dummy value that will never be used to satisfy the compiler
 for char = [chars([inputLines()]0)]c {
-    cup = array()
-    push(cup, int(char))
+    cup = array(int(char))
     if c <> 0 {
         push(prev, cup)
     } otherwise {

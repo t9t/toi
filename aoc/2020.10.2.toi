@@ -1,5 +1,4 @@
-numbers = array()
-push(numbers, 0)
+numbers = array(0)
 for line = [inputLines()]i {
     push(numbers, int(line))
 }

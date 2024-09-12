@@ -1,9 +1,7 @@
 
 parseRulePart|s| rule {
     parts = split(s, "-")
-    rule = array()
-    push(rule, int([parts]0))
-    push(rule, int([parts]1))
+    rule = array(int([parts]0), int([parts]1))
 }
 
 parseTicket|s| ticket {
@@ -38,9 +36,7 @@ for line = [inputLines()]i {
         name = [parts]0
         parts = split([parts]1, " or ")
 
-        rule = array()
-        push(rule, parseRulePart([parts]0))
-        push(rule, parseRulePart([parts]1))
+        rule = array(parseRulePart([parts]0), parseRulePart([parts]1))
         [rules]name = rule
         [matches]name = map()
 

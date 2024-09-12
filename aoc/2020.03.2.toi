@@ -8,19 +8,8 @@ for line = [lines]i {
 lineCount = len(lines)
 lineLength = len([grid]0)
 
-rights = array()
-push(rights, 1)
-push(rights, 3)
-push(rights, 5)
-push(rights, 7)
-push(rights, 1)
-
-downs = array()
-push(downs, 1)
-push(downs, 1)
-push(downs, 1)
-push(downs, 1)
-push(downs, 2)
+rights = array(1, 3, 5, 7, 1)
+downs = array(1, 1, 1, 1, 2)
 
 product = 1
 for right = [rights]i {

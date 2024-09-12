@@ -24,8 +24,7 @@ for line = [inputLines()]l {
     }
 }
 
-search = array()
-push(search, "shiny gold")
+search = array("shiny gold")
 hits = map()
 
 while len(search) {

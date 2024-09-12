@@ -28,9 +28,7 @@ for line = [inputLines()]l {
 deck2 = reverse(deck)
 
 putAtFront|losing winning deck| out {
-    out = array()
-    push(out, losing)
-    push(out, winning)
+    out = array(losing, winning)
     for card = [deck]i {
         push(out, card)
     }

@@ -22,16 +22,11 @@ parseMult|tokens i| out {
         down = parsePlus(tokens, i)
         right = [down]0
         i = [down]1
-        newLeft = array()
-        push(newLeft, "*")
-        push(newLeft, left)
-        push(newLeft, right)
+        newLeft = array("*", left, right)
         left = newLeft
     }
 
-    out = array()
-    push(out, left)
-    push(out, i)
+    out = array(left, i)
 }
 
 parsePlus|tokens i| out {
@@ -44,23 +39,17 @@ parsePlus|tokens i| out {
         down = parseParens(tokens, i)
         right = [down]0
         i = [down]1
-        newLeft = array()
-        push(newLeft, "+")
-        push(newLeft, left)
-        push(newLeft, right)
+        newLeft = array("+", left, right)
         left = newLeft
     }
 
-    out = array()
-    push(out, left)
-    push(out, i)
+    out = array(left, i)
 }
 
 parseParens|tokens i| out {
     if [tokens]i == "(" {
         down = parse(tokens, i + 1)
-        out = array()
-        push(out, [down]0)
+        out = array([down]0)
         i = [down](1) + 1 // consume ')'
         push(out, i)
     } otherwise {
@@ -69,12 +58,8 @@ parseParens|tokens i| out {
 }
 
 parseNumber|tokens i| out {
-    tree = array()
-    push(tree, int([tokens]i))
-
-    out = array()
-    push(out, tree)
-    push(out, i + 1)
+    tree = array(int([tokens]i))
+    out = array(tree, i + 1)
 }
 
 interpret|tree| out {

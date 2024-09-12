@@ -9,8 +9,7 @@ for line = [lines]l {
         power = 1
         set1bits = 0
         clearXBits = 0
-        orMasks = array()
-        push(orMasks, 0)
+        orMasks = array(0)
         i = len(mask)-1
         while i >= 0 {
             c = [mask]i

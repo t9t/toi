@@ -22,9 +22,7 @@ for line = [inputLines()]l {
         chars = chars([parts]1)
         if len(chars) == 3 and [chars]0 == "${"}" {
             // e.g. "a"
-            rule = array()
-            push(rule, "letter")
-            push(rule, [chars]1)
+            rule = array("letter", [chars]1)
             [rules]ruleId = rule
             next iteration
         }
@@ -54,8 +52,7 @@ matchRule|message i ruleId rules| matches {
     } otherwise {
         matchingIndices = array()
         for subRule = [rule]r {
-            currentIndices = array()
-            push(currentIndices, i)
+            currentIndices = array(i)
 
             for subRuleId = [subRule]s {
                 nextIndices = array()

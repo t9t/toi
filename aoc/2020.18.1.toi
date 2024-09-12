@@ -34,9 +34,7 @@ evaluate|chars i| out {
         }
     }
 
-    out = array()
-    push(out, num)
-    push(out, i)
+    out = array(num, i)
 }
 
 sum = 0
