@@ -457,14 +457,14 @@ func (e *FunctionCallExpression) compile(compiler *Compiler) error {
 		}
 	}
 
-	if e.FunctionName == "println" {
-		compiler.writeBytes(OpPrintln, byte(len(e.Arguments)))
-		return nil
-	}
-
 	index, err := compiler.ensureConstant(e.FunctionName)
 	if err != nil {
 		return err
+	}
+
+	if e.FunctionName == "println" || e.FunctionName == "array" {
+		compiler.writeBytes(OpCallVariadicFunction, index, byte(len(e.Arguments)))
+		return nil
 	}
 
 	op := OpCallFunction

@@ -24,7 +24,7 @@ const (
 	OpInstantiate
 	OpCallBuiltin
 	OpCallFunction
-	OpPrintln // Special op because it's variadic
+	OpCallVariadicFunction
 	OpFieldAccess
 	OpSetField
 	OpDuplicate
@@ -313,14 +313,22 @@ func (vm *Vm) execute(stack []any) error {
 			}
 
 			pushStack(outVar)
-		case OpPrintln:
+		case OpCallVariadicFunction:
+			functionName, err := readConstantString()
+			if err != nil {
+				return err
+			}
+			builtin, found := builtins[functionName]
+			if !found {
+				return fmt.Errorf("builtin function '%v' not found at %d", functionName, ip)
+			}
 			argumentCount := int(readOpByte())
 			arguments := make([]any, argumentCount)
 			for i := 0; i < argumentCount; i++ {
 				arguments[i] = popStack()
 			}
 			slices.Reverse(arguments) // Arguments were pushed onto the stack in left-to-right order, so we read them right-to-left
-			returnValue, err := builtinPrintlnVm(arguments)
+			returnValue, err := builtin.VmFunc(arguments)
 			if err != nil {
 				return err
 			}

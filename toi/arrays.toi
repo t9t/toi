@@ -38,3 +38,6 @@ println(a, b, len(arr), arr)
 
 [arr]1 = 5521
 println(arr)
+
+arr = array(10, 20, 30)
+println(arr)

@@ -43,7 +43,7 @@ func decompile(constants []any, ops []byte) {
 			}
 		case OpNot:
 			fmt.Print("[1] Not")
-		case OpPrintln:
+		case OpCallVariadicFunction:
 			argCount := int(ops[i])
 			i++
 			fmt.Printf("[2] PrintLn of %d arguments", argCount)

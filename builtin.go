@@ -30,7 +30,7 @@ var builtins = map[string]Builtin{
 	"string": {1, builtinString, builtinStringVm},
 
 	// "Arrays" and "Maps"
-	"array": {0, builtinArray, builtinArrayVm},
+	"array": {ArityVariadic, builtinArray, builtinArrayVm},
 	"map":   {0, builtinMap, builtinMapVm},
 	"get":   {2, builtinGet, builtinGetVm},
 	"push":  {2, builtinPush, builtinPushVm},
@@ -200,11 +200,20 @@ func builtinIntVm(arguments []any) (any, error) {
 }
 
 func builtinArray(env Env, e []Expression) (any, error) {
-	return builtinArrayVm([]any{})
+	arguments := make([]any, len(e))
+	for i, expr := range e {
+		value, err := expr.evaluate(env)
+		if err != nil {
+			return nil, err
+		}
+		arguments[i] = value
+	}
+
+	return builtinArrayVm(arguments)
 }
 
 func builtinArrayVm(arguments []any) (any, error) {
-	return &[]any{}, nil
+	return &arguments, nil
 }
 
 func builtinMap(env Env, e []Expression) (any, error) {
