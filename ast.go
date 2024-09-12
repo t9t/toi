@@ -27,6 +27,7 @@ type TypeStatement struct {
 	Token      Token
 	Identifier Token
 	Fields     []Token
+	FieldMap   map[string]int
 }
 
 func (s *TypeStatement) lineCol() LineCol {

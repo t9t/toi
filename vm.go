@@ -56,8 +56,9 @@ const (
 )
 
 type VmType struct {
-	Name   string
-	Fields []string
+	Name     string
+	Fields   []string
+	FieldMap map[string]int
 }
 
 type VmInstance struct {
@@ -334,17 +335,11 @@ func (vm *Vm) execute(stack []any) error {
 			if !ok {
 				return fmt.Errorf("left-hand operand of '.' must be a type instance but was '%v'", target)
 			}
-			fieldFound := false
-			for i, field := range instance.vmType.Fields {
-				if field == identifier {
-					pushStack(instance.values[i])
-					fieldFound = true
-					break
-				}
-			}
-			if !fieldFound {
+			index, found := instance.vmType.FieldMap[identifier]
+			if !found {
 				return fmt.Errorf("field '%v' not found on type '%v'", identifier, instance.vmType.Name)
 			}
+			pushStack(instance.values[index])
 		case OpSetField:
 			identifier, err := readConstantString()
 			if err != nil {
@@ -356,17 +351,11 @@ func (vm *Vm) execute(stack []any) error {
 			if !ok {
 				return fmt.Errorf("left-hand operand of '.' must be a type instance but was '%v'", target)
 			}
-			fieldFound := false
-			for i, field := range instance.vmType.Fields {
-				if field == identifier {
-					instance.values[i] = value
-					fieldFound = true
-					break
-				}
-			}
-			if !fieldFound {
+			index, found := instance.vmType.FieldMap[identifier]
+			if !found {
 				return fmt.Errorf("field '%v' not found on type '%v'", identifier, instance.vmType.Name)
 			}
+			instance.values[index] = value
 		case OpDuplicate:
 			v := popStack()
 			pushStack(v)

@@ -199,13 +199,13 @@ func (p *Parser) parseTypeStatement() (Statement, error) {
 	}
 
 	fields := make([]Token, 0)
-	fieldMap := make(map[string]struct{})
+	fieldMap := make(map[string]int)
 	for p.hasCurrent() && p.current().Type == TokenIdentifier {
 		if _, found := fieldMap[p.current().Lexeme]; found {
 			tok := p.current()
 			return nil, fmt.Errorf("duplicate field name '%v' in type declaration '%v' at %d:%d", tok.Lexeme, identifier, tok.Line, tok.Col)
 		}
-		fieldMap[p.current().Lexeme] = struct{}{}
+		fieldMap[p.current().Lexeme] = len(fields)
 		fields = append(fields, p.current())
 		p.consume(1)
 	}
@@ -232,6 +232,7 @@ func (p *Parser) parseTypeStatement() (Statement, error) {
 		Token:      startToken,
 		Identifier: identifierToken,
 		Fields:     fields,
+		FieldMap:   fieldMap,
 	}, nil
 }
 

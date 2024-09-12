@@ -74,13 +74,16 @@ func (s *BlockStatement) compile(compiler *Compiler) error {
 
 func (s *TypeStatement) compile(compiler *Compiler) error {
 	fields := make([]string, len(s.Fields))
+	fieldMap := make(map[string]int, len(s.Fields))
 	for i, fieldToken := range s.Fields {
 		fields[i] = fieldToken.Lexeme
+		fieldMap[fieldToken.Lexeme] = i
 	}
 
 	vmType := VmType{
-		Name:   s.Identifier.Lexeme,
-		Fields: fields,
+		Name:     s.Identifier.Lexeme,
+		Fields:   fields,
+		FieldMap: fieldMap,
 	}
 	compiler.declaredTypes[vmType.Name] = vmType
 

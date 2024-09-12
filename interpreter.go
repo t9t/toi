@@ -148,13 +148,13 @@ func (s *FieldAssignmentStatement) execute(env Env) error {
 	if err != nil {
 		return err
 	}
-	for i, field := range instance.toiType.Fields {
-		if field.Lexeme == s.Identifier.Lexeme {
-			instance.fieldValues[i] = value
-			return nil
-		}
+	identifier := s.Identifier.Lexeme
+	index, found := instance.toiType.FieldMap[identifier]
+	if !found {
+		return fmt.Errorf("field '%v' not found on type '%v'", s.Identifier.Lexeme, instance.toiType.Identifier.Lexeme)
 	}
-	return fmt.Errorf("field '%v' not found on type '%v'", s.Identifier.Lexeme, instance.toiType.Identifier.Lexeme)
+	instance.fieldValues[index] = value
+	return nil
 }
 
 func (s *ExpressionStatement) execute(env Env) error {
@@ -310,12 +310,12 @@ func (e *FieldAccessExpression) evaluate(env Env) (any, error) {
 	if !ok {
 		return nil, fmt.Errorf("left-hand operand of '.' must be a type instance but was '%v'", left)
 	}
-	for i, field := range instance.toiType.Fields {
-		if field.Lexeme == e.Identifier.Lexeme {
-			return instance.fieldValues[i], nil
-		}
+	identifier := e.Identifier.Lexeme
+	index, found := instance.toiType.FieldMap[identifier]
+	if !found {
+		return nil, fmt.Errorf("field '%v' not found on type '%v'", e.Identifier.Lexeme, instance.toiType.Identifier.Lexeme)
 	}
-	return nil, fmt.Errorf("field '%v' not found on type '%v'", e.Identifier.Lexeme, instance.toiType.Identifier.Lexeme)
+	return instance.fieldValues[index], nil
 }
 
 func (e *ContainerAccessExpression) evaluate(env Env) (any, error) {
