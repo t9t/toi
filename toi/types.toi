@@ -1,7 +1,4 @@
-type Data{a b c}
-
-// ? a{a b c}
-// ? a|a b c|
+Data{a b c}
 
 array = array()
 push(array, 42)

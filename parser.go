@@ -89,12 +89,7 @@ func (p *Parser) parseStatement() (stmt Statement, err error) {
 		return nil, nil
 	}
 
-	if p.current().Type == TokenTypeKeyword {
-		stmt, err = p.parseTypeStatement()
-		if err != nil {
-			return nil, err
-		}
-	} else if p.current().Type == TokenIf {
+	if p.current().Type == TokenIf {
 		stmt, err = p.parseIfStatement()
 		if err != nil {
 			return nil, err
@@ -116,6 +111,11 @@ func (p *Parser) parseStatement() (stmt Statement, err error) {
 		}
 	} else if p.current().Type == TokenNext {
 		stmt, err = p.parseNextIterationStatement()
+		if err != nil {
+			return nil, err
+		}
+	} else if p.hasNext() && p.current().Type == TokenIdentifier && p.next().Type == TokenBraceOpen {
+		stmt, err = p.parseTypeStatement()
 		if err != nil {
 			return nil, err
 		}
@@ -173,20 +173,10 @@ func (p *Parser) parseBlock(typ string) (Statement, error) {
 }
 
 func (p *Parser) parseTypeStatement() (Statement, error) {
-	startToken := p.current()
-	p.consume(1)
-
-	if !p.hasCurrent() || p.current().Type != TokenIdentifier {
-		tok := p.current()
-		return nil, fmt.Errorf("expected identifier after 'type' but got '%v' at %d:%d", tok.Type, tok.Line, tok.Col)
-	}
-	if !p.hasNext() || p.next().Type != TokenBraceOpen {
-		tok := p.next()
-		return nil, fmt.Errorf("expected '{' after type identifier but got '%v' at %d:%d", tok.Type, tok.Line, tok.Col)
-	}
 	identifierToken := p.current()
+	startToken := identifierToken
 	identifier := identifierToken.Lexeme
-	p.consume(2)
+	p.consume(2) // identifier and '{'
 
 	if _, found := p.declaredTypes[identifier]; found {
 		tok := startToken

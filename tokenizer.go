@@ -60,8 +60,7 @@ const (
 	TokenNext      TokenType = "Next"
 	TokenIteration TokenType = "Iteration"
 
-	TokenTypeKeyword TokenType = "Type"
-	TokenFullStop    TokenType = "FullStop"
+	TokenFullStop TokenType = "FullStop"
 )
 
 type Token struct {
@@ -115,7 +114,6 @@ var keywordTokens = map[string]TokenType{
 	"bor":       TokenBOr,
 	"xor":       TokenXOr,
 	"band":      TokenBAnd,
-	"type":      TokenTypeKeyword,
 }
 
 func tokenize(input string) (tokens []Token, errors []error) {
