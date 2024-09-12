@@ -16,14 +16,21 @@ println(data.c)
 data.a = 3
 println(data)
 
-//data.a = data.a * 3
-//[data.c]0 = 1337
-//println(data)
-//push(array, data)
-//([array]1).b = "changed"
-//println(data)
-//([([array]1).c]3).a = 5521
-//println(data)
-//data.b = Data(5, 8, 13)
-//data.b.c = data.b.a + data.b.b
-//println(data)
+data.a = data.a * 3
+[data.c]0 = 1337
+println(data)
+
+otherArray = array()
+push(otherArray, data)
+([otherArray]0).b = "changed"
+println(data)
+println(otherArray)
+
+push(data.c, Data(100, 200, 300))
+
+([([otherArray]0).c]1).a = 5521
+println(data)
+
+data.b = Data(5, 8, 13)
+data.b.c = (data.b.a + data.b.b) * data.b.c
+println(data)

@@ -95,7 +95,7 @@ func writeArray(array *[]any, out *bytes.Buffer) {
 		if i != 0 {
 			out.WriteString(", ")
 		}
-		out.WriteString(fmt.Sprintf("%v", element))
+		writeValue(element, out)
 	}
 	out.WriteRune(']')
 }
@@ -108,7 +108,7 @@ func writeMap(map_ *map[string]any, out *bytes.Buffer) {
 		}
 		out.WriteString(fmt.Sprintf("%v", key))
 		out.WriteString(": ")
-		out.WriteString(fmt.Sprintf("%v", (*map_)[key]))
+		writeValue((*map_)[key], out)
 	}
 	out.WriteRune('}')
 }

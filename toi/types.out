@@ -3,3 +3,8 @@ Data{a=2,b=asdf,c=[42]}
 asdf
 [42]
 Data{a=3,b=asdf,c=[42]}
+Data{a=9,b=asdf,c=[1337]}
+Data{a=9,b=changed,c=[1337]}
+[Data{a=9,b=changed,c=[1337]}]
+Data{a=9,b=changed,c=[1337, Data{a=5521,b=200,c=300}]}
+Data{a=9,b=Data{a=5,b=8,c=169},c=[1337, Data{a=5521,b=200,c=300}]}
