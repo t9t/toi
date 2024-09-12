@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"slices"
+	"strings"
 )
 
 // type Opcode byte
@@ -20,6 +21,7 @@ const (
 	OpLoadConstant
 	OpReadVariable
 	OpSetVariable
+	OpInstantiate
 	OpCallBuiltin
 	OpCallFunction
 	OpPrintln // Special op because it's variadic
@@ -51,6 +53,35 @@ const (
 	OpBinaryConcat
 )
 
+type VmType struct {
+	Name   string
+	Fields []string
+}
+
+type VmInstance struct {
+	vmType *VmType
+	values []any
+}
+
+func (instance *VmInstance) String() string {
+	var sb strings.Builder
+	sb.WriteString(instance.vmType.Name)
+	sb.WriteRune('{')
+	for i := range len(instance.values) {
+		fieldName := instance.vmType.Fields[i]
+		fieldValue := instance.values[i]
+		if i != 0 {
+			sb.WriteRune(',')
+		}
+		sb.WriteString(fieldName)
+		sb.WriteRune('=')
+		// TODO: better value to string
+		sb.WriteString(fmt.Sprintf("%+v", fieldValue))
+	}
+	sb.WriteRune('}')
+	return sb.String()
+}
+
 type VmFunction struct {
 	params              []string
 	ops                 []byte
@@ -64,16 +95,18 @@ type Vm struct {
 	variableDefinitions []string
 	variables           []any
 	functions           map[string]VmFunction
+	types               map[string]VmType
 }
 
 const maxStack = 50
 
-func execute(ops []byte, constants []any, variableDefinitions []string, functions map[string]VmFunction) error {
+func execute(ops []byte, constants []any, variableDefinitions []string, functions map[string]VmFunction, types map[string]VmType) error {
 	variables := make([]any, len(variableDefinitions))
 	vm := &Vm{
 		ops:                 ops,
 		constants:           constants,
 		functions:           functions,
+		types:               types,
 		variableDefinitions: variableDefinitions,
 		variables:           variables,
 	}
@@ -83,7 +116,7 @@ func execute(ops []byte, constants []any, variableDefinitions []string, function
 }
 
 func (vm *Vm) execute(stack []any) error {
-	constants, ops, functions := vm.constants, vm.ops, vm.functions
+	constants, ops, functions, types := vm.constants, vm.ops, vm.functions, vm.types
 
 	ip := 0
 	readOpByte := func() byte {
@@ -209,6 +242,25 @@ func (vm *Vm) execute(stack []any) error {
 		case OpSetVariable:
 			index := int(readOpByte())
 			vm.variables[index] = popStack()
+		case OpInstantiate:
+			typeName, err := readConstantString()
+			if err != nil {
+				return err
+			}
+			vmType, found := types[typeName]
+			if !found {
+				return fmt.Errorf("type '%v' not found at %d", typeName, ip)
+			}
+			fieldValues := make([]any, len(vmType.Fields))
+			for i := range vmType.Fields {
+				fieldValues[i] = popStack()
+			}
+			slices.Reverse(fieldValues) // Arguments were pushed onto the stack in left-to-right order, so we read them right-to-left
+			instance := VmInstance{
+				vmType: &vmType,
+				values: fieldValues,
+			}
+			pushStack(&instance)
 		case OpCallBuiltin:
 			functionName, err := readConstantString()
 			if err != nil {

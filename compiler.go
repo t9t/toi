@@ -19,6 +19,7 @@ type Compiler struct {
 	loopStates    []*LoopState
 	functions     map[string]VmFunction
 	exitFunctions []int
+	declaredTypes map[string]VmType
 }
 
 func (c *Compiler) writeByte(b byte) {
@@ -68,6 +69,20 @@ func (s *BlockStatement) compile(compiler *Compiler) error {
 			return err
 		}
 	}
+	return nil
+}
+
+func (s *TypeStatement) compile(compiler *Compiler) error {
+	fields := make([]string, len(s.Fields))
+	for i, fieldToken := range s.Fields {
+		fields[i] = fieldToken.Lexeme
+	}
+
+	vmType := VmType{
+		Name:   s.Identifier.Lexeme,
+		Fields: fields,
+	}
+	compiler.declaredTypes[vmType.Name] = vmType
 	return nil
 }
 
@@ -421,6 +436,8 @@ func (e *FunctionCallExpression) compile(compiler *Compiler) error {
 	op := OpCallFunction
 	if e.Builtin {
 		op = OpCallBuiltin
+	} else if e.Constructor {
+		op = OpInstantiate
 	}
 	compiler.writeBytes(op, index)
 	return nil

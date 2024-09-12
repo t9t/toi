@@ -23,6 +23,16 @@ func (s *BlockStatement) lineCol() LineCol {
 	return s.Token.LineCol()
 }
 
+type TypeStatement struct {
+	Token      Token
+	Identifier Token
+	Fields     []Token
+}
+
+func (s *TypeStatement) lineCol() LineCol {
+	return s.Token.LineCol()
+}
+
 type IfStatement struct {
 	Token     Token
 	Condition Expression
@@ -121,6 +131,7 @@ func (e *ContainerAccessExpression) lineCol() LineCol {
 type FunctionCallExpression struct {
 	Token        Token
 	Builtin      bool
+	Constructor  bool
 	FunctionName string
 	Arguments    []Expression
 }

@@ -59,7 +59,7 @@ func runScript(scriptData []byte, outFile string, stdin string) (string, error) 
 		return "", fmt.Errorf("tokenization error")
 	}
 
-	parser := &Parser{tokens: tokens, declaredFunctions: make(map[string]int)}
+	parser := &Parser{tokens: tokens, declaredFunctions: make(map[string]int), declaredTypes: make(map[string]struct{})}
 	scriptStatement, err := parser.parse()
 	if err != nil {
 		return "", fmt.Errorf("parse error: %w", err)
@@ -84,7 +84,7 @@ func runScript(scriptData []byte, outFile string, stdin string) (string, error) 
 
 	toiStdout.Reset()
 
-	compiler := &Compiler{functions: make(map[string]VmFunction)}
+	compiler := &Compiler{functions: make(map[string]VmFunction), declaredTypes: make(map[string]VmType)}
 	err = scriptStatement.compile(compiler)
 	if err != nil {
 		return "", fmt.Errorf("Compilation error: %w", err)
@@ -98,7 +98,7 @@ func runScript(scriptData []byte, outFile string, stdin string) (string, error) 
 	}
 
 	start = time.Now()
-	err = execute(ops, compiler.constants, compiler.variables, compiler.functions)
+	err = execute(ops, compiler.constants, compiler.variables, compiler.functions, compiler.declaredTypes)
 	if err != nil {
 		fmt.Printf("%s\n", toiStdout.String())
 		return "", fmt.Errorf("VM execution error: %w", err)

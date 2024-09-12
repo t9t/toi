@@ -19,6 +19,7 @@ type Parser struct {
 	parsingFunctionDeclaration bool
 	declaredFunctions          map[string]int
 	forwardCalls               []ForwardCall
+	declaredTypes              map[string]struct{}
 }
 
 func (p *Parser) consume(i int) {
@@ -87,7 +88,12 @@ func (p *Parser) parseStatement() (stmt Statement, err error) {
 		return nil, nil
 	}
 
-	if p.current().Type == TokenIf {
+	if p.current().Type == TokenTypeKeyword {
+		stmt, err = p.parseTypeStatement()
+		if err != nil {
+			return nil, err
+		}
+	} else if p.current().Type == TokenIf {
 		stmt, err = p.parseIfStatement()
 		if err != nil {
 			return nil, err
@@ -163,6 +169,69 @@ func (p *Parser) parseBlock(typ string) (Statement, error) {
 
 	p.consume(1)
 	return &BlockStatement{Token: token, Statements: statements}, nil
+}
+
+func (p *Parser) parseTypeStatement() (Statement, error) {
+	startToken := p.current()
+	p.consume(1)
+
+	if !p.hasCurrent() || p.current().Type != TokenIdentifier {
+		tok := p.current()
+		return nil, fmt.Errorf("expected identifier after 'type' but got '%v' at %d:%d", tok.Type, tok.Line, tok.Col)
+	}
+	if !p.hasNext() || p.next().Type != TokenBraceOpen {
+		tok := p.next()
+		return nil, fmt.Errorf("expected '{' after type identifier but got '%v' at %d:%d", tok.Type, tok.Line, tok.Col)
+	}
+	identifierToken := p.current()
+	identifier := identifierToken.Lexeme
+	p.consume(2)
+
+	if _, found := p.declaredTypes[identifier]; found {
+		tok := startToken
+		return nil, fmt.Errorf("type '%v' re-declared %d:%d", identifier, tok.Line, tok.Col)
+	}
+
+	if _, found := p.declaredFunctions[identifier]; found {
+		tok := startToken
+		return nil, fmt.Errorf("cannot use '%v' as a type name because a function with the same name already exists at %d:%d", identifier, tok.Line, tok.Col)
+	}
+
+	fields := make([]Token, 0)
+	fieldMap := make(map[string]struct{})
+	for p.hasCurrent() && p.current().Type == TokenIdentifier {
+		if _, found := fieldMap[p.current().Lexeme]; found {
+			tok := p.current()
+			return nil, fmt.Errorf("duplicate field name '%v' in type declaration '%v' at %d:%d", tok.Lexeme, identifier, tok.Line, tok.Col)
+		}
+		fieldMap[p.current().Lexeme] = struct{}{}
+		fields = append(fields, p.current())
+		p.consume(1)
+	}
+
+	if len(fields) == 0 {
+		tok := identifierToken
+		return nil, fmt.Errorf("types must have at least 1 field for type '%s' at %d:%d", identifierToken.Lexeme, tok.Line, tok.Col)
+	}
+
+	if len(fields) > 50 {
+		return nil, fmt.Errorf("types don't support more than 50 fields (was %d for '%v')", len(fields), identifierToken.Lexeme)
+	}
+
+	if !p.hasCurrent() || p.current().Type != TokenBraceClose {
+		tok := p.current()
+		return nil, fmt.Errorf("expected '}' after type fields but got '%v' at %d:%d", tok.Type, tok.Line, tok.Col)
+	}
+	p.consume(1)
+
+	p.declaredTypes[identifier] = struct{}{}
+	p.declaredFunctions[identifier] = len(fields)
+
+	return &TypeStatement{
+		Token:      startToken,
+		Identifier: identifierToken,
+		Fields:     fields,
+	}, nil
 }
 
 func (p *Parser) parseIfStatement() (Statement, error) {
@@ -651,6 +720,7 @@ func (p *Parser) parseFunctionCall() (Expression, error) {
 
 	builtin, builtinFound := builtins[identifier]
 	functionArity, functionFound := p.declaredFunctions[identifier]
+	_, constructor := p.declaredTypes[identifier]
 	if builtinFound {
 		// This is safe, because parseFunctionDeclaration disallows overwriting builtin functions
 		functionArity = builtin.Arity
@@ -694,6 +764,7 @@ func (p *Parser) parseFunctionCall() (Expression, error) {
 	return &FunctionCallExpression{
 		Token:        callToken,
 		Builtin:      builtinFound,
+		Constructor:  constructor,
 		FunctionName: callToken.Lexeme,
 		Arguments:    arguments,
 	}, nil

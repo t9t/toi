@@ -26,6 +26,7 @@ func TestToi(t *testing.T) {
 		{"math", ""},
 		{"printNumbers", ""},
 		{"strings", ""},
+		{"types", ""},
 		{"while", ""},
 	}
 

@@ -9,10 +9,11 @@ import (
 type TokenType string
 
 const (
-	TokenNewline    TokenType = "Newline"
-	TokenIdentifier TokenType = "Identifier"
-	TokenNumber     TokenType = "Number"
-	TokenString     TokenType = "String"
+	TokenNewline         TokenType = "Newline"
+	TokenIdentifier      TokenType = "Identifier"
+	TokenNumber          TokenType = "Number"
+	TokenString          TokenType = "String"
+	TokenInternalLiteral TokenType = "InternalLiteral"
 
 	TokenEqualEqual   TokenType = "EqualEqual"
 	TokenNotEqual     TokenType = "NotEqual"
@@ -58,6 +59,9 @@ const (
 	TokenLoop      TokenType = "Loop"
 	TokenNext      TokenType = "Next"
 	TokenIteration TokenType = "Iteration"
+
+	TokenTypeKeyword TokenType = "Type"
+	TokenFullStop    TokenType = "FullStop"
 )
 
 type Token struct {
@@ -92,6 +96,8 @@ var singleCharTokens = map[rune]TokenType{
 
 	'&': TokenAmpersand,
 	'|': TokenPipe,
+
+	'.': TokenFullStop,
 }
 
 var keywordTokens = map[string]TokenType{
@@ -109,6 +115,7 @@ var keywordTokens = map[string]TokenType{
 	"bor":       TokenBOr,
 	"xor":       TokenXOr,
 	"band":      TokenBAnd,
+	"type":      TokenTypeKeyword,
 }
 
 func tokenize(input string) (tokens []Token, errors []error) {

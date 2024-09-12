@@ -1,0 +1,16 @@
+type Data{a b c}
+
+// ? a{a b c}
+// ? a|a b c|
+
+array = array()
+push(array, 42)
+
+data = Data(1, "asdf", array)
+
+// TODO: change c=&[42] to c=[42]
+// TODO: change b=asdf to b="asdf"
+println(data)
+//println(data.a)
+//println(data.b)
+//println(data.c)

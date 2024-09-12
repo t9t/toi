@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"slices"
+	"strings"
 )
 
 var ErrExitFunction = errors.New("exit function")
@@ -11,6 +12,30 @@ var ErrExitLoop = errors.New("exit loop")
 var ErrNextIteration = errors.New("next iteration")
 
 type Env map[string]any
+
+type ToiInstance struct {
+	toiType     TypeStatement
+	fieldValues []any
+}
+
+func (instance *ToiInstance) String() string {
+	var sb strings.Builder
+	sb.WriteString(instance.toiType.Identifier.Lexeme)
+	sb.WriteRune('{')
+	for i := range len(instance.fieldValues) {
+		fieldName := instance.toiType.Fields[i].Lexeme
+		fieldValue := instance.fieldValues[i]
+		if i != 0 {
+			sb.WriteRune(',')
+		}
+		sb.WriteString(fieldName)
+		sb.WriteRune('=')
+		// TODO: better value to string
+		sb.WriteString(fmt.Sprintf("%+v", fieldValue))
+	}
+	sb.WriteRune('}')
+	return sb.String()
+}
 
 const outerScope = "_outer"
 
@@ -28,6 +53,14 @@ func (s *BlockStatement) execute(env Env) error {
 			return err
 		}
 	}
+	return nil
+}
+
+func (s *TypeStatement) execute(env Env) error {
+	fmt.Printf("Interpreting TypeStatement: %+v\n", s)
+	currentInterpreterLineCol = s.lineCol()
+
+	env[getFuncEnvName(s.Identifier.Lexeme)] = s
 	return nil
 }
 
@@ -267,34 +300,56 @@ func (e *FunctionCallExpression) evaluate(env Env) (any, error) {
 	if outer, found := env[outerScope]; found {
 		envToFindFunc = outer.(Env)
 	}
-	stmt := envToFindFunc[getFuncEnvName(e.FunctionName)].(*FunctionDeclarationStatement)
+	stmt := envToFindFunc[getFuncEnvName(e.FunctionName)]
 
-	functionEnv := make(Env)
-	if outer, found := env[outerScope]; found {
-		functionEnv[outerScope] = outer
+	if fff, ok := stmt.(*FunctionDeclarationStatement); ok {
+		funcStmt := fff
+		functionEnv := make(Env)
+		if outer, found := env[outerScope]; found {
+			functionEnv[outerScope] = outer
+		} else {
+			functionEnv[outerScope] = env
+		}
+
+		if funcStmt.OutVariable != nil {
+			functionEnv[funcStmt.OutVariable.Lexeme] = nil
+		}
+		var err error
+		for i, param := range funcStmt.Parameters {
+			functionEnv[param.Lexeme], err = e.Arguments[i].evaluate(env)
+			if err != nil {
+				return nil, err
+			}
+		}
+		if err = funcStmt.Body.execute(functionEnv); err != nil {
+			if !errors.Is(err, ErrExitFunction) {
+				return nil, err
+			}
+		}
+		if funcStmt.OutVariable != nil {
+			return functionEnv[funcStmt.OutVariable.Lexeme], nil
+		}
+		return nil, nil
 	} else {
-		functionEnv[outerScope] = env
-	}
+		typeStmt := stmt.(*TypeStatement)
+		if len(typeStmt.Fields) != len(e.Arguments) {
+			panic(fmt.Sprintf("%d != %d", len(typeStmt.Fields), len(e.Arguments)))
+		}
 
-	if stmt.OutVariable != nil {
-		functionEnv[stmt.OutVariable.Lexeme] = nil
-	}
-	var err error
-	for i, param := range stmt.Parameters {
-		functionEnv[param.Lexeme], err = e.Arguments[i].evaluate(env)
-		if err != nil {
-			return nil, err
+		fieldValues := make([]any, len(typeStmt.Fields))
+		for i := range typeStmt.Fields {
+			value, err := e.Arguments[i].evaluate(env)
+			if err != nil {
+				return nil, err
+			}
+			fieldValues[i] = value
 		}
+
+		return &ToiInstance{
+			toiType:     *typeStmt,
+			fieldValues: fieldValues,
+		}, nil
 	}
-	if err = stmt.Body.execute(functionEnv); err != nil {
-		if !errors.Is(err, ErrExitFunction) {
-			return nil, err
-		}
-	}
-	if stmt.OutVariable != nil {
-		return functionEnv[stmt.OutVariable.Lexeme], nil
-	}
-	return nil, nil
 }
 
 func (e *LiteralExpression) evaluate(env Env) (any, error) {
