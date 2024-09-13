@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"reflect"
 	"slices"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -41,6 +42,7 @@ var builtins = map[string]Builtin{
 	"keys":  {1, builtinKeys, builtinKeysVm},
 	"isSet": {2, builtinIsSet, builtinIsSetVm},
 	"unset": {2, builtinUnset, builtinUnsetVm},
+	"sort":  {1, builtinSort, builtinSortVm},
 }
 
 func toArguments(env Env, e []Expression) ([]any, error) {
@@ -523,6 +525,44 @@ func builtinUnsetVm(arguments []any) (any, error) {
 
 	delete(*map_, key)
 	return 0, nil
+}
+
+func builtinSort(env Env, e []Expression) (any, error) {
+	// sort(arr)
+	arguments, err := toArguments(env, e)
+	if err != nil {
+		return nil, err
+	}
+	return builtinSortVm(arguments)
+}
+
+func builtinSortVm(arguments []any) (any, error) {
+	v := arguments[0]
+
+	array, ok := v.(*[]any)
+	if !ok {
+		return nil, fmt.Errorf("argument to sort() needs to be an array, but was '%v'", v)
+	}
+
+	sort.Slice(*array, func(i, j int) bool {
+		l, r := (*array)[i], (*array)[j]
+		ls, lsok := l.(string)
+		rs, rsok := r.(string)
+		if lsok && rsok {
+			return ls < rs
+		}
+		li, liok := l.(int)
+		ri, riok := r.(int)
+		if liok && riok {
+			return li < ri
+		}
+		if liok && rsok {
+			// special case: ints go before strings
+			return true
+		}
+		return false
+	})
+	return nil, nil
 }
 
 func getMapVm(arguments []any) (*map[string]any, error) {

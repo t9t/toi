@@ -1,0 +1,14 @@
+array = array(1337, 42, 5521)
+println(array)
+sort(array)
+println(array)
+
+array = array("b", "fe", "c", "fz", "a")
+println(array)
+sort(array)
+println(array)
+
+array = array("b", 42, "a", 1337)
+println(array)
+sort(array)
+println(array)
