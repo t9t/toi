@@ -545,24 +545,67 @@ func builtinSortVm(arguments []any) (any, error) {
 	}
 
 	sort.Slice(*array, func(i, j int) bool {
-		l, r := (*array)[i], (*array)[j]
-		ls, lsok := l.(string)
-		rs, rsok := r.(string)
-		if lsok && rsok {
-			return ls < rs
-		}
-		li, liok := l.(int)
-		ri, riok := r.(int)
-		if liok && riok {
-			return li < ri
-		}
-		if liok && rsok {
-			// special case: ints go before strings
-			return true
-		}
-		return false
+		return less((*array)[i], (*array)[j])
 	})
 	return nil, nil
+}
+
+func lessToiInstance(left, right *ToiInstance) bool {
+	if left.toiType.Identifier.Lexeme != right.toiType.Identifier.Lexeme {
+		return left.toiType.Identifier.Lexeme < right.toiType.Identifier.Lexeme
+	}
+	for i, lv := range left.fieldValues {
+		rv := right.fieldValues[i]
+		if less(lv, rv) {
+			return true
+		} else {
+			return false
+		}
+	}
+	return false
+}
+
+func lessVmInstance(left, right *VmInstance) bool {
+	if left.vmType.Name != right.vmType.Name {
+		return left.vmType.Name < right.vmType.Name
+	}
+	for i, lv := range left.values {
+		rv := right.values[i]
+		if less(lv, rv) {
+			return true
+		} else {
+			return false
+		}
+	}
+	return false
+}
+
+func less(l, r any) bool {
+	ls, lsok := l.(string)
+	rs, rsok := r.(string)
+	if lsok && rsok {
+		return ls < rs
+	}
+	li, liok := l.(int)
+	ri, riok := r.(int)
+	if liok && riok {
+		return li < ri
+	}
+	if liok && rsok {
+		// special case: ints go before strings
+		return true
+	}
+	lt, ltok := l.(*ToiInstance)
+	rt, rtok := r.(*ToiInstance)
+	if ltok && rtok {
+		return lessToiInstance(lt, rt)
+	}
+	lv, lvok := l.(*VmInstance)
+	rv, rvok := r.(*VmInstance)
+	if lvok && rvok {
+		return lessVmInstance(lv, rv)
+	}
+	return false
 }
 
 func getMapVm(arguments []any) (*map[string]any, error) {

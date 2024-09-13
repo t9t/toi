@@ -12,3 +12,9 @@ array = array("b", 42, "a", 1337)
 println(array)
 sort(array)
 println(array)
+
+
+Type{a b}
+array = array(Type("z", "x"), Type("a", "b"), Type("z", "a"), Type("a", "c"))
+sort(array)
+println(array)

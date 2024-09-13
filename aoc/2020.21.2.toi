@@ -1,0 +1,81 @@
+allergensToIngredients = map()
+allIngredients = map()
+for line = [inputLines()]l {
+    parts = split(line, " (contains ")
+    ingredients = split([parts]0, " ")
+    allergens = split([split([parts]1, ")")]0, ", ")
+
+    for ingredient = [ingredients]i {
+        if isSet(allIngredients, ingredient) {
+            [allIngredients]ingredient = [allIngredients]ingredient + 1
+        } otherwise {
+            [allIngredients]ingredient = 1
+        }
+    }
+
+    for allergen = [allergens]a {
+        if isSet(allergensToIngredients, allergen) == 0 {
+            [allergensToIngredients]allergen = map()
+        }
+        entry = [allergensToIngredients]allergen
+
+        for ingredient = [ingredients]i {
+            if isSet(entry, ingredient) {
+                [entry]ingredient = [entry]ingredient + 1
+            } otherwise {
+                [entry]ingredient = 1
+            }
+        }
+    }
+}
+
+couldBe = map()
+for ingredients = [allergensToIngredients]allergen {
+    max = 0
+    for count = [ingredients]ingredient {
+        if count > max {
+            max = count
+        }
+    }
+    for count = [ingredients]ingredient {
+        if count == max {
+            if isSet(couldBe, ingredient) {
+                [[couldBe]ingredient]allergen = 1
+            } otherwise {
+                [couldBe]ingredient = map(allergen, 1)
+            }
+        }
+    }
+}
+
+
+Result{allergen ingredient}
+
+final = array()
+while len(couldBe) > 0 {
+    for allergens = [couldBe]ingredient {
+        if len(allergens) == 1 {
+            for n = [allergens]allergen {
+            }
+            unset(couldBe, ingredient)
+            for otherAllergens = [couldBe]otherIngredient {
+                unset(otherAllergens, allergen)
+            }
+            push(final, Result(allergen, ingredient))
+
+            exit loop
+        }
+    }
+}
+
+sort(final)
+
+s = ""
+for result = [final]f {
+    if f <> 0 {
+        s = s _ ","
+    }
+    s = s _ result.ingredient
+}
+
+println(s)
