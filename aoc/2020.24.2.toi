@@ -1,0 +1,127 @@
+toKey|x y| key {
+    key = string(x) _ "," _ string(y)
+}
+
+blacks = map()
+
+for line = [inputLines()]l {
+    chars = chars(line)
+    c = 0
+    x = 0
+    y = 0
+    while c < len(chars) {
+        dir = [chars]c
+        if dir <> "e" and dir <> "w" { // "n" or "s"
+            c = c + 1
+            nextChar = [chars]c
+            dir = dir _ nextChar
+        }
+        c = c + 1
+
+        if dir == "e" {
+            x = x + 1
+        }
+        if dir == "se" {
+            y = y + 1
+        }
+        if dir == "sw" {
+            x = x - 1
+            y = y + 1
+        }
+        if dir == "w" {
+            x = x - 1
+        }
+        if dir == "nw" {
+            y = y - 1
+        }
+        if dir == "ne" {
+            x = x + 1
+            y = y - 1
+        }
+    }
+
+    key = toKey(x, y)
+
+    if isSet(blacks, key) {
+        unset(blacks, key)
+    } otherwise {
+        [blacks]key = 1
+    }
+}
+
+isBlackThen1|blacks x y| out {
+    out = 0
+    if isSet(blacks, toKey(x, y)) {
+        out = 1
+    }
+}
+
+countAdjacentBlacks|blacks x y| count {
+    count = 0
+    count = count + isBlackThen1(blacks, x, y-1)
+    count = count + isBlackThen1(blacks, x+1, y-1)
+    count = count + isBlackThen1(blacks, x+1, y)
+    count = count + isBlackThen1(blacks, x, y+1)
+    count = count + isBlackThen1(blacks, x-1, y+1)
+    count = count + isBlackThen1(blacks, x-1, y)
+}
+
+generateWhites|blacks| whites {
+    whites = map()
+    for n = [blacks]key {
+        parts = split(key, ",")
+        x = int([parts]0)
+        y = int([parts]1)
+
+        adjacentKeys = array( //
+            toKey(x, y-1), //
+            toKey(x+1, y-1), //
+            toKey(x+1, y), //
+            toKey(x, y+1), //
+            toKey(x-1, y+1), //
+            toKey(x-1, y) //
+        )
+
+        for k = [adjacentKeys]i {
+            if isSet(blacks, k) == 0 {
+                [whites]k = 1
+            }
+        }
+    }
+}
+
+day = 1
+while day <= 100 {
+    day = day + 1
+    newBlacks = map()
+    for n = [blacks]key {
+        parts = split(key, ",")
+        x = int([parts]0)
+        y = int([parts]1)
+
+        // Any black tile with zero or more than 2 black tiles immediately adjacent to it is flipped to white.
+        adjacentBlacks = countAdjacentBlacks(blacks, x, y)
+        if adjacentBlacks == 0 or adjacentBlacks > 2 {
+            // turned to white: don't add to newBlacks
+        } otherwise {
+            [newBlacks]key = 1
+        }
+    }
+
+    whites = generateWhites(blacks)
+    for n = [whites]key {
+        parts = split(key, ",")
+        x = int([parts]0)
+        y = int([parts]1)
+
+        // Any white tile with exactly 2 black tiles immediately adjacent to it is flipped to black.
+        adjacentBlacks = countAdjacentBlacks(blacks, x, y)
+        if adjacentBlacks == 2 {
+            [newBlacks]key = 1
+        }
+    }
+
+    blacks = newBlacks
+}
+
+println(len(blacks))
