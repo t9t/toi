@@ -1,0 +1,48 @@
+blacks = map()
+
+for line = [inputLines()]l {
+    chars = chars(line)
+    c = 0
+    x = 0
+    y = 0
+    while c < len(chars) {
+        dir = [chars]c
+        if dir <> "e" and dir <> "w" { // "n" or "s"
+            c = c + 1
+            nextChar = [chars]c
+            dir = dir _ nextChar
+        }
+        c = c + 1
+
+        if dir == "e" {
+            x = x + 1
+        }
+        if dir == "se" {
+            y = y + 1
+        }
+        if dir == "sw" {
+            x = x - 1
+            y = y + 1
+        }
+        if dir == "w" {
+            x = x - 1
+        }
+        if dir == "nw" {
+            y = y - 1
+        }
+        if dir == "ne" {
+            x = x + 1
+            y = y - 1
+        }
+    }
+
+    key = string(x) _ "," _ string(y)
+
+    if isSet(blacks, key) {
+        unset(blacks, key)
+    } otherwise {
+        [blacks]key = 1
+    }
+}
+
+println(len(blacks))
