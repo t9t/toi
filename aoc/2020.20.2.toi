@@ -1,10 +1,13 @@
 equalArray|left right| equal {
     equal = 1
-    for l = [left]i {
-        if l <> [right]i {
+    l = 0
+    len = len(left)
+    while l < len {
+        if [left]l <> [right]l {
             equal = 0
             exit function
         }
+        l = l + 1
     }
 }
 
@@ -29,6 +32,11 @@ top|tile| out {
 
 bottom|tile| out {
     out = [tile](len(tile)-1)
+}
+
+Tile{tile left right top bottom}
+createTile|tile| out {
+    out = Tile(tile, left(tile), right(tile), top(tile), bottom(tile))
 }
 
 reverse|chars| out {
@@ -85,19 +93,24 @@ allProjections|tile| out {
     )
 }
 
-Tile{id projections}
+toTiles|projections| out {
+    out = array()
+    for projection = [projections]p {
+        push(out, createTile(projection))
+    }
+}
+
 tiles = map()
 
 readingMode = 0 // 0 = title; 1 = data
 
-// TODO: "Compilation error: variable used before set"; while it's set in previous iteration
 currentTile = array()
 tileId = 0
 
 for line = [inputLines()]l {
     if readingMode == 0 { // reading title, e.g. "Tile 2311:"
         if l <> 0 {
-            [tiles]tileId = Tile(tileId, allProjections(currentTile))
+            [tiles]tileId = toTiles(allProjections(currentTile))
         }
         tileId = [split([split(line, " ")]1, ":")]0
         currentTile = array()
@@ -122,107 +135,65 @@ fromKey|key| coords {
     coords = Coords(int([parts]0), int([parts]1))
 }
 
-GridTile{id tile}
-grid = map(toKey(Coords(0, 0)), GridTile(tileId, currentTile))
-gridString|grid| s {
-    s = ""
-    i = 0
-    for tile = [grid]key {
-        if i == 0 {
-            i = 1
-        } otherwise {
-            s = s _ ", "
-        }
-        s = s _ "(" _ key _ ") = " _ tile.id
-    }
-}
+grid = map(toKey(Coords(0, 0)), createTile(currentTile))
+
+min = Coords(0, 0)
+max = Coords(0, 0)
 
 while len(tiles) > 0 {
-    left = ""
-    t = 0
-    for tile = [tiles]key {
-        if t <> 0 {
-            left = left _ ", "
-        } otherwise {
-            t = 1
-        }
-        left = left _ tile.id
-    }
-
-    anyFit = 0
-    for leftTile = [tiles]leftTileId {
-        projections = leftTile.projections
+    for projections = [tiles]leftTileId {
         fits = 0
-        for gridTile = [grid]key {
-            tileLeft = left(gridTile.tile)
-            tileRight = right(gridTile.tile)
-            tileTop = top(gridTile.tile)
-            tileBottom = bottom(gridTile.tile)
-
-            for projection = [projections]p {
-                left = left(projection)
-                right = right(projection)
-                top = top(projection)
-                bottom = bottom(projection)
-
+        keys = keys(grid)
+        k = 0
+        while fits == 0 and k < len(keys) {
+            key = [keys]k
+            k = k + 1
+            gridTile = [grid]key
+            p = 0
+            while fits == 0 and p < len(projections) {
+                projection = [projections]p
+                p = p + 1
                 dx = 0
                 dy = 0
-                if equalArray(left, tileRight) {
+                if equalArray(projection.left, gridTile.right) {
                     fits = 1
                     dx = 1
                 }
-                if equalArray(right, tileLeft) {
+                if equalArray(projection.right, gridTile.left) {
                     fits = 1
                     dx = 0-1
                 }
-                if equalArray(top, tileBottom) {
+                if equalArray(projection.top, gridTile.bottom) {
                     fits = 1
                     dy = 1
                 }
-                if equalArray(bottom, tileTop) {
+                if equalArray(projection.bottom, gridTile.top) {
                     fits = 1
                     dy = 0-1
                 }
                 if fits == 0 {
                     next iteration
                 }
-                anyFit = 1
                 coords = fromKey(key)
                 newCoords = Coords(coords.x + dx, coords.y + dy)
+                if newCoords.x < min.x {
+                    min.x = newCoords.x
+                }
+                if newCoords.x > max.x {
+                    max.x = newCoords.x
+                }
+                if newCoords.y < min.y {
+                    min.y = newCoords.y
+                }
+                if newCoords.y > max.y {
+                    max.y = newCoords.y
+                }
                 newKey = toKey(newCoords)
-                [grid]newKey = GridTile(leftTileId, projection)
+                [grid]newKey = projection
                 unset(tiles, leftTileId)
                 exit loop
             }
-            if fits == 1 {
-                exit loop
-            }
         }
-        if fits == 1 {
-            exit loop
-            anyFit = 1
-        }
-    }
-    if anyFit == 0 {
-        exit loop
-    }
-}
-
-min = Coords(0, 0)
-max = Coords(0, 0)
-for tile = [grid]key {
-    coords = fromKey(key)
-    if coords.x < min.x {
-        min.x = coords.x
-    }
-    if coords.y < min.y {
-        min.y = coords.y
-    }
-    if coords.x > max.x {
-        max.x = coords.x
-    }
-    if coords.y > max.y {
-        max.y = coords.y
     }
 }
 
@@ -235,26 +206,18 @@ while x <= max.x {
     imageY = 0
     y = min.y
     while y <= max.y {
-        tile = [grid]toKey(Coords(x, y))
-        for row = [tile.tile]r {
-            if r == 0 or r == len(tile.tile)-1 {
+        tile = ([grid]toKey(Coords(x, y))).tile
+        for row = [tile]r {
+            if r == 0 or r == len(tile)-1 {
                 next iteration
             }
             if x == min.x {
                 [image]imageY = array()
             }
-            s = ""
             for char = [row]c {
-                if c == 0 or c == len(row)-1 {
-                    //s = s _ "[" _ char _ "]"
-                    next iteration
-                } otherwise {
+                if c <> 0 and c <> len(row)-1 {
                     push([image]imageY, char)
-                    s = s _ char
                 }
-            }
-            if r == 0 or r == len(tile.tile)-1 {
-                next iteration
             }
             imageY = imageY + 1
         }
@@ -262,10 +225,6 @@ while x <= max.x {
     }
     x = x + 1
 }
-
-//                   #
-// #    ##    ##    ###
-//  #  #  #  #  #  #
 
 check|row pattern offset| checked {
     checked = 1
@@ -294,16 +253,10 @@ countOccurrences|row1 row2 row3 pattern1 pattern2 pattern3| count {
     }
 }
 
-findSeaMonsters|image| monsters {
-    //[                  # ]
-    //[#    ##    ##    ###]
-    //[ #  #  #  #  #  #   ]
+findSeaMonsters|image head body legs| monsters {
     //head = array(18)
     //body = array(0, 5, 6, 11, 12, 17, 18, 19)
     //legs = array(1, 4, 7, 10, 13, 16)
-    head = chars("                  # ")
-    body = chars("#    ##    ##    ###")
-    legs = chars(" #  #  #  #  #  #   ")
 
     monsters = 0
     i = 2
@@ -316,8 +269,12 @@ findSeaMonsters|image| monsters {
     }
 }
 
+head = chars("                  # ")
+body = chars("#    ##    ##    ###")
+legs = chars(" #  #  #  #  #  #   ")
+
 for projection = [allProjections(image)]p {
-    monsterCount = findSeaMonsters(projection)
+    monsterCount = findSeaMonsters(projection, head, body, legs)
     if monsterCount <> 0 {
         hashes = 0
         for row = [projection]p {
