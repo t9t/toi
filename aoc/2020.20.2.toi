@@ -1,0 +1,335 @@
+equalArray|left right| equal {
+    equal = 1
+    for l = [left]i {
+        if l <> [right]i {
+            equal = 0
+            exit function
+        }
+    }
+}
+
+left|tile| out {
+    out = array()
+    for row = [tile]r {
+        push(out, [row]0)
+    }
+}
+
+right|tile| out {
+    out = array()
+    right = len([tile]0) - 1
+    for row = [tile]r {
+        push(out, [row]right)
+    }
+}
+
+top|tile| out {
+    out = [tile]0
+}
+
+bottom|tile| out {
+    out = [tile](len(tile)-1)
+}
+
+reverse|chars| out {
+    out = array()
+    i = len(chars) - 1
+    while i >= 0 {
+        push(out, [chars]i)
+        i = i - 1
+    }
+}
+
+flipHorizontally|tile| out {
+    out = array()
+    for row = [tile]r {
+        push(out, reverse(row))
+    }
+}
+
+rotate90deg|tile| out {
+    out = array()
+    for row = [tile]r {
+        push(out, array())
+    }
+    max = len([tile]0)-1
+    r = max
+    while r >= 0 {
+        row = [tile]r
+        for char = [row]col {
+            [[out]col](max-r) = char
+        }
+        r = r - 1
+    }
+}
+
+rotate180deg|tile| out {
+    out = rotate90deg(rotate90deg(tile))
+}
+
+rotate270deg|tile| out {
+    out = rotate180deg(rotate90deg(tile))
+}
+
+allProjections|tile| out {
+    flipped = flipHorizontally(tile)
+    out = array( //
+        tile, //
+        rotate90deg(tile), //
+        rotate180deg(tile), //
+        rotate270deg(tile), //
+        flipped, //
+        rotate90deg(flipped), //
+        rotate180deg(flipped), //
+        rotate270deg(flipped) //
+    )
+}
+
+Tile{id projections}
+tiles = map()
+
+readingMode = 0 // 0 = title; 1 = data
+
+// TODO: "Compilation error: variable used before set"; while it's set in previous iteration
+currentTile = array()
+tileId = 0
+
+for line = [inputLines()]l {
+    if readingMode == 0 { // reading title, e.g. "Tile 2311:"
+        if l <> 0 {
+            [tiles]tileId = Tile(tileId, allProjections(currentTile))
+        }
+        tileId = [split([split(line, " ")]1, ":")]0
+        currentTile = array()
+        readingMode = 1
+    } otherwise {
+        if line == "" {
+            readingMode = 0
+            next iteration
+        }
+
+        chars = chars(line)
+        push(currentTile, chars)
+    }
+}
+
+Coords{x y}
+toKey|coords| key {
+    key = string(coords.x) _ "," _ string(coords.y)
+}
+fromKey|key| coords {
+    parts = split(key, ",")
+    coords = Coords(int([parts]0), int([parts]1))
+}
+
+GridTile{id tile}
+grid = map(toKey(Coords(0, 0)), GridTile(tileId, currentTile))
+gridString|grid| s {
+    s = ""
+    i = 0
+    for tile = [grid]key {
+        if i == 0 {
+            i = 1
+        } otherwise {
+            s = s _ ", "
+        }
+        s = s _ "(" _ key _ ") = " _ tile.id
+    }
+}
+
+while len(tiles) > 0 {
+    left = ""
+    t = 0
+    for tile = [tiles]key {
+        if t <> 0 {
+            left = left _ ", "
+        } otherwise {
+            t = 1
+        }
+        left = left _ tile.id
+    }
+
+    anyFit = 0
+    for leftTile = [tiles]leftTileId {
+        projections = leftTile.projections
+        fits = 0
+        for gridTile = [grid]key {
+            tileLeft = left(gridTile.tile)
+            tileRight = right(gridTile.tile)
+            tileTop = top(gridTile.tile)
+            tileBottom = bottom(gridTile.tile)
+
+            for projection = [projections]p {
+                left = left(projection)
+                right = right(projection)
+                top = top(projection)
+                bottom = bottom(projection)
+
+                dx = 0
+                dy = 0
+                if equalArray(left, tileRight) {
+                    fits = 1
+                    dx = 1
+                }
+                if equalArray(right, tileLeft) {
+                    fits = 1
+                    dx = 0-1
+                }
+                if equalArray(top, tileBottom) {
+                    fits = 1
+                    dy = 1
+                }
+                if equalArray(bottom, tileTop) {
+                    fits = 1
+                    dy = 0-1
+                }
+                if fits == 0 {
+                    next iteration
+                }
+                anyFit = 1
+                coords = fromKey(key)
+                newCoords = Coords(coords.x + dx, coords.y + dy)
+                newKey = toKey(newCoords)
+                [grid]newKey = GridTile(leftTileId, projection)
+                unset(tiles, leftTileId)
+                exit loop
+            }
+            if fits == 1 {
+                exit loop
+            }
+        }
+        if fits == 1 {
+            exit loop
+            anyFit = 1
+        }
+    }
+    if anyFit == 0 {
+        exit loop
+    }
+}
+
+min = Coords(0, 0)
+max = Coords(0, 0)
+for tile = [grid]key {
+    coords = fromKey(key)
+    if coords.x < min.x {
+        min.x = coords.x
+    }
+    if coords.y < min.y {
+        min.y = coords.y
+    }
+    if coords.x > max.x {
+        max.x = coords.x
+    }
+    if coords.y > max.y {
+        max.y = coords.y
+    }
+}
+
+tileWidth = len([currentTile]0)
+tileHeight = len(currentTile)
+
+image = array()
+x = min.x
+while x <= max.x {
+    imageY = 0
+    y = min.y
+    while y <= max.y {
+        tile = [grid]toKey(Coords(x, y))
+        for row = [tile.tile]r {
+            if r == 0 or r == len(tile.tile)-1 {
+                next iteration
+            }
+            if x == min.x {
+                [image]imageY = array()
+            }
+            s = ""
+            for char = [row]c {
+                if c == 0 or c == len(row)-1 {
+                    //s = s _ "[" _ char _ "]"
+                    next iteration
+                } otherwise {
+                    push([image]imageY, char)
+                    s = s _ char
+                }
+            }
+            if r == 0 or r == len(tile.tile)-1 {
+                next iteration
+            }
+            imageY = imageY + 1
+        }
+        y = y + 1
+    }
+    x = x + 1
+}
+
+//                   #
+// #    ##    ##    ###
+//  #  #  #  #  #  #
+
+check|row pattern offset| checked {
+    checked = 1
+    for patternChar = [pattern]i {
+        rowChar = [row](offset+i)
+        if patternChar == "#" {
+            if rowChar <> "#" {
+                checked = 0
+                exit function
+            }
+        }
+    }
+}
+
+countOccurrences|row1 row2 row3 pattern1 pattern2 pattern3| count {
+    count = 0
+    offset = 0
+    rowLen = len(row1)
+    patternLen = len(pattern1)
+    while offset+patternLen <= rowLen {
+        if check(row1, pattern1, offset) and check(row2, pattern2, offset) and check(row3, pattern3, offset) {
+            count = count + 1
+        }
+
+        offset = offset + 1
+    }
+}
+
+findSeaMonsters|image| monsters {
+    //[                  # ]
+    //[#    ##    ##    ###]
+    //[ #  #  #  #  #  #   ]
+    //head = array(18)
+    //body = array(0, 5, 6, 11, 12, 17, 18, 19)
+    //legs = array(1, 4, 7, 10, 13, 16)
+    head = chars("                  # ")
+    body = chars("#    ##    ##    ###")
+    legs = chars(" #  #  #  #  #  #   ")
+
+    monsters = 0
+    i = 2
+    while i < len(image) {
+        row1 = [image](i-2)
+        row2 = [image](i-1)
+        row3 = [image]i
+        monsters = monsters + countOccurrences(row1, row2, row3, head, body, legs)
+        i = i + 1
+    }
+}
+
+for projection = [allProjections(image)]p {
+    monsterCount = findSeaMonsters(projection)
+    if monsterCount <> 0 {
+        hashes = 0
+        for row = [projection]p {
+            for char = [row]c {
+                if char == "#" {
+                    hashes = hashes + 1
+                }
+            }
+        }
+        println(hashes - monsterCount*15)
+
+
+        exit loop
+    }
+}
