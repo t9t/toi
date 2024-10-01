@@ -103,10 +103,7 @@ while 1 {
 ```
 
 ```
-array = array()
-push(array, 42)
-push(array, 1337)
-push(array, 5521)
+array = array(42, 1337, 5521)
 
 for value = [array]index {
     println("index", index, "value", value)
@@ -144,6 +141,13 @@ while i < len(keys) {
 
 [values](len(values)-1) = "last item" // re-assigns the last item of the array
 pop(values) // removes the last value from the array
+```
+
+Array and map can be created with values:
+```
+values = array(1, 1, 2, 3, 5, 8, 13, 21)
+// Alternating keys and values:
+items = map("a", 1, "b", 2, "c", 3)
 ```
 
 
@@ -214,11 +218,26 @@ printNumbers|maximum| {
 }
 ```
 
+
 ## Other built-in functions
 `inputLines()` returns the standard input as lines
 `chars(s)` returns an array with the characters in a string (each element is a string of length 1)
 `isSet(map, key)` returns 1 if the key is set in the map, and 0 if it's not
 `unset(map, key)` removes the key from the map
+`sort(array)` sorts an array by lexicographically order; custom types are sorted by the order of their fields
+
+
+## Custom types
+Custom types can be defined to group data:
+
+```
+Item{id data}
+
+item = Item(42, "Hello, world")
+println(item.id) // Prints: 42
+item.data = "Hello, custom type"
+println(item) // Prints: Item{id=42,data=Hello, custom type}
+```
 
 
 # Implementation

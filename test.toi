@@ -1,0 +1,6 @@
+Item{id data}
+
+item = Item(42, "Hello, world")
+println(item.id)
+item.data = "Hello, custom type"
+println(item)
